@@ -149,35 +149,25 @@ function Index() {
         </div>
       </section>
 
-      {/* COMPRENDRE / RETROUVER / S'EXPRIMER — magazine, asymétrique */}
+      {/* COMPRENDRE / RETROUVER / S'EXPRIMER — trois piliers de poids égal */}
       <section className="bg-card">
         <div className="mx-auto w-full max-w-6xl px-6 py-24 md:px-8">
-          <div className="grid gap-6 md:grid-cols-12">
-            <article className="group relative overflow-hidden rounded-3xl bg-background p-8 md:col-span-7 md:row-span-2">
-              <span className="absolute left-0 top-8 h-14 w-1.5 rounded-r bg-brand" />
-              <p className="text-sm font-bold text-brand">01</p>
-              <h2 className="mt-2 font-serif text-6xl md:text-7xl">Comprendre</h2>
-              <p className="mt-4 max-w-sm text-lg text-muted-foreground">Écouter une idée et en saisir l'essentiel.</p>
-              <img src={img("newspaper")} alt="" className="mt-8 aspect-[16/9] w-full rounded-2xl object-cover transition duration-500 group-hover:scale-[1.02]" />
-            </article>
-            <article className="group flex gap-5 rounded-3xl border bg-background p-6 transition hover:border-brand md:col-span-5">
-              <img src={img("glasses")} alt="" className="h-28 w-24 shrink-0 rounded-xl object-cover" />
-              <div>
-                <p className="text-sm font-bold text-brand">02</p>
-                <h2 className="mt-1 text-3xl font-sans font-semibold tracking-tight">Retrouver</h2>
-                <p className="mt-2 text-base text-muted-foreground">Mobiliser ses connaissances et son vocabulaire.</p>
-              </div>
-            </article>
-            <article className="group rounded-3xl bg-brand-soft p-6 transition hover:-translate-y-1 md:col-span-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-bold text-brand">03</p>
-                  <h2 className="mt-1 text-3xl font-sans font-semibold tracking-tight">S'exprimer</h2>
-                  <p className="mt-2 text-base text-muted-foreground">Donner son avis, expliquer, reformuler.</p>
+          <div className="grid gap-6 md:grid-cols-3">
+            {[
+              { n: "01", t: "Comprendre", d: "Écouter une idée et en saisir l'essentiel.", ph: "newspaper" },
+              { n: "02", t: "Retrouver", d: "Mobiliser ses connaissances et son vocabulaire.", ph: "glasses" },
+              { n: "03", t: "S'exprimer", d: "Donner son avis, expliquer, reformuler.", ph: "consultation" },
+            ].map((p) => (
+              <article key={p.n} className="group flex flex-col rounded-3xl border bg-background p-7 transition hover:-translate-y-1 hover:border-brand hover:bg-brand-soft">
+                <div className="flex items-center gap-3">
+                  <p className="text-sm font-bold text-brand">{p.n}</p>
+                  <span className="h-px flex-1 bg-border transition group-hover:bg-brand/40" />
                 </div>
-                <img src={img("consultation")} alt="" className="h-24 w-24 shrink-0 rounded-full object-cover ring-4 ring-background" />
-              </div>
-            </article>
+                <h2 className="mt-5 text-3xl font-sans font-semibold tracking-tight md:text-4xl">{p.t}</h2>
+                <p className="mt-3 text-base text-muted-foreground">{p.d}</p>
+                <img src={img(p.ph)} alt="" className="mt-auto aspect-[16/9] w-full rounded-2xl object-cover pt-7" />
+              </article>
+            ))}
           </div>
         </div>
       </section>
