@@ -223,7 +223,7 @@ function Index() {
       <section className="bg-card">
         <div className="mx-auto w-full max-w-6xl px-6 py-24 md:px-8">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-brand">Comment ça marche</p>
-          <h2 className="mt-3 font-sans text-4xl font-semibold tracking-tight md:text-5xl">Une séance, trois gestes</h2>
+          <h2 className="mt-3 font-sans text-4xl font-semibold tracking-tight md:text-5xl">Une séance, trois temps</h2>
           <p className="mt-3 max-w-2xl text-lg text-muted-foreground">Chaque sujet se déroule comme une courte conversation : on écoute, on retrouve, puis on s'exprime.</p>
           <div className="mt-10 grid items-stretch gap-6 md:grid-cols-[1fr_auto_1fr_auto_1fr]">
             {[
