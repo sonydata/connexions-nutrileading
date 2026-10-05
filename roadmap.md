@@ -14,5 +14,5 @@
 - [x] Guidage oral : « Réponse 1… » lues avec mise en évidence, « À vous… » dit à voix haute, « Je vous écoute », tolérance aux pauses
 - [ ] Actualité : en attente d'une source fiable (affichée « Bientôt disponible »)
 
-- [ ] Une seule voix féminine (pas de bascule vers la voix du navigateur)
-- [ ] Retirer les questions trop évidentes/enfantines de la banque
+- [x] Une seule voix féminine (pas de bascule vers la voix du navigateur)
+- [x] Retirer les questions trop évidentes/enfantines de la banque
