@@ -66,18 +66,24 @@ export const completeSession = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Natural voice, cached in storage so each sentence is synthesised only once. */
+/**
+ * Natural voice, cached in storage so each sentence is synthesised only once.
+ * Key = SHA-256("v1|" + exact text) — flat, stable, scales to any bank size.
+ * An existing file is never regenerated nor overwritten.
+ */
 export const speak = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ text: z.string().min(1).max(400) }).parse(d))
+  .inputValidator((d) => z.object({ text: z.string().trim().min(1).max(400) }).parse(d))
   .handler(async ({ data, context }) => {
     const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`v1|${data.text}`));
     const name = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("") + ".wav";
     const bucket = context.supabase.storage.from("voice");
     const cached = await bucket.download(name);
-    if (cached.data) return { audio: Buffer.from(await cached.data.arrayBuffer()).toString("base64") };
+    if (cached.data && cached.data.size > 0) return { audio: Buffer.from(await cached.data.arrayBuffer()).toString("base64") };
     const { synthesizeSpeech } = await import("./gateway.server");
     const buf = await synthesizeSpeech(data.text);
-    await bucket.upload(name, new Blob([buf], { type: "audio/wav" }), { contentType: "audio/wav", upsert: true });
+    // upsert:false — if another request stored it meanwhile, keep that file.
+    const up = await bucket.upload(name, new Blob([buf], { type: "audio/wav" }), { contentType: "audio/wav", upsert: false });
+    if (up.error && !/exists|duplicate/i.test(up.error.message)) console.error("voice cache upload failed:", up.error.message);
     return { audio: Buffer.from(buf).toString("base64") };
   });
