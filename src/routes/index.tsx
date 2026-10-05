@@ -67,9 +67,8 @@ function Index() {
   return (
     <main className="relative flex min-h-screen flex-col bg-background">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5 md:px-8">
-        <Link to="/" className="flex items-center gap-3">
-          <img src={symbol.url} alt="" className="h-10 w-auto" />
-          <span className="font-serif text-2xl">Connexions</span>
+        <Link to="/" className="flex items-center" aria-label="Connexions">
+          <img src={symbol.url} alt="Connexions" className="h-11 w-auto" />
         </Link>
         <nav className="flex items-center gap-1 text-sm font-medium">
           {[
@@ -87,14 +86,15 @@ function Index() {
       <section className="paper-grain">
         <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-6 pb-20 pt-10 md:grid-cols-[1fr_1.1fr] md:px-8 md:pt-16">
           <div className="animate-rise">
-            <p className="text-sm font-medium capitalize text-muted-foreground">
+            <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xl font-semibold capitalize text-foreground md:text-2xl">
+              <span className="h-2 w-2 rounded-full bg-brand" aria-hidden />
               {today}
-              {state === "in" && <span className="normal-case"> · Bonjour {name}</span>}
+              {state === "in" && <span className="normal-case font-medium text-muted-foreground"> · Bonjour {name}</span>}
             </p>
             <img src={symbol.url} alt="" className="mt-6 h-24 w-auto md:h-28" />
             <h1 className="mt-4 text-7xl leading-[0.9] tracking-tight md:text-8xl">Connexions</h1>
-            <p className="mt-3 flex items-center gap-2 text-base text-muted-foreground">
-              by <img src={logo.url} alt="" className="h-7 w-7" /> <span className="font-bold text-foreground">Nutrileading</span>
+            <p className="mt-4 flex flex-wrap items-center gap-3 text-2xl text-muted-foreground md:text-3xl">
+              by <img src={logo.url} alt="" className="h-11 w-11 md:h-12 md:w-12" /> <span className="font-bold text-foreground">Nutrileading</span>
             </p>
             <p className="mt-10 text-3xl font-semibold leading-tight tracking-tight md:text-4xl">
               Comprendre. <span className="text-brand">Retrouver.</span> S'exprimer.
@@ -259,7 +259,7 @@ function Index() {
 
       <footer className="bg-background">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-4 px-6 py-12 text-center md:px-8">
-          <img src={logo.url} alt="Nutrileading" className="h-12 w-12" />
+          <img src={logo.url} alt="Nutrileading" className="h-16 w-16" />
           <p className="text-base text-muted-foreground">Une initiative Nutrileading, inspirée par le parcours du Dr Hafid Halhol.</p>
 
         </div>
