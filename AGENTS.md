@@ -19,4 +19,5 @@
 - Choice photos are shown only when every option has one, and never for advice/action answers, so an image never contradicts the answer; otherwise a context photo from `SCENE` illustrates the situation, never the answer.
 - Choice questions read the sentence, the question and every answer aloud; tapping an answer interrupts the reading.
 - Discovery mode: /seance runs without an account — built locally, nothing saved, voice read from cache only (speakCached never synthesises) so visitors can't create paid calls.
-- Interests (subjects) are stored in caregiver_settings.topics with an "i:" prefix and mapped onto bank themes by src/lib/interests.ts; each item keeps skill (what is exercised) separate from theme (subject) — avoids a schema change.
+- Every bank item has a subject (`topic`, explicit or derived by topicOf) separate from its skill; buildSession fills ~80 % of slots from the chosen interests (rotating subjects) and ~20 % from transversal "general" items — personalisation stays rule-based.
+- First launch goes through /interets; signed-in choices are saved in caregiver_settings.topics ("i:" prefix), guest choices in localStorage.

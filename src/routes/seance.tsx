@@ -211,7 +211,6 @@ function Seance() {
   const it = items[i] as PlayItem;
   /** Full prompt read aloud: sentence, question, then each answer. */
   const spoken = (x: PlayItem) => [x.audio, x.question, ...(x.kind === "mcq" || x.kind === "tf" ? x.options.flatMap((o, k) => [`Réponse ${k + 1}.`, o.label]) : [])];
-  const head = (x: PlayItem) => (x.question ? 2 : 1);
   /** Read the prompt; highlight each answer while it is read; then say clearly when it is his turn to speak. */
   const readItem = async (x: PlayItem, slow = false, questionOnly = false) => {
     setCue(null);
@@ -223,7 +222,7 @@ function Seance() {
       const c = turnCue(x, i);
       setCue(c);
       const ok = await play([c]);
-      if (ok && x.kind !== "oral" ? true : ok && x.mode !== "lire") voice.start();
+      if (ok && !(x.kind === "oral" && x.mode === "lire")) voice.start();
     }
   };
 
