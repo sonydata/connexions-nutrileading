@@ -69,14 +69,14 @@ export const completeSession = createServerFn({ method: "POST" })
 
 /**
  * Natural voice, cached in storage so each sentence is synthesised only once.
- * Key = SHA-256("v1|" + exact text) — flat, stable, scales to any bank size.
+ * Key = SHA-256("v2|" + exact text) — flat, stable, scales to any bank size.
  * An existing file is never regenerated nor overwritten.
  */
 export const speak = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ text: z.string().trim().min(1).max(400) }).parse(d))
   .handler(async ({ data, context }) => {
-    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`v1|${data.text}`));
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`v2|${data.text}`));
     const name = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("") + ".wav";
     // Privileged client: the voice bucket is a shared, server-only cache —
     // direct client access is revoked by policy, so reads/writes go through here.
@@ -100,7 +100,7 @@ export const speak = createServerFn({ method: "POST" })
 export const speakCached = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ text: z.string().trim().min(1).max(400) }).parse(d))
   .handler(async ({ data }) => {
-    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`v1|${data.text}`));
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`v2|${data.text}`));
     const name = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("") + ".wav";
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const cached = await supabaseAdmin.storage.from("voice").download(name);

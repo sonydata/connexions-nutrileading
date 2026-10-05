@@ -36,7 +36,15 @@ export async function synthesizeSpeech(text: string): Promise<ArrayBuffer> {
       contents: [
         {
           role: "user",
-          parts: [{ text: `Lis en français, d'une voix calme, chaleureuse et posée, en articulant clairement : ${text}` }],
+          parts: [
+            {
+              text:
+                "Parle en français comme une femme cultivée et bienveillante qui converse avec un ami qu'elle respecte : " +
+                "ton naturel et chaleureux, débit posé mais fluide, intonation vivante, petites respirations douces entre les idées. " +
+                "Jamais le ton d'une assistante vocale, d'un GPS ou d'une lecture scolaire. Dis simplement ceci : " +
+                text,
+            },
+          ],
         },
       ],
       generationConfig: {
