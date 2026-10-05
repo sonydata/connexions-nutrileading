@@ -18,21 +18,21 @@ export const Route = createFileRoute("/_authenticated/aidant")({
 });
 
 const TOPICS = [
-  { id: "nutrition", label: "Nutrition" },
-  { id: "daily", label: "Vie pratique" },
-  { id: "time", label: "Temps et orientation" },
-  { id: "culture", label: "Culture" },
-  { id: "science", label: "Science et nature" },
+  { id: "nutrition", label: "Nutrition et aliments" },
+  { id: "avis", label: "Cas pratiques et « Votre avis »" },
+  { id: "sciences", label: "Culture scientifique et médicale" },
+  { id: "temps", label: "Organisation et temps" },
+  { id: "expression", label: "Expression orale" },
 ];
 const SKILL_LABELS: Record<string, string> = {
-  word: "Mots isolés",
-  sentence: "Phrases courtes",
-  temporal: "Notions de temps",
-  practical: "Langage pratique",
-  memory: "Mémoire auditive",
-  semantic: "Compréhension du sens",
+  lexique: "Connaissances alimentaires",
+  conseil: "Conseil et cas pratiques",
+  information: "Compréhension d'informations",
+  temps: "Notions de temps",
+  completion: "Complétion de phrases",
+  expression: "Expression orale",
 };
-const CAT_LABELS: Record<string, string> = { nutrition: "Nutrition", daily: "Vie pratique", time: "Temps", culture: "Culture", science: "Science" };
+const CAT_LABELS: Record<string, string> = { nutrition: "Nutrition", avis: "Votre avis", sciences: "Sciences", temps: "Temps", expression: "Expression" };
 
 type Attempt = { skill: string; category: string; outcome: string; word_count: number; response_ms: number | null; created_at: string; prompt: string };
 
