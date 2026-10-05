@@ -162,5 +162,5 @@ export const SEQUENCES: Sequence[] = [
 ];
 
 export const SEQ_ITEMS = SEQUENCES.flatMap((s) => s.items);
-export const STAGE_OF = new Map<string, Stage>(SEQUENCES.flatMap((s) => (["comprendre", "retrouver", "exprimer", "reformuler"] as Stage[]).map((st, k) => [s.items[k].id, st] as [string, Stage])));
+export const STAGE_OF = new Map<string, Stage>(SEQUENCES.flatMap((s) => (["comprendre", "retrouver", "exprimer", "reformuler"] as Stage[]).map((st, k) => [s.items[k]!.id, st] as [string, Stage])));
 export const SEQ_TITLE = new Map<string, string>(SEQUENCES.flatMap((s) => s.items.map((i) => [i.id, s.title] as [string, string])));
