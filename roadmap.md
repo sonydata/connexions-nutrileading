@@ -21,4 +21,4 @@
 - [x] Pré-enregistrement des 1194 phrases avec la voix Vindemiatrix
 - [x] « Voici les réponses possibles » ne se répète plus lors des relectures
 - [x] La voix dit un encouragement à voix haute après chaque réponse (bonne ou mauvaise)
-- [x] Accueil : date plus visible, « by Nutrileading » et logo agrandis, « Connexions » plus dupliqué en en-tête
+- [x] Accueil : date en en-tête (remplace le symbole), « by Nutrileading » et logo agrandis, « Connexions » plus dupliqué
