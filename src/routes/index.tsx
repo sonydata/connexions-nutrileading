@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/nutrileading-logo.png.asset.json";
 import { weekSummary } from "@/lib/week";
+import { imageSrc } from "@/lib/library";
+import { Apple, BookOpen, ChefHat, Cpu, Landmark, Leaf, Map as MapIcon, Microscope, Newspaper, Palette, Sparkles, Stethoscope, Trophy } from "lucide-react";
 import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, hasInterests, interestsOf, otherInterest } from "@/lib/interests";
 
 export const Route = createFileRoute("/")({
@@ -22,7 +24,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   const [state, setState] = useState<"loading" | "out" | "in">("loading");
   const [name, setName] = useState("Hafid");
-  const [week, setWeek] = useState<{ sessions: number; minutes: number } | null>(null);
+  const [week, setWeek] = useState<{ sessions: number; minutes: number; days: number } | null>(null);
   const [topics, setTopics] = useState<string[]>([]);
   const [configured, setConfigured] = useState(true);
 
@@ -47,122 +49,202 @@ function Index() {
 
   const today = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
-  const label = (id: string) => INTERESTS.find((x) => x.id === id)?.label;
-  const mine = [...interestsOf(topics).map(label).filter((x): x is string => !!x), otherInterest(topics)].filter(Boolean);
-  const chips = mine.length ? mine : DEFAULT_INTERESTS.map(label).filter((x): x is string => !!x);
-  const PILLARS = [
-    ["Comprendre", "Écouter une idée et en saisir l'essentiel."],
-    ["Retrouver", "Mobiliser ses connaissances et son vocabulaire."],
-    ["S'exprimer", "Donner son avis, expliquer, reformuler."],
-  ];
-  const Eyebrow = ({ children }: { children: React.ReactNode }) => (
-    <p className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-brand">
-      <span className="h-px w-8 bg-brand" />
-      {children}
-    </p>
-  );
+  const ICON: Record<string, typeof Apple> = { sante: Apple, medecine: Stethoscope, sciences: Microscope, histoire: Landmark, art: Palette, geographie: MapIcon, actualite: Newspaper, nature: Leaf, litterature: BookOpen, technologie: Cpu, cuisine: ChefHat, sport: Trophy };
+  const ids = interestsOf(topics).filter((x) => !x.startsWith("autre:") && x !== "actualite");
+  const myIds = ids.length ? ids : DEFAULT_INTERESTS.filter((x) => x !== "actualite");
+  const label = (id: string) => INTERESTS.find((x) => x.id === id)?.label ?? id;
+  const short = (id: string) => label(id).split(" &")[0]!;
+  const other = otherInterest(topics);
+  const QUOTES = ["Faire vivre ses connaissances.", "La curiosité se cultive.", "Chaque mot retrouvé compte.", "Réfléchir, comprendre, transmettre.", "Votre expérience reste une richesse."];
+  const quote = QUOTES[Math.floor(Date.now() / 864e5) % QUOTES.length]!;
+  const img = (id: string) => imageSrc(id) ?? "";
+  const startLink = { to: configured ? "/seance" : "/interets", search: configured ? {} : { next: "seance" as const } } as const;
 
   return (
-    <main className="paper-grain relative flex min-h-screen flex-col">
-      <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-8 py-6">
-        <img src={logo.url} alt="Nutrileading" className="h-10 w-10" />
-        <nav className="flex items-center gap-6 text-sm text-muted-foreground">
-          <Link to="/interets" search={{ next: undefined }} className="underline-offset-4 hover:text-brand hover:underline">Vos centres d'intérêt</Link>
-          <Link to={state === "in" ? "/aidant" : "/auth"} className="underline-offset-4 hover:text-brand hover:underline">Connexion</Link>
+    <main className="relative flex min-h-screen flex-col bg-background">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5 md:px-8">
+        <Link to="/" className="flex items-center gap-3">
+          <img src={logo.url} alt="Nutrileading" className="h-10 w-10" />
+          <span className="font-serif text-2xl">Connexions</span>
+        </Link>
+        <nav className="flex items-center gap-1 text-sm font-medium">
+          {[
+            { to: "/interets" as const, label: "Centres d'intérêt", search: { next: undefined } },
+            { to: (state === "in" ? "/aidant" : "/auth") as "/aidant" | "/auth", label: state === "in" ? "Vos progrès" : "Connexion", search: undefined },
+          ].map((l) => (
+            <Link key={l.label} to={l.to} search={l.search as never} className="rounded-full px-4 py-2 text-muted-foreground transition hover:bg-brand-soft hover:text-brand">
+              {l.label}
+            </Link>
+          ))}
         </nav>
       </header>
 
-      {/* HERO — éditorial, sans grande photo */}
-      <section className="mx-auto w-full max-w-5xl px-8 pb-24 pt-14 md:pt-20 animate-rise">
-        <p className="text-base capitalize text-muted-foreground">
-          {today}
-          {state === "in" && <span className="normal-case"> · Bonjour {name}</span>}
-        </p>
-        <h1 className="mt-8 text-7xl leading-[0.92] tracking-tight md:text-[8.5rem]">Connexions</h1>
-        <p className="mt-4 flex items-center gap-3 text-lg font-medium text-brand">
-          <span className="h-px w-10 bg-brand" />
-          by Nutrileading
-        </p>
-        <p className="mt-12 max-w-3xl font-serif text-4xl leading-tight md:text-5xl">
-          Comprendre. <span className="text-brand">Retrouver.</span> S'exprimer.
-        </p>
-        <p className="mt-6 max-w-2xl text-xl leading-relaxed text-muted-foreground">
-          Des séances quotidiennes pour mobiliser vos connaissances, votre langage et votre curiosité à partir des sujets qui vous intéressent.
-        </p>
-        <div className="mt-12 flex flex-wrap items-center gap-6">
-          <Link
-            to={configured ? "/seance" : "/interets"}
-            search={configured ? {} : { next: "seance" as const }}
-            className="inline-flex items-center rounded-full bg-primary px-14 py-6 text-2xl font-medium text-primary-foreground shadow-lg transition hover:opacity-90"
-          >
-            Commencer
-          </Link>
-          <span className="flex items-center gap-2 text-lg text-muted-foreground">
-            <span className="h-2 w-2 rounded-full bg-brand animate-breathe" />
-            10 minutes aujourd'hui
-          </span>
-        </div>
-        {state === "out" && <p className="mt-4 text-base text-muted-foreground">Sans compte, la séance n'est pas enregistrée.</p>}
-      </section>
+      {/* HERO */}
+      <section className="paper-grain">
+        <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-6 pb-20 pt-10 md:grid-cols-[1.15fr_1fr] md:px-8 md:pt-16">
+          <div className="animate-rise">
+            <p className="text-sm font-medium capitalize text-muted-foreground">
+              {today}
+              {state === "in" && <span className="normal-case"> · Bonjour {name}</span>}
+            </p>
+            <h1 className="mt-6 text-7xl leading-[0.9] tracking-tight md:text-8xl">Connexions</h1>
+            <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-brand-soft px-4 py-1.5 text-sm font-semibold text-brand">by Nutrileading</p>
+            <p className="mt-10 text-3xl font-semibold leading-tight tracking-tight md:text-4xl">
+              Comprendre. <span className="text-brand">Retrouver.</span> S'exprimer.
+            </p>
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
+              Des séances quotidiennes pour mobiliser vos connaissances, votre langage et votre curiosité à partir des sujets qui vous intéressent.
+            </p>
 
-      {/* BLOC 2 — Comprendre / Retrouver / S'exprimer */}
-      <section className="border-t border-border/70">
-        <div className="mx-auto grid w-full max-w-5xl gap-px overflow-hidden px-8 py-20 md:grid-cols-3">
-          {PILLARS.map(([title, text], k) => (
-            <div key={title} className={`py-6 md:px-8 ${k > 0 ? "md:border-l md:border-border/70" : "md:pl-0"}`}>
-              <span className="font-serif text-lg text-brand">0{k + 1}</span>
-              <h2 className="mt-3 font-sans text-sm font-semibold uppercase tracking-[0.3em]">{title}</h2>
-              <p className="mt-4 font-serif text-3xl leading-snug">{text}</p>
+            {/* Aujourd'hui */}
+            <div className="mt-10 max-w-xl rounded-3xl border-l-4 border-brand bg-card p-6 shadow-lg">
+              <div className="flex flex-wrap items-center justify-between gap-5">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand">Aujourd'hui · 10 minutes</p>
+                  <p className="mt-2 text-base text-muted-foreground">Votre séance explorera</p>
+                  <p className="mt-1 text-xl font-semibold">{myIds.slice(0, 3).map(short).join(" · ")}</p>
+                </div>
+                <Link {...startLink} className="inline-flex items-center rounded-full bg-primary px-10 py-5 text-xl font-semibold text-primary-foreground shadow-md transition hover:-translate-y-0.5 hover:opacity-95">
+                  Commencer
+                </Link>
+              </div>
+              {state === "out" && <p className="mt-4 text-sm text-muted-foreground">Sans compte, la séance n'est pas enregistrée.</p>}
             </div>
-          ))}
+            <p className="mt-5 flex items-center gap-2 text-base font-medium text-muted-foreground">
+              <Sparkles className="h-4 w-4 text-brand" /> {quote}
+            </p>
+          </div>
+
+          {/* Composition asymétrique : la variété des sujets */}
+          <div className="relative hidden h-[560px] md:block" aria-hidden>
+            <figure className="absolute left-4 top-0 w-56 rotate-[-4deg] overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition hover:rotate-0">
+              <img src={img("monet")} alt="" className="aspect-[4/5] w-full rounded-xl object-cover" />
+              <figcaption className="px-1 pt-2 text-xs font-bold uppercase tracking-widest text-brand">Art</figcaption>
+            </figure>
+            <figure className="absolute right-0 top-10 w-48 rotate-[3deg] overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition hover:rotate-0">
+              <img src={img("astronomy")} alt="" className="aspect-square w-full rounded-xl object-cover" />
+              <figcaption className="px-1 pt-2 text-xs font-bold uppercase tracking-widest text-brand">Sciences</figcaption>
+            </figure>
+            <figure className="absolute left-40 top-[300px] w-52 rotate-[2deg] overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition hover:rotate-0">
+              <img src={img("rome")} alt="" className="aspect-[4/3] w-full rounded-xl object-cover" />
+              <figcaption className="px-1 pt-2 text-xs font-bold uppercase tracking-widest text-brand">Histoire</figcaption>
+            </figure>
+            <figure className="absolute right-6 top-[270px] w-40 rotate-[-3deg] overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition hover:rotate-0">
+              <img src={img("book")} alt="" className="aspect-[3/4] w-full rounded-xl object-cover" />
+              <figcaption className="px-1 pt-2 text-xs font-bold uppercase tracking-widest text-brand">Littérature</figcaption>
+            </figure>
+            <figure className="absolute bottom-[-10px] left-[-24px] w-36 rotate-[5deg] overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition hover:rotate-0">
+              <img src={img("vegetables")} alt="" className="aspect-square w-full rounded-xl object-cover" />
+              <figcaption className="px-1 pt-2 text-xs font-bold uppercase tracking-widest text-brand">Santé</figcaption>
+            </figure>
+          </div>
         </div>
       </section>
 
-      {/* BLOC 3 — Vos centres d'intérêt */}
-      <section className="bg-card/70">
-        <div className="mx-auto w-full max-w-5xl px-8 py-20">
+      {/* COMPRENDRE / RETROUVER / S'EXPRIMER — magazine, asymétrique */}
+      <section className="bg-card">
+        <div className="mx-auto w-full max-w-6xl px-6 py-24 md:px-8">
+          <div className="grid gap-6 md:grid-cols-12">
+            <article className="group relative overflow-hidden rounded-3xl bg-background p-8 md:col-span-7 md:row-span-2">
+              <span className="absolute left-0 top-8 h-14 w-1.5 rounded-r bg-brand" />
+              <p className="text-sm font-bold text-brand">01</p>
+              <h2 className="mt-2 font-serif text-6xl md:text-7xl">Comprendre</h2>
+              <p className="mt-4 max-w-sm text-lg text-muted-foreground">Écouter une idée et en saisir l'essentiel.</p>
+              <img src={img("newspaper")} alt="" className="mt-8 aspect-[16/9] w-full rounded-2xl object-cover transition duration-500 group-hover:scale-[1.02]" />
+            </article>
+            <article className="group flex gap-5 rounded-3xl border bg-background p-6 transition hover:border-brand md:col-span-5">
+              <img src={img("glasses")} alt="" className="h-28 w-24 shrink-0 rounded-xl object-cover" />
+              <div>
+                <p className="text-sm font-bold text-brand">02</p>
+                <h2 className="mt-1 text-3xl font-sans font-semibold tracking-tight">Retrouver</h2>
+                <p className="mt-2 text-base text-muted-foreground">Mobiliser ses connaissances et son vocabulaire.</p>
+              </div>
+            </article>
+            <article className="group rounded-3xl bg-brand-soft p-6 transition hover:-translate-y-1 md:col-span-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-bold text-brand">03</p>
+                  <h2 className="mt-1 text-3xl font-sans font-semibold tracking-tight">S'exprimer</h2>
+                  <p className="mt-2 text-base text-muted-foreground">Donner son avis, expliquer, reformuler.</p>
+                </div>
+                <img src={img("consultation")} alt="" className="h-24 w-24 shrink-0 rounded-full object-cover ring-4 ring-background" />
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      {/* CENTRES D'INTÉRÊT — visuels */}
+      <section className="paper-grain">
+        <div className="mx-auto w-full max-w-6xl px-6 py-24 md:px-8">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <Eyebrow>Vos centres d'intérêt</Eyebrow>
-              <h2 className="mt-4 text-4xl leading-tight md:text-5xl">Vos séances partent de ce qui vous passionne.</h2>
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-brand">Vos centres d'intérêt</p>
+              <h2 className="mt-3 font-sans text-4xl font-semibold leading-tight tracking-tight md:text-5xl">Vos séances partent de ce qui vous passionne.</h2>
             </div>
-            <Link to="/interets" search={{ next: undefined }} className="text-lg font-medium text-brand underline-offset-4 hover:underline">Modifier</Link>
+            <Link to="/interets" search={{ next: undefined }} className="rounded-full border-2 border-brand px-6 py-2.5 text-base font-semibold text-brand transition hover:bg-brand hover:text-primary-foreground">
+              Modifier
+            </Link>
           </div>
-          <ul className="mt-10 flex flex-wrap gap-3">
-            {chips.map((c) => (
-              <li key={c} className="rounded-full border border-brand/30 bg-background px-5 py-2.5 text-lg">{c}</li>
-            ))}
+          <ul className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {myIds.map((id) => {
+              const Icon = ICON[id] ?? Sparkles;
+              return (
+                <li key={id} className="group rounded-2xl border bg-card p-5 transition hover:-translate-y-1 hover:border-brand hover:shadow-lg">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-soft text-brand transition group-hover:bg-brand group-hover:text-primary-foreground">
+                    <Icon className="h-5 w-5" strokeWidth={1.75} />
+                  </span>
+                  <p className="mt-4 text-lg font-semibold">{label(id)}</p>
+                </li>
+              );
+            })}
+            {other && (
+              <li className="rounded-2xl border border-dashed bg-card p-5">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted text-muted-foreground"><Sparkles className="h-5 w-5" /></span>
+                <p className="mt-4 text-lg font-semibold">{other}</p>
+              </li>
+            )}
           </ul>
         </div>
       </section>
 
-      {/* BLOC 4 — Cette semaine (discret) */}
-      {state === "in" && week && (
-        <section className="mx-auto w-full max-w-5xl px-8 pt-20">
-          <div className="max-w-sm rounded-2xl border bg-card p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Cette semaine</p>
-            <p className="mt-2 font-serif text-3xl">
-              {week.sessions} séance{week.sessions > 1 ? "s" : ""} · {week.minutes} min
-            </p>
-            <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-muted">
-              <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${Math.min(100, (week.sessions / 7) * 100)}%` }} />
+      {/* CETTE SEMAINE — chaleureux */}
+      {state === "in" && week && week.sessions > 0 && (
+        <section className="bg-card">
+          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-10 px-6 py-16 md:px-8">
+            <div className="relative h-24 w-24">
+              <svg viewBox="0 0 36 36" className="h-24 w-24 -rotate-90">
+                <circle cx="18" cy="18" r="15.5" fill="none" className="stroke-muted" strokeWidth="3" />
+                <circle cx="18" cy="18" r="15.5" fill="none" className="stroke-brand" strokeWidth="3" strokeLinecap="round" strokeDasharray={`${Math.min(100, (week.days / 7) * 100)} 100`} pathLength={100} />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-2xl font-semibold">{week.days}/7</span>
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-brand">Cette semaine</p>
+              <p className="mt-2 text-2xl font-semibold">
+                {week.sessions} séance{week.sessions > 1 ? "s" : ""} · {week.minutes} minutes · {week.days} jour{week.days > 1 ? "s" : ""} actif{week.days > 1 ? "s" : ""}
+              </p>
+              {week.sessions >= 3 && <p className="mt-1 text-lg text-muted-foreground">Belle régularité.</p>}
             </div>
           </div>
         </section>
       )}
 
-      {/* BLOC 5 — Manifeste */}
-      <section className="mx-auto w-full max-w-5xl px-8 py-28 text-center">
-        <span className="mx-auto block h-px w-16 bg-brand" />
-        <p className="mt-10 font-serif text-5xl italic leading-tight md:text-6xl">Faire vivre ses connaissances.</p>
+      {/* MANIFESTE */}
+      <section className="bg-brand-soft">
+        <div className="mx-auto w-full max-w-6xl px-6 py-24 text-center md:px-8">
+          <p className="font-serif text-5xl italic leading-tight md:text-7xl">
+            Faire <span className="text-brand">vivre</span> ses connaissances.
+          </p>
+          <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">Comprendre, retrouver, s'exprimer — à partir de ce qui vous passionne.</p>
+          <p className="mt-8 text-sm font-semibold uppercase tracking-[0.25em] text-brand">Connexions by Nutrileading</p>
+        </div>
       </section>
 
-      <footer className="border-t border-border/70">
-        <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 px-8 py-12 text-center">
-          <img src={logo.url} alt="" className="h-9 w-9 opacity-90" />
-          <p className="font-serif text-lg italic text-muted-foreground">
-            Une initiative Nutrileading, inspirée par le parcours du Dr Hafid Halhol.
-          </p>
+      <footer className="bg-background">
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-4 px-6 py-12 text-center md:px-8">
+          <img src={logo.url} alt="" className="h-9 w-9" />
+          <p className="text-base text-muted-foreground">Une initiative Nutrileading, inspirée par le parcours du Dr Hafid Halhol.</p>
         </div>
       </footer>
     </main>
