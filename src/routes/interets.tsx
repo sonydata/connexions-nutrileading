@@ -6,7 +6,7 @@ import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, PREFIX, interestsOf, otherInte
 
 export const Route = createFileRoute("/interets")({
   ssr: false,
-  validateSearch: (s: Record<string, unknown>) => ({ next: s.next === "seance" ? ("seance" as const) : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({ next: s["next"] === "seance" ? ("seance" as const) : undefined }),
   head: () => ({
     meta: [
       { title: "Vos centres d'intérêt — Connexions" },

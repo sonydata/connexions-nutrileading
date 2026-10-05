@@ -72,7 +72,7 @@ function Index() {
             Comprendre. Retrouver.<br />S'exprimer.
           </p>
           <div className="mt-12">
-            <Link to={configured ? "/seance" : "/interets"} search={configured ? undefined : { next: "seance" as const }} className="inline-flex items-center rounded-full bg-primary px-14 py-6 text-2xl font-medium text-primary-foreground shadow-lg transition hover:opacity-90">
+            <Link to={configured ? "/seance" : "/interets"} search={configured ? {} : { next: "seance" as const }} className="inline-flex items-center rounded-full bg-primary px-14 py-6 text-2xl font-medium text-primary-foreground shadow-lg transition hover:opacity-90">
               Commencer
             </Link>
             {state === "out" && <p className="mt-4 text-base text-muted-foreground">Sans compte, la séance n'est pas enregistrée.</p>}
