@@ -97,7 +97,7 @@ function Index() {
               Comprendre. <span className="text-brand">Retrouver.</span> S'exprimer.
             </p>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Des séances quotidiennes pour entretenir la compréhension, retrouver plus facilement ses mots et mobiliser ses connaissances à partir de sujets qui vous intéressent.
+              Des séances quotidiennes pour mobiliser ses connaissances, exercer son langage et nourrir sa curiosité à partir de sujets qui vous intéressent.
             </p>
 
 
