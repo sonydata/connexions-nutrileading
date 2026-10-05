@@ -201,37 +201,25 @@ function Index() {
         </div>
       </section>
 
-      {/* CENTRES D'INTÉRÊT — visuels */}
+      {/* CENTRES D'INTÉRÊT — simple rappel, seul « Modifier » est interactif */}
       <section className="paper-grain">
-        <div className="mx-auto w-full max-w-6xl px-6 py-24 md:px-8">
-          <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="mx-auto w-full max-w-6xl px-6 py-14 md:px-8">
+          <div className="flex flex-col gap-5 border-t border-border pt-8 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.25em] text-brand">Vos centres d'intérêt</p>
-              <h2 className="mt-3 font-sans text-4xl font-semibold leading-tight tracking-tight md:text-5xl">Vos séances partent de ce qui vous passionne.</h2>
+              <h2 className="font-sans text-xl font-semibold tracking-tight">Vos centres d'intérêt</h2>
+              <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-lg text-muted-foreground">
+                {[...myIds.map(label), ...(other ? [other] : [])].map((t, i) => (
+                  <span key={t} className="flex items-center gap-3">
+                    {i > 0 && <span className="text-brand" aria-hidden>·</span>}
+                    <span className="text-foreground">{t}</span>
+                  </span>
+                ))}
+              </p>
             </div>
-            <Link to="/interets" search={{ next: undefined }} className="rounded-full border-2 border-brand px-6 py-2.5 text-base font-semibold text-brand transition hover:bg-brand hover:text-primary-foreground">
+            <Link to="/interets" search={{ next: undefined }} className="shrink-0 self-start text-base font-semibold text-brand underline underline-offset-4 hover:opacity-80 md:self-center">
               Modifier
             </Link>
           </div>
-          <ul className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-            {myIds.map((id) => {
-              const Icon = ICON[id] ?? Sparkles;
-              return (
-                <li key={id} className="group rounded-2xl border bg-card p-5 transition hover:-translate-y-1 hover:border-brand hover:shadow-lg">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-soft text-brand transition group-hover:bg-brand group-hover:text-primary-foreground">
-                    <Icon className="h-5 w-5" strokeWidth={1.75} />
-                  </span>
-                  <p className="mt-4 text-lg font-semibold">{label(id)}</p>
-                </li>
-              );
-            })}
-            {other && (
-              <li className="rounded-2xl border border-dashed bg-card p-5">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted text-muted-foreground"><Sparkles className="h-5 w-5" /></span>
-                <p className="mt-4 text-lg font-semibold">{other}</p>
-              </li>
-            )}
-          </ul>
         </div>
       </section>
 
