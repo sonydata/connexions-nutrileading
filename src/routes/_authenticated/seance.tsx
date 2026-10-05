@@ -21,6 +21,23 @@ export const Route = createFileRoute("/_authenticated/seance")({
 
 type Outcome = "spontaneous" | "after_repeat" | "after_cue" | "revealed";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Browser/device French voice — no network, no cost. Used only if the server voice fails. */
+function speakLocally(text: string, rate: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const synth = typeof window !== "undefined" ? window.speechSynthesis : undefined;
+    if (!synth) return reject(new Error("no speech"));
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "fr-FR";
+    u.rate = 0.9 * rate;
+    const fr = synth.getVoices().find((v) => v.lang?.toLowerCase().startsWith("fr"));
+    if (fr) u.voice = fr;
+    u.onend = () => resolve();
+    u.onerror = () => resolve();
+    synth.cancel();
+    synth.speak(u);
+  });
+}
 const MODE_TITLE: Record<string, string> = { expliquer: "Votre avis", lire: "À voix haute", reformuler: "Avec vos mots", nommer: "Regard d'expert" };
 const THEME_TITLE: Record<string, string> = { nutrition: "Nutrition", avis: "Votre avis", sciences: "Culture scientifique", temps: "Organisation" };
 
@@ -65,7 +82,14 @@ function Seance() {
 
   const playOne = useCallback(
     async (text: string, rate = 1) => {
-      const url = await clip(text);
+      let url: string;
+      try {
+        url = await clip(text);
+      } catch {
+        // Free on-device fallback when the natural voice is unavailable.
+        await speakLocally(text, rate);
+        return;
+      }
       const el = audio.current ?? (audio.current = new Audio());
       el.src = url;
       el.playbackRate = rate;
