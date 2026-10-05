@@ -8,7 +8,7 @@ const FIXED = [
   "Voici les réponses possibles.",
   "Réponse 1.", "Réponse 2.", "Réponse 3.", "Réponse 4.", "Réponse 5.",
   "Vrai ou faux ?", "Vrai", "Faux",
-  "Une formulation possible :",
+  "Voici une formulation possible.",
   "À vous. Répétez la phrase.",
   "À vous. Dites-le avec vos mots.",
   "À vous. Quel serait votre conseil ?",

@@ -368,7 +368,7 @@ function Seance() {
       setStep("model");
       setCue(null);
       await sleep(400);
-      play([m, it.model ? "Une formulation possible :" : null, it.model]);
+      play([m, it.model ? "Voici une formulation possible." : null, it.model]);
       return;
     }
     await voice.start();
