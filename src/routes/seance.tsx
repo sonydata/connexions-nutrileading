@@ -208,7 +208,7 @@ function Seance() {
     stopAudio();
     const p = pending.current ?? { outcome: "after_cue" as Outcome, spoken: 0, responseMs: null };
     const kind = it.kind === "oral" ? (it.mode ?? "oral") : it.kind;
-    record({
+    if (!guest.current) record({
       data: { sessionId, itemId: it.id, kind, category: it.theme, skill: it.skill, prompt: it.audio, optionCount: it.kind === "oral" ? p.spoken : it.options.length, outcome: p.outcome, responseMs: p.responseMs, repeated },
     }).catch(() => {});
     log.current.push({ theme: it.theme, skill: it.skill, kind, outcome: p.outcome, spoken: p.spoken > 0 });
@@ -230,7 +230,7 @@ function Seance() {
     setHeard("");
     setRepeated(false);
     if (i + 1 >= items.length + added) {
-      complete({ data: { sessionId } }).catch(() => {});
+      if (!guest.current) complete({ data: { sessionId } }).catch(() => {});
       setPhase("done");
     } else setI(i + 1);
   }
@@ -568,9 +568,10 @@ function Btn({ children, onClick, subtle }: { children: React.ReactNode; onClick
   );
 }
 
-function Summary({ log, minutes }: { log: Done[]; minutes: number }) {
+function Summary({ log, minutes, guest }: { log: Done[]; minutes: number; guest?: boolean }) {
   const [week, setWeek] = useState<string | null>(null);
   useEffect(() => {
+    if (guest) return;
     const t = setTimeout(() => weekSummary().then((w) => setWeek(weekLine(w))).catch(() => {}), 800);
     return () => clearTimeout(t);
   }, []);
