@@ -352,7 +352,7 @@ function Seance() {
         <Link to="/" className="mt-10 inline-block rounded-full bg-primary px-10 py-4 text-lg text-primary-foreground">Retour</Link>
       </Center>
     );
-  if (phase === "done") return <Summary log={log.current} minutes={Math.max(1, Math.round((Date.now() - startedAt.current) / 60000))} />;
+  if (phase === "done") return <Summary guest={isGuest} log={log.current} minutes={Math.max(1, Math.round((Date.now() - startedAt.current) / 60000))} />;
 
   const isChoice = it.kind === "mcq" || it.kind === "tf";
   const isRecall = it.kind === "evoke" || it.kind === "complete" || (it.kind === "oral" && it.mode === "nommer");
