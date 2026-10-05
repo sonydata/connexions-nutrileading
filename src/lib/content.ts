@@ -301,3 +301,26 @@ export const BANK: Item[] = [
 
 export const BY_ID = new Map(BANK.map((i) => [i.id, i]));
 export const FOLLOW_IDS = new Set(BANK.flatMap((i) => (i.kind === "oral" && i.follow ? [i.follow] : [])));
+
+/** Context photo shown above a question when its answers have no photos.
+ * It illustrates the situation described, never the answer. */
+export const SCENE: Record<string, string> = {
+  "c-hta-salt": "salt", "c-diab-soda": "soda", "c-chol": "butter", "c-hydra": "elderly_meal", "c-constip": "consultation",
+  "c-elderly-protein": "elderly_meal", "c-appetite": "elderly_meal", "c-veg": "plate", "c-cardio": "consultation", "cmp-meal": "midday",
+  "a-breakfast": "breakfast_sweet", "a-lowprot": "plate", "a-snack": "croissant", "a-fastfood": "fast_food",
+  "c-weightloss": "elderly_meal", "c-starch": "bread", "c-salt-indus": "salt", "c-density": "elderly_meal", "c-constip2": "consultation",
+  "c-sarco-move": "consultation", "c-diab-bread": "bread", "c-heat": "summer", "c-nofish": "market", "c-indoor": "consultation",
+  "c-iron": "consultation", "c-microb": "market",
+  "i-nuts": "walnuts", "i-muscle": "walk", "i-fibres": "vegetables", "i-vitd": "summer", "i-salt": "salt", "i-olive": "olive_oil",
+  "i-sleep": "sleep", "i-walk": "walk", "i-thirst": "water", "i-combine": "lentils", "i-microb": "vegetables",
+  "cat-lentils": "lentils", "cat-salmon": "salmon", "cat-yogurt": "yogurt", "cat-almonds": "almonds",
+  "n-lentils": "lentils",
+  "m-glyc": "consultation", "m-vitd": "summer", "m-bone": "consultation", "m-anemia": "consultation", "m-b12": "consultation", "m-heart": "consultation",
+  "cu-joconde": "mona_lisa", "cu-monet": "monet", "cu-rome": "rome", "cu-thames": "london", "cu-gaudi": "barcelona", "cu-pasteur": "book",
+  "cu-fleming": "book", "cu-curie": "book", "cu-mercury": "astronomy", "cu-hippo": "book", "cu-eiffel": "paris",
+  "t-twice": "calendar", "t-15h": "calendar", "t-bilan": "consultation", "t-meal": "plate", "t-week": "calendar", "t-evening": "evening",
+  "t-season": "calendar", "t-2h": "plate", "t-dinner": "evening", "t-sequence": "consultation", "t-3x": "calendar", "t-kine": "calendar",
+  "tf-olive": "olive_oil", "tf-salmon": "salmon", "tf-lentils": "lentils", "tf-vitc": "orange", "tf-water": "water", "tf-soda": "soda",
+  "tf-insulin": "consultation", "tf-calcium": "yogurt", "tf-walnuts": "walnuts", "tf-transit": "vegetables", "tf-protage": "elderly_meal",
+  "tf-vitdsun": "summer", "tf-saltbp": "salt",
+};
