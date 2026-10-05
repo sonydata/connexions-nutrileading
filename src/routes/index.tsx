@@ -67,9 +67,11 @@ function Index() {
   return (
     <main className="relative flex min-h-screen flex-col bg-background">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5 md:px-8">
-        <Link to="/" className="flex items-center" aria-label="Connexions">
-          <img src={symbol.url} alt="Connexions" className="h-11 w-auto" />
-        </Link>
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-lg font-semibold capitalize text-foreground md:text-xl">
+          <span className="h-2 w-2 rounded-full bg-brand" aria-hidden />
+          {today}
+          {state === "in" && <span className="normal-case font-medium text-muted-foreground"> · Bonjour {name}</span>}
+        </p>
         <nav className="flex items-center gap-1 text-sm font-medium">
           {[
             { to: "/interets" as const, label: "Centres d'intérêt", search: { next: undefined } },
@@ -86,12 +88,7 @@ function Index() {
       <section className="paper-grain">
         <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-6 pb-20 pt-10 md:grid-cols-[1fr_1.1fr] md:px-8 md:pt-16">
           <div className="animate-rise">
-            <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xl font-semibold capitalize text-foreground md:text-2xl">
-              <span className="h-2 w-2 rounded-full bg-brand" aria-hidden />
-              {today}
-              {state === "in" && <span className="normal-case font-medium text-muted-foreground"> · Bonjour {name}</span>}
-            </p>
-            <img src={symbol.url} alt="" className="mt-6 h-24 w-auto md:h-28" />
+            <img src={symbol.url} alt="" className="h-24 w-auto md:h-28" />
             <h1 className="mt-4 text-7xl leading-[0.9] tracking-tight md:text-8xl">Connexions</h1>
             <p className="mt-4 flex flex-wrap items-center gap-3 text-2xl text-muted-foreground md:text-3xl">
               by <img src={logo.url} alt="" className="h-11 w-11 md:h-12 md:w-12" /> <span className="font-bold text-foreground">Nutrileading</span>
