@@ -74,7 +74,7 @@ function Index() {
         </p>
         <nav className="flex items-center gap-1 text-sm font-medium">
           {[
-            { to: "/interets" as const, label: "Centres d'intérêt", search: { next: undefined } },
+            { to: "/interets" as const, label: "Mes centres d'intérêt", search: { next: undefined } },
             { to: (state === "in" ? "/aidant" : "/auth") as "/aidant" | "/auth", label: state === "in" ? "Vos progrès" : "Mon espace", search: undefined },
           ].map((l) => (
             <Link key={l.label} to={l.to} search={l.search as never} className="rounded-full px-4 py-2 text-muted-foreground transition hover:bg-brand-soft hover:text-brand">
