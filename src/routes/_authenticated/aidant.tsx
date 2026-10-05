@@ -1,14 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
+import { DEFAULT_INTERESTS, INTERESTS, PREFIX, interestsOf, otherInterest } from "@/lib/interests";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/aidant")({
   head: () => ({
     meta: [
-      { title: "Suivi — Écoute" },
+      { title: "Suivi — Connexions" },
       { name: "description", content: "Suivi de la compréhension et réglages des séances." },
-      { property: "og:title", content: "Suivi — Écoute" },
+      { property: "og:title", content: "Suivi — Connexions" },
       { property: "og:description", content: "Suivi de la compréhension et réglages des séances." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
