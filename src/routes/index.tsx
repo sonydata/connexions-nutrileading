@@ -126,7 +126,7 @@ function Index() {
           {/* Constellation de sujets reliés par des lignes fines, comme le symbole Connexions */}
           <div className="relative hidden aspect-[10/9] md:block" aria-hidden>
             <svg viewBox="0 0 100 90" preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible">
-              <g fill="none" stroke="var(--brand)" strokeWidth="0.25" strokeLinecap="round" vectorEffect="non-scaling-stroke" opacity="0.55">
+              <g fill="none" stroke="var(--brand)" strokeWidth="1.1" strokeLinecap="round" opacity="0.6">
                 {[
                   "M52 47 C 44 40, 36 34, 30 24",
                   "M52 47 C 62 38, 70 30, 78 20",
