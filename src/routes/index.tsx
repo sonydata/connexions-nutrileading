@@ -116,7 +116,7 @@ function Index() {
                   Commencer
                 </Link>
               </div>
-              {state === "out" && <p className="mt-4 text-sm text-muted-foreground">Sans compte, la séance n'est pas enregistrée.</p>}
+              {state === "out" && <p className="mt-4 text-sm text-muted-foreground">Connectez-vous à votre espace, afin d'enregistrer vos progrès.</p>}
             </div>
             <p className="mt-5 flex items-center gap-2 text-base font-medium text-muted-foreground">
               <Sparkles className="h-4 w-4 text-brand" /> {quote}
