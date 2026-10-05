@@ -123,28 +123,25 @@ function Index() {
             </p>
           </div>
 
-          {/* Sélection éditoriale : 1 carte principale + 4 secondaires alignées */}
-          <div className="relative hidden md:block" aria-hidden>
-            <div className="absolute -inset-6 -z-10 rounded-[2.5rem] bg-brand-soft/60" />
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { src: artImg, label: "Art", pos: "object-[60%_40%]", main: true },
-                { src: img("astronomy"), label: "Sciences", pos: "object-center", shift: "" },
-                { src: img("rome"), label: "Histoire", pos: "object-center", shift: "translate-y-4" },
-                { src: litteratureImg, label: "Littérature", pos: "object-[50%_70%]", shift: "" },
-                { src: santeImg, label: "Santé", pos: "object-center", shift: "translate-y-4" },
-              ].map((c) => (
-                <figure key={c.label} className={c.main ? "col-span-2" : c.shift}>
-                  <div className={`overflow-hidden rounded-2xl bg-card p-1.5 shadow-lg ${c.main ? "aspect-[16/8]" : "aspect-[4/3]"}`}>
-                    <img src={c.src} alt="" className={`h-full w-full rounded-xl object-cover ${c.pos} transition duration-500 hover:scale-[1.03]`} />
-                  </div>
-                  <figcaption className="mt-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand">
-                    <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-                    {c.label}
-                  </figcaption>
-                </figure>
-              ))}
-            </div>
+          {/* Moodboard éditorial : tailles variées, légers décalages et rotations */}
+          <div className="relative hidden h-[600px] md:block" aria-hidden>
+            {[
+              { src: artImg, label: "Art", pos: "object-[60%_40%]", box: "left-0 top-0 w-[60%] aspect-[4/3] -rotate-[1.2deg] z-10" },
+              { src: img("astronomy"), label: "Sciences", pos: "object-center", box: "right-0 top-8 w-[36%] aspect-[3/4] rotate-[1.5deg]" },
+              { src: img("rome"), label: "Histoire", pos: "object-center", box: "left-[3%] top-[330px] w-[42%] aspect-[4/3] rotate-[0.8deg]" },
+              { src: litteratureImg, label: "Littérature", pos: "object-[50%_70%]", box: "left-[44%] top-[300px] w-[27%] aspect-[4/5] -rotate-[1.5deg] z-20" },
+              { src: santeImg, label: "Santé", pos: "object-center", box: "right-0 top-[380px] w-[30%] aspect-[4/3] rotate-[1deg]" },
+            ].map((c) => (
+              <figure key={c.label} className={`absolute ${c.box.replace(/aspect-\S+/, "")} transition duration-500 hover:z-30 hover:rotate-0`}>
+                <div className={`overflow-hidden rounded-2xl bg-card p-1.5 shadow-xl ${c.box.match(/aspect-\S+/)?.[0]}`}>
+                  <img src={c.src} alt="" className={`h-full w-full rounded-xl object-cover ${c.pos}`} />
+                </div>
+                <figcaption className="mt-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand">
+                  <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+                  {c.label}
+                </figcaption>
+              </figure>
+            ))}
           </div>
         </div>
       </section>
@@ -152,22 +149,26 @@ function Index() {
       {/* COMPRENDRE / RETROUVER / S'EXPRIMER — trois piliers de poids égal */}
       <section className="bg-card">
         <div className="mx-auto w-full max-w-6xl px-6 py-24 md:px-8">
-          <div className="grid gap-6 md:grid-cols-3">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-brand">Comment ça marche</p>
+          <h2 className="mt-3 font-sans text-4xl font-semibold tracking-tight md:text-5xl">Une séance, trois gestes</h2>
+          <p className="mt-3 max-w-2xl text-lg text-muted-foreground">Chaque sujet se déroule comme une courte conversation : on écoute, on retrouve, puis on s'exprime.</p>
+          <div className="mt-10 grid items-stretch gap-6 md:grid-cols-[1fr_auto_1fr_auto_1fr]">
             {[
-              { n: "01", t: "Comprendre", d: "Écouter une idée et en saisir l'essentiel.", ph: "newspaper" },
-              { n: "02", t: "Retrouver", d: "Mobiliser ses connaissances et son vocabulaire.", ph: "glasses" },
-              { n: "03", t: "S'exprimer", d: "Donner son avis, expliquer, reformuler.", ph: "consultation" },
-            ].map((p) => (
+              { n: "01", t: "Écouter", d: "Une idée, une histoire, une situation.", ph: "newspaper" },
+              { n: "02", t: "Retrouver", d: "Un mot, une connaissance, un lien.", ph: "glasses" },
+              { n: "03", t: "S'exprimer", d: "Un avis, une explication, une formulation.", ph: "consultation" },
+            ].flatMap((p, k) => [
+              ...(k > 0 ? [<span key={`a${k}`} className="hidden items-center text-3xl text-brand md:flex">→</span>] : []),
               <article key={p.n} className="group flex flex-col rounded-3xl border bg-background p-7 transition hover:-translate-y-1 hover:border-brand hover:bg-brand-soft">
                 <div className="flex items-center gap-3">
                   <p className="text-sm font-bold text-brand">{p.n}</p>
                   <span className="h-px flex-1 bg-border transition group-hover:bg-brand/40" />
                 </div>
-                <h2 className="mt-5 text-3xl font-sans font-semibold tracking-tight md:text-4xl">{p.t}</h2>
+                <h3 className="mt-5 font-sans text-3xl font-semibold tracking-tight md:text-4xl">{p.t}</h3>
                 <p className="mt-3 text-base text-muted-foreground">{p.d}</p>
                 <img src={img(p.ph)} alt="" className="mt-auto aspect-[16/9] w-full rounded-2xl object-cover pt-7" />
-              </article>
-            ))}
+              </article>,
+            ])}
           </div>
         </div>
       </section>

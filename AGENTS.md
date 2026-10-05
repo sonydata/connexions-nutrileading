@@ -21,3 +21,4 @@
 - Discovery mode: /seance runs without an account — built locally, nothing saved, voice read from cache only (speakCached never synthesises) so visitors can't create paid calls.
 - Every bank item has a subject (`topic`, explicit or derived by topicOf) separate from its skill; buildSession fills ~80 % of slots from the chosen interests (rotating subjects) and ~20 % from transversal "general" items — personalisation stays rule-based.
 - First launch goes through /interets; signed-in choices are saved in caregiver_settings.topics ("i:" prefix), guest choices in localStorage.
+- Sessions are built from thematic mini-sequences in `src/lib/sequences.ts` (Comprendre → Retrouver → S'exprimer → Reformuler on one subject), 3 per session + 1 time item — keeps choice questions ≈ a quarter and gives continuity; the old slot plan is only a fallback.
