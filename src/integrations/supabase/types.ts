@@ -14,7 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      attempts: {
+        Row: {
+          category: string
+          concept: string | null
+          created_at: string
+          id: string
+          option_count: number
+          outcome: string
+          prompt: string
+          response_ms: number | null
+          session_id: string
+          skill: string
+          user_id: string
+          word_count: number
+        }
+        Insert: {
+          category: string
+          concept?: string | null
+          created_at?: string
+          id?: string
+          option_count?: number
+          outcome: string
+          prompt: string
+          response_ms?: number | null
+          session_id: string
+          skill: string
+          user_id: string
+          word_count?: number
+        }
+        Update: {
+          category?: string
+          concept?: string | null
+          created_at?: string
+          id?: string
+          option_count?: number
+          outcome?: string
+          prompt?: string
+          response_ms?: number | null
+          session_id?: string
+          skill?: string
+          user_id?: string
+          word_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attempts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "practice_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caregiver_settings: {
+        Row: {
+          difficulty: number
+          patient_name: string
+          topics: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          difficulty?: number
+          patient_name?: string
+          topics?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          difficulty?: number
+          patient_name?: string
+          topics?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      practice_sessions: {
+        Row: {
+          completed_at: string | null
+          id: string
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
