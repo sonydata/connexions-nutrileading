@@ -38,7 +38,11 @@ function speakLocally(text: string, rate: number): Promise<void> {
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "fr-FR";
     u.rate = 0.9 * rate;
-    const fr = synth.getVoices().find((v) => v.lang?.toLowerCase().startsWith("fr"));
+    // Always the same female French voice, so the voice never changes between sentences.
+    const frs = synth.getVoices().filter((v) => v.lang?.toLowerCase().startsWith("fr"));
+    const FEMALE = /am[ée]lie|audrey|aur[ée]lie|marie|virginie|julie|denise|hortense|c[ée]line|eloise|vivienne|google fran/i;
+    const MALE = /thomas|daniel|paul|henri|nicolas|claude|jacques|remy|antoine|jean/i;
+    const fr = frs.find((v) => FEMALE.test(v.name)) ?? frs.find((v) => !MALE.test(v.name)) ?? frs[0];
     if (fr) u.voice = fr;
     u.onend = () => resolve();
     u.onerror = () => resolve();
