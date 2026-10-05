@@ -46,8 +46,8 @@
 
 :root {
   --radius: 1rem;
-  --background: oklch(0.982 0.01 85);
-  --foreground: oklch(0.25 0.02 250);
+  --background: oklch(0.973 0.008 50);
+  --foreground: oklch(0.27 0 0);
   --card: oklch(0.99 0.006 85);
   --card-foreground: oklch(0.25 0.02 250);
   --popover: oklch(0.99 0.006 85);
@@ -69,8 +69,8 @@
   --calm-soft: oklch(0.93 0.035 170);
   --gold: oklch(0.72 0.1 75);
   /* Nutrileading heritage red — used sparingly for brand marks and eyebrows */
-  --brand: oklch(0.53 0.19 18);
-  --brand-soft: oklch(0.96 0.025 18);
+  --brand: oklch(0.5 0.17 25);
+  --brand-soft: oklch(0.94 0.03 30);
   --chart-1: oklch(0.45 0.07 175);
   --chart-2: oklch(0.72 0.1 75);
   --chart-3: oklch(0.6 0.05 250);

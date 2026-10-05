@@ -54,41 +54,41 @@ const evoke = (id: string, theme: Theme, audio: string, answer: string, hint: st
 
 const CORE: Item[] = [
   // ——— 1. Questions de nutrition ———
-  mcq("n-omega3", "nutrition", "lexique", "Quel aliment apporte le plus d'oméga-3 ?", "oméga-3", o("saumon", "salmon"), [o("pain blanc", "bread"), o("poulet", "chicken"), o("œufs", "eggs")]),
-  mcq("n-med-fat", "nutrition", "lexique", "Quelle graisse est privilégiée dans le régime méditerranéen ?", "méditerranéen", o("huile d'olive", "olive_oil"), [o("soda", "soda"), o("beurre", "butter"), o("fromage", "cheese")], { audioShort: "Quelle graisse pour le régime méditerranéen ?" }),
-  mcq("n-lentils", "nutrition", "lexique", "Quel nutriment abonde dans les lentilles ?", "lentilles", o("fibres"), [o("alcool"), o("cholestérol"), o("vitamine D")], { audioShort: "Les lentilles apportent surtout… ?" }),
-  mcq("n-calcium", "nutrition", "lexique", "Quel aliment est une bonne source de calcium ?", "calcium", o("yaourt", "yogurt"), [o("soda", "soda"), o("pomme", "apple"), o("lentilles", "lentils")]),
-  mcq("n-vitc", "nutrition", "lexique", "Quel aliment est riche en vitamine C ?", "vitamine C", o("orange", "orange"), [o("beurre", "butter"), o("pain", "bread"), o("noix", "walnuts")]),
-  mcq("n-protein-veg", "nutrition", "lexique", "Quelle est une bonne source de protéines végétales ?", "protéines végétales", o("lentilles", "lentils"), [o("soda", "soda"), o("pomme", "apple"), o("carottes", "carrots")]),
+  mcq("n-omega3", "nutrition", "lexique", "Quel aliment apporte le plus d'oméga-3 ?", "oméga-3", o("saumon", "salmon"), [o("thon en conserve"), o("poulet", "chicken"), o("œufs", "eggs")]),
+  mcq("n-med-fat", "nutrition", "lexique", "Quelle graisse est privilégiée dans le régime méditerranéen ?", "méditerranéen", o("huile d'olive", "olive_oil"), [o("huile de tournesol"), o("beurre", "butter"), o("fromage", "cheese")], { audioShort: "Quelle graisse pour le régime méditerranéen ?" }),
+  mcq("n-lentils", "nutrition", "lexique", "Quel nutriment abonde dans les lentilles ?", "lentilles", o("fibres"), [o("lipides"), o("vitamine C"), o("vitamine D")], { audioShort: "Les lentilles apportent surtout… ?" }),
+  mcq("n-calcium", "nutrition", "lexique", "Quel aliment est une bonne source de calcium ?", "calcium", o("yaourt", "yogurt"), [o("riz complet"), o("pomme", "apple"), o("lentilles", "lentils")]),
+  mcq("n-vitc", "nutrition", "lexique", "Quel aliment est riche en vitamine C ?", "vitamine C", o("orange", "orange"), [o("banane"), o("lentilles", "lentils"), o("noix", "walnuts")]),
+  mcq("n-protein-veg", "nutrition", "lexique", "Quelle est une bonne source de protéines végétales ?", "protéines végétales", o("lentilles", "lentils"), [o("riz blanc"), o("avocat"), o("carottes", "carrots")]),
   mcq("n-oats", "nutrition", "lexique", "Quel aliment apporte des fibres solubles au petit-déjeuner ?", "fibres", o("flocons d'avoine", "oats"), [o("beurre", "butter"), o("croissant", "croissant"), o("pain blanc", "bread")], { audioShort: "Quel aliment apporte des fibres ?" }),
-  mcq("n-unsat", "nutrition", "lexique", "Quel en-cas apporte des graisses insaturées ?", "insaturées", o("amandes", "almonds"), [o("soda", "soda"), o("croissant", "croissant"), o("fromage", "cheese")]),
-  mcq("n-betacarotene", "nutrition", "lexique", "Quel légume est riche en bêta-carotène ?", "bêta-carotène", o("carottes", "carrots"), [o("pain", "bread"), o("œufs", "eggs"), o("brocoli", "broccoli")]),
-  mcq("n-sardines", "nutrition", "lexique", "Quel poisson gras est économique et riche en oméga-3 ?", "poisson gras", o("sardines", "sardines"), [o("poulet", "chicken"), o("fromage", "cheese"), o("œufs", "eggs")], { audioShort: "Quel poisson est riche en oméga-3 ?" }),
+  mcq("n-unsat", "nutrition", "lexique", "Quel en-cas apporte des graisses insaturées ?", "insaturées", o("amandes", "almonds"), [o("chips"), o("croissant", "croissant"), o("fromage", "cheese")]),
+  mcq("n-betacarotene", "nutrition", "lexique", "Quel légume est riche en bêta-carotène ?", "bêta-carotène", o("carottes", "carrots"), [o("chou-fleur"), o("concombre"), o("brocoli", "broccoli")]),
+  mcq("n-sardines", "nutrition", "lexique", "Quel poisson gras est économique et riche en oméga-3 ?", "poisson gras", o("sardines", "sardines"), [o("cabillaud"), o("sole"), o("œufs", "eggs")], { audioShort: "Quel poisson est riche en oméga-3 ?" }),
 
   // ——— 2. Mini-cas cliniques ———
-  mcq("c-hta-salt", "avis", "conseil", "Un patient est hypertendu. Il mange très salé.", "sel", o("réduire le sel", "salt"), [o("boire des sodas", "soda"), o("supprimer l'eau"), o("ajouter du beurre", "butter")], { question: "Quel conseil serait prioritaire ?" }),
-  mcq("c-diab-soda", "avis", "conseil", "Un patient diabétique boit beaucoup de sodas.", "sucre", o("remplacer par de l'eau", "water"), [o("ajouter du sel", "salt"), o("supprimer les légumes"), o("boire plus de jus")], { question: "Que conseilleriez-vous d'abord ?" }),
-  mcq("c-chol", "avis", "conseil", "Un patient a un cholestérol élevé. Il cuisine au beurre.", "graisses", o("cuisiner à l'huile d'olive", "olive_oil"), [o("boire moins d'eau"), o("manger plus de sucre"), o("ajouter du fromage", "cheese")], { question: "Quel changement proposeriez-vous ?" }),
-  mcq("c-hydra", "avis", "conseil", "Un patient boit très peu dans la journée.", "hydratation", o("boire régulièrement de l'eau", "water"), [o("manger plus salé", "salt"), o("boire un soda le soir", "soda"), o("attendre d'avoir soif")], { question: "Quel conseil serait le plus approprié ?" }),
-  mcq("c-constip", "avis", "conseil", "Une patiente souffre de constipation.", "transit", o("plus de fibres et d'eau", "vegetables"), [o("plus de sodas", "soda"), o("moins de légumes"), o("plus de pain blanc", "bread")], { question: "Que lui conseilleriez-vous ?" }),
-  mcq("c-elderly-protein", "avis", "conseil", "Une personne âgée perd de la masse musculaire.", "muscle", o("augmenter les protéines", "eggs"), [o("supprimer la viande"), o("boire plus de sodas", "soda"), o("manger moins")], { question: "Quel apport faut-il surveiller ?" }),
-  mcq("c-appetite", "avis", "conseil", "Un patient âgé a perdu l'appétit.", "appétit", o("petits repas enrichis"), [o("sauter le dîner"), o("un seul gros repas"), o("ne boire que de l'eau")], { question: "Quelle stratégie proposeriez-vous ?" }),
-  mcq("c-veg", "avis", "conseil", "Une personne mange très peu de légumes.", "légumes", o("en ajouter à chaque repas", "vegetables"), [o("prendre un soda", "soda"), o("manger plus de pain", "bread"), o("attendre l'été")], { question: "Quel conseil donneriez-vous ?" }),
-  mcq("c-cardio", "avis", "conseil", "Un patient veut protéger son cœur.", "cœur", o("poisson gras deux fois par semaine", "salmon"), [o("plus de fritures", "fast_food"), o("moins d'eau"), o("plus de beurre", "butter")], { question: "Que recommanderiez-vous ?" }),
+  mcq("c-hta-salt", "avis", "conseil", "Un patient est hypertendu. Il mange très salé.", "sel", o("réduire le sel", "salt"), [o("augmenter les fruits seuls"), o("supprimer toutes les graisses"), o("prendre un complément de magnésium")], { question: "Quel conseil serait prioritaire ?" }),
+  mcq("c-diab-soda", "avis", "conseil", "Un patient diabétique boit beaucoup de sodas.", "sucre", o("remplacer par de l'eau", "water"), [o("passer aux sodas light"), o("supprimer tous les féculents"), o("boire plus de jus")], { question: "Que conseilleriez-vous d'abord ?" }),
+  mcq("c-chol", "avis", "conseil", "Un patient a un cholestérol élevé. Il cuisine au beurre.", "graisses", o("cuisiner à l'huile d'olive", "olive_oil"), [o("supprimer les œufs"), o("cuisiner à la margarine"), o("éviter tous les fruits")], { question: "Quel changement proposeriez-vous ?" }),
+  mcq("c-hydra", "avis", "conseil", "Un patient boit très peu dans la journée.", "hydratation", o("boire régulièrement de l'eau", "water"), [o("boire surtout du café"), o("boire un litre le soir"), o("attendre d'avoir soif")], { question: "Quel conseil serait le plus approprié ?" }),
+  mcq("c-constip", "avis", "conseil", "Une patiente souffre de constipation.", "transit", o("plus de fibres et d'eau", "vegetables"), [o("un laxatif d'emblée"), o("plus de produits laitiers"), o("plus de pain blanc", "bread")], { question: "Que lui conseilleriez-vous ?" }),
+  mcq("c-elderly-protein", "avis", "conseil", "Une personne âgée perd de la masse musculaire.", "muscle", o("augmenter les protéines", "eggs"), [o("les fibres"), o("les glucides"), o("la vitamine C")], { question: "Quel apport faut-il surveiller ?" }),
+  mcq("c-appetite", "avis", "conseil", "Un patient âgé a perdu l'appétit.", "appétit", o("petits repas enrichis"), [o("des compléments seuls"), o("un seul gros repas"), o("un régime sans sel")], { question: "Quelle stratégie proposeriez-vous ?" }),
+  mcq("c-veg", "avis", "conseil", "Une personne mange très peu de légumes.", "légumes", o("en ajouter à chaque repas", "vegetables"), [o("un jus de fruits"), o("manger plus de pain", "bread"), o("des compléments vitaminiques")], { question: "Quel conseil donneriez-vous ?" }),
+  mcq("c-cardio", "avis", "conseil", "Un patient veut protéger son cœur.", "cœur", o("poisson gras deux fois par semaine", "salmon"), [o("supprimer toutes les graisses"), o("des jus de fruits"), o("un régime hyperprotéiné")], { question: "Que recommanderiez-vous ?" }),
 
   // ——— 4. Comparaisons ———
   mcq("cmp-fibres", "nutrition", "lexique", "Lequel contient le plus de fibres ?", "fibres", o("lentilles", "lentils"), [o("poulet", "chicken"), o("pain blanc", "bread")]),
-  mcq("cmp-protein", "nutrition", "lexique", "Lequel est la meilleure source de protéines ?", "protéines", o("poulet", "chicken"), [o("soda", "soda"), o("pomme", "apple")]),
+  mcq("cmp-protein", "nutrition", "lexique", "Lequel est la meilleure source de protéines ?", "protéines", o("poulet", "chicken"), [o("riz"), o("pomme", "apple")]),
   mcq("cmp-omega", "nutrition", "lexique", "Lequel conseilleriez-vous pour les oméga-3 ?", "oméga-3", o("sardines", "sardines"), [o("croissant", "croissant"), o("poulet", "chicken")]),
-  mcq("cmp-meal", "avis", "conseil", "Pour le déjeuner, quel repas semble le plus équilibré ?", "équilibré", o("poisson, légumes, riz", "balanced_meal"), [o("burger, frites, soda", "fast_food"), o("croissant", "croissant")]),
+  mcq("cmp-meal", "avis", "conseil", "Pour le déjeuner, quel repas semble le plus équilibré ?", "équilibré", o("poisson, légumes, riz", "balanced_meal"), [o("burger, frites, soda", "fast_food"), o("salade verte seule")]),
 
   // ——— 5. Courtes informations scientifiques ———
   mcq("i-nuts", "sciences", "information", "Les noix apportent des acides gras insaturés.", "noix", o("des graisses", "walnuts"), [o("des sucres"), o("du sel", "salt"), o("des fibres")], { question: "De quel type de nutriment parlait-on ?" }),
   mcq("i-muscle", "sciences", "information", "Les protéines aident à maintenir la masse musculaire.", "protéines", o("le muscle"), [o("les os"), o("la peau"), o("le foie")], { question: "Quel tissu cherche-t-on à préserver ?" }),
   mcq("i-fibres", "sciences", "information", "Les fibres favorisent un bon transit intestinal.", "fibres", o("l'intestin"), [o("le cœur"), o("les poumons"), o("l'estomac")], { question: "De quel organe s'agit-il ?" }),
   mcq("i-vitd", "sciences", "information", "La vitamine D aide à fixer le calcium.", "vitamine D", o("les os"), [o("les cheveux"), o("les yeux"), o("les muscles")], { question: "Quelle partie du corps en profite surtout ?" }),
-  mcq("i-salt", "sciences", "information", "Un excès de sel peut augmenter la tension artérielle.", "tension", o("la tension"), [o("la vue"), o("la glycémie"), o("le cholestérol")], { question: "Qu'est-ce qui peut augmenter ?" }),
-  mcq("i-olive", "sciences", "information", "L'huile d'olive est au cœur du régime crétois.", "crétois", o("l'huile d'olive", "olive_oil"), [o("le beurre", "butter"), o("le soda", "soda"), o("le fromage", "cheese")], { question: "De quel aliment parlait-on ?" }),
+  mcq("i-salt", "sciences", "information", "Un excès de sel peut augmenter la tension artérielle.", "tension", o("la tension"), [o("la fréquence cardiaque"), o("la glycémie"), o("le cholestérol")], { question: "Qu'est-ce qui peut augmenter ?" }),
+  mcq("i-olive", "sciences", "information", "L'huile d'olive est au cœur du régime crétois.", "crétois", o("l'huile d'olive", "olive_oil"), [o("le beurre", "butter"), o("l'huile de colza"), o("le fromage", "cheese")], { question: "De quel aliment parlait-on ?" }),
 
   // ——— 6. Vrai / faux ———
   tf("tf-olive", "L'huile d'olive est surtout composée de graisses insaturées.", true, "huile d'olive"),
@@ -96,7 +96,7 @@ const CORE: Item[] = [
   tf("tf-lentils", "Les lentilles sont pauvres en fibres.", false, "lentilles"),
   tf("tf-vitc", "Les agrumes apportent de la vitamine C.", true, "agrumes"),
   tf("tf-water", "La sensation de soif diminue souvent avec l'âge.", true, "soif"),
-  tf("tf-soda", "Les sodas sont une bonne source de protéines.", false, "sodas"),
+  tf("tf-soda", "Les jus de fruits comptent comme une portion de fruits entière.", false, "jus"),
   tf("tf-insulin", "L'insuline est produite par le pancréas.", true, "insuline"),
   tf("tf-calcium", "Le calcium est important pour les os.", true, "calcium"),
 
@@ -106,7 +106,6 @@ const CORE: Item[] = [
   mcq("m-bone", "sciences", "information", "Quel minéral est essentiel à la santé osseuse ?", "os", o("le calcium"), [o("le sodium"), o("le fer"), o("le potassium")]),
   mcq("m-anemia", "sciences", "information", "Quel minéral manque souvent en cas d'anémie ?", "anémie", o("le fer"), [o("le sel"), o("le calcium"), o("le magnésium")]),
   mcq("m-b12", "sciences", "information", "Quelle vitamine se trouve surtout dans les produits animaux ?", "produits animaux", o("vitamine B12"), [o("vitamine C"), o("vitamine K"), o("vitamine D")]),
-  mcq("m-heart", "sciences", "information", "Quel organe pompe le sang dans le corps ?", "sang", o("le cœur"), [o("l'estomac"), o("les poumons"), o("le foie")]),
 
   // ——— 10. Catégorisation ———
   mcq("cat-lentils", "nutrition", "lexique", "Les lentilles appartiennent à quelle catégorie ?", "catégorie", o("légumineuses", "lentils"), [o("poissons"), o("produits laitiers"), o("céréales")]),
@@ -115,10 +114,10 @@ const CORE: Item[] = [
   mcq("cat-almonds", "nutrition", "lexique", "Les amandes appartiennent à quelle catégorie ?", "catégorie", o("fruits à coque", "almonds"), [o("produits laitiers"), o("légumes verts"), o("légumineuses")]),
 
   // ——— 11. Votre avis ———
-  mcq("a-breakfast", "avis", "conseil", "Petit-déjeuner : pain blanc, confiture, jus.", "petit-déjeuner", o("ajouter une protéine", "yogurt"), [o("ajouter un soda", "soda"), o("supprimer l'eau"), o("doubler la confiture")], { question: "Que modifieriez-vous en priorité ?" }),
-  mcq("a-lowprot", "avis", "conseil", "Ce déjeuner contient très peu de protéines.", "protéines", o("œufs", "eggs"), [o("soda", "soda"), o("croissant", "croissant"), o("pain blanc", "bread")], { question: "Quel aliment pourrait être ajouté ?" }),
-  mcq("a-snack", "avis", "conseil", "Un patient grignote des viennoiseries l'après-midi.", "en-cas", o("une poignée d'amandes", "almonds"), [o("un soda", "soda"), o("un second croissant", "croissant"), o("rien boire")], { question: "Quel en-cas proposeriez-vous ?" }),
-  mcq("a-fastfood", "avis", "conseil", "Un patient déjeune souvent burger, frites et soda.", "déjeuner", o("poisson, légumes, riz", "balanced_meal"), [o("ajouter du sel", "salt"), o("un dessert en plus"), o("supprimer l'eau")], { question: "Quelle alternative suggéreriez-vous ?" }),
+  mcq("a-breakfast", "avis", "conseil", "Petit-déjeuner : pain blanc, confiture, jus.", "petit-déjeuner", o("ajouter une protéine", "yogurt"), [o("remplacer le jus par un fruit seul"), o("supprimer le pain"), o("ajouter du beurre", "butter")], { question: "Que modifieriez-vous en priorité ?" }),
+  mcq("a-lowprot", "avis", "conseil", "Ce déjeuner contient très peu de protéines.", "protéines", o("œufs", "eggs"), [o("riz"), o("croissant", "croissant"), o("pain blanc", "bread")], { question: "Quel aliment pourrait être ajouté ?" }),
+  mcq("a-snack", "avis", "conseil", "Un patient grignote des viennoiseries l'après-midi.", "en-cas", o("une poignée d'amandes", "almonds"), [o("un jus de fruits"), o("un second croissant", "croissant"), o("une barre de céréales")], { question: "Quel en-cas proposeriez-vous ?" }),
+  mcq("a-fastfood", "avis", "conseil", "Un patient déjeune souvent burger, frites et soda.", "déjeuner", o("poisson, légumes, riz", "balanced_meal"), [o("supprimer les féculents"), o("une salade composée sans protéines"), o("un sandwich jambon-beurre")], { question: "Quelle alternative suggéreriez-vous ?" }),
 
   // ——— 14. Temps, situations adultes ———
   mcq("t-twice", "temps", "temps", "Un patient prend son traitement matin et soir.", "matin et soir", o("deux prises"), [o("cinq prises"), o("une prise"), o("trois prises")], { question: "Combien de prises par jour ?" }),
@@ -202,7 +201,7 @@ const CORE: Item[] = [
   // ——— Mini-cas complémentaires ———
   mcq("c-weightloss", "avis", "conseil", "Un patient âgé perd du poids. Il mange peu de protéines.", "protéines", o("une protéine à chaque repas", "eggs"), [o("boire plus de jus"), o("plus de pain blanc", "bread"), o("supprimer le goûter")], { question: "Quel conseil serait prioritaire ?", audioShort: "Un patient âgé perd du poids." }),
   mcq("c-starch", "avis", "conseil", "Un repas apporte beaucoup de féculents. Il contient peu de protéines.", "protéines", o("ajouter poisson ou œufs", "salmon"), [o("supprimer les légumes"), o("ajouter du pain", "bread"), o("ajouter un dessert")], { question: "Que modifieriez-vous ?" }),
-  mcq("c-salt-indus", "avis", "conseil", "Une personne hypertendue mange souvent des plats industriels salés.", "sel", o("cuisiner davantage maison", "cooking"), [o("supprimer l'eau"), o("boire un soda", "soda"), o("ajouter du sel", "salt")], { question: "Quel conseil donneriez-vous en priorité ?", audioShort: "Une personne hypertendue mange très salé." }),
+  mcq("c-salt-indus", "avis", "conseil", "Une personne hypertendue mange souvent des plats industriels salés.", "sel", o("cuisiner davantage maison", "cooking"), [o("utiliser du sel allégé"), o("ne manger que des crudités"), o("supprimer tous les fromages")], { question: "Quel conseil donneriez-vous en priorité ?", audioShort: "Une personne hypertendue mange très salé." }),
   mcq("c-density", "avis", "conseil", "Une personne âgée mange très peu à chaque repas.", "densité", o("enrichir les plats", "cheese"), [o("supprimer les desserts"), o("plus de salade verte"), o("de la soupe claire")], { question: "Comment enrichir sans augmenter le volume ?" }),
   mcq("c-constip2", "avis", "conseil", "Un patient est constipé. Il mange très peu de végétaux.", "végétaux", o("plus de végétaux et d'eau", "vegetables"), [o("plus de pain blanc", "bread"), o("moins boire"), o("plus de viande")], { question: "Quel axe alimentaire serait pertinent ?" }),
   mcq("c-sarco-move", "avis", "conseil", "Une patiente perd de la force. Elle bouge très peu.", "force", o("protéines et activité physique"), [o("plus de sucre"), o("un régime sans graisse"), o("le repos complet")], { question: "Quelle association serait la plus utile ?" }),
@@ -211,7 +210,7 @@ const CORE: Item[] = [
   mcq("c-nofish", "avis", "conseil", "Un patient ne mange jamais de poisson.", "poisson", o("les oméga-3", "sardines"), [o("le sel", "salt"), o("l'amidon"), o("le sucre")], { question: "Quel apport risque de manquer ?" }),
   mcq("c-indoor", "avis", "conseil", "Une personne âgée sort très peu de chez elle.", "soleil", o("la vitamine D", "summer"), [o("la vitamine B1"), o("la vitamine K"), o("la vitamine C")], { question: "Quelle vitamine faut-il surveiller ?" }),
   mcq("c-iron", "avis", "conseil", "Une patiente est fatiguée. Elle mange peu de viande et de légumineuses.", "fatigue", o("le fer", "lentils"), [o("l'iode"), o("le fluor"), o("le sodium", "salt")], { question: "Quel minéral faut-il surveiller ?" }),
-  mcq("c-microb", "avis", "conseil", "Un patient veut prendre soin de son microbiote.", "microbiote", o("manger varié et riche en fibres", "vegetables"), [o("boire moins d'eau"), o("manger plus sucré", "soda"), o("supprimer les légumes")], { question: "Quel conseil est le plus consensuel ?" }),
+  mcq("c-microb", "avis", "conseil", "Un patient veut prendre soin de son microbiote.", "microbiote", o("manger varié et riche en fibres", "vegetables"), [o("prendre des probiotiques seuls"), o("éviter tous les féculents"), o("un jeûne régulier")], { question: "Quel conseil est le plus consensuel ?" }),
 
   // ——— Mini-informations ———
   mcq("i-sleep", "sciences", "information", "Un bon sommeil aide la mémoire à se consolider.", "sommeil", o("la mémoire"), [o("l'audition"), o("la vue"), o("la digestion")], { question: "Quelle fonction est aidée ?" }),
