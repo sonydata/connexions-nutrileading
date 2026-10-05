@@ -2,13 +2,16 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Mic, Play, Square, Volume2 } from "lucide-react";
-import { completeSession, recordAttempt, speak, startSession, type PlayItem } from "@/lib/session.functions";
+import { completeSession, recordAttempt, speak, speakCached, startSession, type PlayItem } from "@/lib/session.functions";
+import { buildSession } from "@/lib/builder";
+import { supabase } from "@/integrations/supabase/client";
 import { imageSrc } from "@/lib/library";
 import { heardWord, useVoiceInput, wordCount } from "@/lib/voice-input";
 import { praise, praiseChoice } from "@/lib/praise";
 import { todayGoal, weekLine, weekSummary } from "@/lib/week";
 
-export const Route = createFileRoute("/_authenticated/seance")({
+export const Route = createFileRoute("/seance")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Séance du jour — Écoute" },
@@ -50,9 +53,12 @@ const THEME_FR: Record<string, string> = { nutrition: "de nutrition", avis: "les
 function Seance() {
   const start = useServerFn(startSession);
   const speakFn = useServerFn(speak);
+  const cachedFn = useServerFn(speakCached);
   const record = useServerFn(recordAttempt);
   const complete = useServerFn(completeSession);
   const voice = useVoiceInput();
+  const guest = useRef(false);
+  const [isGuest, setIsGuest] = useState(false);
 
   const [phase, setPhase] = useState<"loading" | "play" | "done" | "error">("loading");
   const [sessionId, setSessionId] = useState("");
@@ -84,7 +90,8 @@ function Seance() {
     (text: string) => {
       let p = cache.current.get(text);
       if (!p) {
-        p = speakFn({ data: { text } }).then(({ audio: b64 }) => {
+        p = (guest.current ? cachedFn({ data: { text } }) : speakFn({ data: { text } })).then(({ audio: b64 }) => {
+          if (!b64) throw new Error("not cached");
           const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
           return URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
         });
@@ -93,7 +100,7 @@ function Seance() {
       }
       return p;
     },
-    [speakFn],
+    [speakFn, cachedFn],
   );
 
   const playOne = useCallback(
@@ -155,7 +162,15 @@ function Seance() {
   useEffect(() => {
     if (started.current) return;
     started.current = true;
-    start()
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (data.session) return start();
+        // Discovery mode: built locally, nothing saved.
+        guest.current = true;
+        setIsGuest(true);
+        return { sessionId: "", items: buildSession([], ["nutrition", "avis", "sciences", "temps", "expression"], 1) };
+      })
       .then((r) => {
         if (!r.items.length) throw new Error("empty");
         setSessionId(r.sessionId);
@@ -193,7 +208,7 @@ function Seance() {
     stopAudio();
     const p = pending.current ?? { outcome: "after_cue" as Outcome, spoken: 0, responseMs: null };
     const kind = it.kind === "oral" ? (it.mode ?? "oral") : it.kind;
-    record({
+    if (!guest.current) record({
       data: { sessionId, itemId: it.id, kind, category: it.theme, skill: it.skill, prompt: it.audio, optionCount: it.kind === "oral" ? p.spoken : it.options.length, outcome: p.outcome, responseMs: p.responseMs, repeated },
     }).catch(() => {});
     log.current.push({ theme: it.theme, skill: it.skill, kind, outcome: p.outcome, spoken: p.spoken > 0 });
@@ -215,7 +230,7 @@ function Seance() {
     setHeard("");
     setRepeated(false);
     if (i + 1 >= items.length + added) {
-      complete({ data: { sessionId } }).catch(() => {});
+      if (!guest.current) complete({ data: { sessionId } }).catch(() => {});
       setPhase("done");
     } else setI(i + 1);
   }
@@ -337,7 +352,7 @@ function Seance() {
         <Link to="/" className="mt-10 inline-block rounded-full bg-primary px-10 py-4 text-lg text-primary-foreground">Retour</Link>
       </Center>
     );
-  if (phase === "done") return <Summary log={log.current} minutes={Math.max(1, Math.round((Date.now() - startedAt.current) / 60000))} />;
+  if (phase === "done") return <Summary guest={isGuest} log={log.current} minutes={Math.max(1, Math.round((Date.now() - startedAt.current) / 60000))} />;
 
   const isChoice = it.kind === "mcq" || it.kind === "tf";
   const isRecall = it.kind === "evoke" || it.kind === "complete" || (it.kind === "oral" && it.mode === "nommer");
@@ -553,9 +568,10 @@ function Btn({ children, onClick, subtle }: { children: React.ReactNode; onClick
   );
 }
 
-function Summary({ log, minutes }: { log: Done[]; minutes: number }) {
+function Summary({ log, minutes, guest }: { log: Done[]; minutes: number; guest?: boolean }) {
   const [week, setWeek] = useState<string | null>(null);
   useEffect(() => {
+    if (guest) return;
     const t = setTimeout(() => weekSummary().then((w) => setWeek(weekLine(w))).catch(() => {}), 800);
     return () => clearTimeout(t);
   }, []);

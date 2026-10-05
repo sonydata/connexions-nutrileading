@@ -44,6 +44,11 @@ function Index() {
             Connexion
           </Link>
         )}
+        {state === "out" && (
+          <Link to="/auth" className="text-sm text-muted-foreground underline-offset-4 hover:underline">
+            Connexion
+          </Link>
+        )}
       </header>
       <section className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-12 px-8 pb-16 md:grid-cols-2">
         <div className="animate-rise">
@@ -58,16 +63,10 @@ function Index() {
             </div>
           )}
           <div className="mt-10">
-            {state === "in" && (
-              <Link to="/seance" className="inline-flex items-center rounded-full bg-primary px-14 py-6 text-2xl font-medium text-primary-foreground shadow-lg transition hover:opacity-90">
-                Commencer
-              </Link>
-            )}
-            {state === "out" && (
-              <Link to="/auth" className="inline-flex items-center rounded-full bg-primary px-10 py-5 text-xl text-primary-foreground transition hover:opacity-90">
-                Connexion
-              </Link>
-            )}
+            <Link to="/seance" className="inline-flex items-center rounded-full bg-primary px-14 py-6 text-2xl font-medium text-primary-foreground shadow-lg transition hover:opacity-90">
+              Commencer
+            </Link>
+            {state === "out" && <p className="mt-4 text-base text-muted-foreground">Sans compte, la séance n'est pas enregistrée.</p>}
           </div>
         </div>
         <div className="animate-rise overflow-hidden rounded-3xl shadow-2xl [animation-delay:150ms]">
