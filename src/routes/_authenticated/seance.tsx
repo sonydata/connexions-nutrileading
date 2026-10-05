@@ -7,7 +7,6 @@ import { imageSrc } from "@/lib/library";
 import { heardWord, useVoiceInput, wordCount } from "@/lib/voice-input";
 import { praise, praiseChoice } from "@/lib/praise";
 import { todayGoal, weekLine, weekSummary } from "@/lib/week";
-import morning from "@/assets/library/morning.jpg";
 
 export const Route = createFileRoute("/_authenticated/seance")({
   head: () => ({
