@@ -124,13 +124,13 @@ function Index() {
           </div>
 
           {/* Moodboard éditorial : tailles variées, légers décalages et rotations */}
-          <div className="relative hidden h-[600px] md:block" aria-hidden>
+          <div className="relative hidden h-[640px] md:block" aria-hidden>
             {[
-              { src: artImg, label: "Art", pos: "object-[60%_40%]", box: "left-0 top-0 w-[60%] aspect-[4/3] -rotate-[1.2deg] z-10" },
-              { src: img("astronomy"), label: "Sciences", pos: "object-center", box: "right-0 top-8 w-[36%] aspect-[3/4] rotate-[1.5deg]" },
-              { src: img("rome"), label: "Histoire", pos: "object-center", box: "left-[3%] top-[330px] w-[42%] aspect-[4/3] rotate-[0.8deg]" },
-              { src: litteratureImg, label: "Littérature", pos: "object-[50%_70%]", box: "left-[44%] top-[300px] w-[27%] aspect-[4/5] -rotate-[1.5deg] z-20" },
-              { src: santeImg, label: "Santé", pos: "object-center", box: "right-0 top-[380px] w-[30%] aspect-[4/3] rotate-[1deg]" },
+              { src: artImg, label: "Art", pos: "object-[60%_40%]", box: "left-0 top-0 w-[72%] aspect-[4/3] -rotate-[1.2deg] z-10" },
+              { src: img("astronomy"), label: "Sciences", pos: "object-center", box: "right-0 top-6 w-[40%] aspect-[3/4] rotate-[1.5deg]" },
+              { src: img("rome"), label: "Histoire", pos: "object-center", box: "left-[2%] top-[330px] w-[52%] aspect-[4/3] rotate-[0.8deg]" },
+              { src: litteratureImg, label: "Littérature", pos: "object-[50%_70%]", box: "left-[52%] top-[300px] w-[30%] aspect-[4/5] -rotate-[1.5deg] z-20" },
+              { src: santeImg, label: "Santé", pos: "object-center", box: "right-0 top-[400px] w-[38%] aspect-[4/3] rotate-[1deg]" },
             ].map((c) => (
               <figure key={c.label} className={`absolute ${c.box.replace(/aspect-\S+/, "")} transition duration-500 hover:z-30 hover:rotate-0`}>
                 <div className={`overflow-hidden rounded-2xl bg-card p-1.5 shadow-xl ${c.box.match(/aspect-\S+/)?.[0]}`}>
