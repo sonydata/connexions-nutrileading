@@ -106,7 +106,7 @@ function Seance() {
         setSessionId(r.sessionId);
         setItems(r.exercises);
         // Warm up the first clips while the screen appears.
-        const first = r.exercises[0];
+        const first = r.exercises[0]!;
         Promise.all([clip(first.audio_text), first.question_text ? clip(first.question_text) : null]).finally(() => setPhase("play"));
       })
       .catch((e) => {
@@ -115,7 +115,7 @@ function Seance() {
       });
   }, [start, clip]);
 
-  const ex = items[i];
+  const ex = items[i] as Exercise;
 
   useEffect(() => {
     if (phase !== "play" || !ex) return;
