@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/nutrileading-logo.png.asset.json";
+import symbol from "@/assets/connexions-symbol.png.asset.json";
 import { weekSummary } from "@/lib/week";
 import { imageSrc } from "@/lib/library";
 import { Apple, BookOpen, ChefHat, Cpu, Landmark, Leaf, Map as MapIcon, Microscope, Newspaper, Palette, Sparkles, Stethoscope, Trophy } from "lucide-react";
@@ -64,7 +65,7 @@ function Index() {
     <main className="relative flex min-h-screen flex-col bg-background">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5 md:px-8">
         <Link to="/" className="flex items-center gap-3">
-          <img src={logo.url} alt="Nutrileading" className="h-10 w-10" />
+          <img src={symbol.url} alt="" className="h-10 w-auto" />
           <span className="font-serif text-2xl">Connexions</span>
         </Link>
         <nav className="flex items-center gap-1 text-sm font-medium">
@@ -87,14 +88,18 @@ function Index() {
               {today}
               {state === "in" && <span className="normal-case"> · Bonjour {name}</span>}
             </p>
-            <h1 className="mt-6 text-7xl leading-[0.9] tracking-tight md:text-8xl">Connexions</h1>
-            <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-brand-soft px-4 py-1.5 text-sm font-semibold text-brand">by Nutrileading</p>
+            <img src={symbol.url} alt="" className="mt-6 h-24 w-auto md:h-28" />
+            <h1 className="mt-4 text-7xl leading-[0.9] tracking-tight md:text-8xl">Connexions</h1>
+            <p className="mt-3 flex items-center gap-2 text-base text-muted-foreground">
+              by <img src={logo.url} alt="" className="h-5 w-5" /> <span className="font-bold text-foreground">Nutrileading</span>
+            </p>
             <p className="mt-10 text-3xl font-semibold leading-tight tracking-tight md:text-4xl">
               Comprendre. <span className="text-brand">Retrouver.</span> S'exprimer.
             </p>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Des séances quotidiennes pour mobiliser vos connaissances, votre langage et votre curiosité à partir des sujets qui vous intéressent.
+              Des séances quotidiennes pour entretenir la compréhension, retrouver plus facilement ses mots et mobiliser ses connaissances à partir de sujets qui vous intéressent.
             </p>
+
 
             {/* Aujourd'hui */}
             <div className="mt-10 max-w-xl rounded-3xl border-l-4 border-brand bg-card p-6 shadow-lg">
@@ -233,8 +238,9 @@ function Index() {
       {/* MANIFESTE */}
       <section className="bg-brand-soft">
         <div className="mx-auto w-full max-w-6xl px-6 py-24 text-center md:px-8">
-          <p className="font-serif text-5xl italic leading-tight md:text-7xl">
-            Faire <span className="text-brand">vivre</span> ses connaissances.
+          <img src={symbol.url} alt="" className="mx-auto h-16 w-auto" />
+          <p className="mt-6 font-serif text-4xl leading-tight md:text-6xl">
+            Relier ce que l'on <span className="text-brand">entend</span>, ce que l'on sait et ce que l'on exprime.
           </p>
           <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">Comprendre, retrouver, s'exprimer — à partir de ce qui vous passionne.</p>
           <p className="mt-8 text-sm font-semibold uppercase tracking-[0.25em] text-brand">Connexions by Nutrileading</p>
@@ -243,8 +249,9 @@ function Index() {
 
       <footer className="bg-background">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-4 px-6 py-12 text-center md:px-8">
-          <img src={logo.url} alt="" className="h-9 w-9" />
+          <img src={logo.url} alt="Nutrileading" className="h-9 w-9" />
           <p className="text-base text-muted-foreground">Une initiative Nutrileading, inspirée par le parcours du Dr Hafid Halhol.</p>
+
         </div>
       </footer>
     </main>
