@@ -573,9 +573,8 @@ function Summary({ log, minutes }: { log: Done[]; minutes: number }) {
   ].filter(Boolean) as string[];
   return (
     <Center>
-      <img src={morning} alt="Lever du soleil sur les toits de Paris" className="mx-auto w-full max-w-xl rounded-3xl object-cover shadow-xl animate-pop aspect-[16/9]" />
-      <p className="mt-8 text-sm uppercase tracking-[0.25em] text-muted-foreground">Séance terminée</p>
-      <h1 className="mt-3 text-6xl">Excellente séance aujourd'hui.</h1>
+      <p className="text-sm uppercase tracking-[0.25em] text-muted-foreground">Séance terminée</p>
+      <h1 className="mt-3 text-6xl text-primary animate-pop">Excellente séance aujourd'hui.</h1>
       <ul className="mx-auto mt-8 max-w-2xl space-y-2 font-serif text-2xl text-muted-foreground">
         {lines.map((l) => <li key={l}>{l}</li>)}
       </ul>
