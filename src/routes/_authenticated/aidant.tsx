@@ -1,14 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
+import { DEFAULT_INTERESTS, INTERESTS, PREFIX, interestsOf, otherInterest } from "@/lib/interests";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/aidant")({
   head: () => ({
     meta: [
-      { title: "Suivi — Écoute" },
+      { title: "Suivi — Connexions" },
       { name: "description", content: "Suivi de la compréhension et réglages des séances." },
-      { property: "og:title", content: "Suivi — Écoute" },
+      { property: "og:title", content: "Suivi — Connexions" },
       { property: "og:description", content: "Suivi de la compréhension et réglages des séances." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -48,6 +49,8 @@ function Aidant() {
   const [userId, setUserId] = useState<string | null>(null);
   const [name, setName] = useState("Hafid");
   const [topics, setTopics] = useState<string[]>(TOPICS.map((t) => t.id));
+  const [interests, setInterests] = useState<string[]>(DEFAULT_INTERESTS);
+  const [other, setOther] = useState("");
   const [difficulty, setDifficulty] = useState(1);
   const [saved, setSaved] = useState(false);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
@@ -67,7 +70,9 @@ function Aidant() {
       ]);
       if (s.data) {
         setName(s.data.patient_name);
-        setTopics(s.data.topics);
+        setTopics(s.data.topics.filter((t) => !t.startsWith(PREFIX)));
+        setInterests(interestsOf(s.data.topics).filter((x) => !x.startsWith("autre:")));
+        setOther(otherInterest(s.data.topics));
         setDifficulty(s.data.difficulty);
       }
       setAttempts((a.data as Attempt[]) ?? []);
@@ -78,7 +83,8 @@ function Aidant() {
 
   async function save() {
     if (!userId) return;
-    await supabase.from("caregiver_settings").upsert({ user_id: userId, patient_name: name.trim() || "Hafid", topics, difficulty, updated_at: new Date().toISOString() });
+    const picked = [...interests, ...(other.trim() ? [`autre:${other.trim()}`] : [])].map((x) => PREFIX + x);
+    await supabase.from("caregiver_settings").upsert({ user_id: userId, patient_name: name.trim() || "Hafid", topics: [...topics, ...picked], difficulty, updated_at: new Date().toISOString() });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
@@ -150,7 +156,7 @@ function Aidant() {
   return (
     <main className="paper-grain min-h-screen px-6 py-8 md:px-12">
       <header className="mx-auto flex max-w-6xl items-center justify-between">
-        <Link to="/" className="font-serif text-2xl">Écoute</Link>
+        <Link to="/" className="font-serif text-2xl">Connexions</Link>
         <div className="flex items-center gap-6 text-sm">
           <Link to="/" className="text-muted-foreground hover:text-foreground">Accueil</Link>
           <button onClick={async () => { await supabase.auth.signOut(); nav({ to: "/auth" }); }} className="text-muted-foreground hover:text-foreground">Se déconnecter</button>
@@ -250,6 +256,24 @@ function Aidant() {
             )}
           </Card>
         </div>
+
+        <Card title="Vos centres d'intérêt" className="mt-5">
+          <p className="text-lg">Quels sujets aimez-vous particulièrement ?</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+            {INTERESTS.map((t) => (
+              <label key={t.id} className="flex items-center gap-3 text-lg">
+                <input type="checkbox" className="h-5 w-5 accent-[var(--primary)]" checked={interests.includes(t.id)} onChange={(e) => setInterests(e.target.checked ? [...interests, t.id] : interests.filter((x) => x !== t.id))} />
+                {t.label}
+              </label>
+            ))}
+          </div>
+          <label className="mt-5 block max-w-md">
+            <span className="text-sm text-muted-foreground">Autre sujet</span>
+            <input value={other} onChange={(e) => setOther(e.target.value)} placeholder="Par exemple : architecture" className="mt-2 w-full rounded-xl border bg-background px-4 py-3 text-lg" />
+          </label>
+          <p className="mt-4 text-xs text-muted-foreground">Les séances utilisent ces sujets en priorité. La banque couvre aujourd'hui surtout la santé, la nutrition, les sciences et la culture générale ; les autres sujets seront enrichis progressivement.</p>
+          <button onClick={save} className="mt-6 rounded-full bg-primary px-10 py-3 text-primary-foreground">{saved ? "Enregistré" : "Enregistrer"}</button>
+        </Card>
 
         <Card title="Réglages des séances" className="mt-5">
           <div className="grid gap-8 md:grid-cols-3">

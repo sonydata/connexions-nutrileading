@@ -14,9 +14,9 @@ export const Route = createFileRoute("/seance")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Séance du jour — Écoute" },
+      { title: "Séance du jour — Connexions" },
       { name: "description", content: "La séance d'écoute du jour." },
-      { property: "og:title", content: "Séance du jour — Écoute" },
+      { property: "og:title", content: "Séance du jour — Connexions" },
       { property: "og:description", content: "La séance d'écoute du jour." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -363,7 +363,7 @@ function Seance() {
   return (
     <main className="paper-grain flex min-h-screen flex-col px-6 py-6 md:px-12">
       <header className="flex items-center justify-between">
-        <Link to="/" className="font-serif text-2xl">Écoute</Link>
+        <Link to="/" className="font-serif text-2xl">Connexions</Link>
         <div className="flex items-center gap-4" aria-label={`${i + 1} sur ${items.length}`}>
           <div className="hidden gap-1.5 sm:flex" aria-hidden>
             {items.map((_, k) => (

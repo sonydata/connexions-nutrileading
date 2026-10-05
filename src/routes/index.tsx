@@ -7,10 +7,10 @@ import { todayGoal, weekLine, weekSummary } from "@/lib/week";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Écoute — un moment d'écoute chaque jour" },
-      { name: "description", content: "Dix minutes d'écoute par jour : nutrition, culture, vie pratique et repères du temps, dans un cadre calme et adulte." },
-      { property: "og:title", content: "Écoute — un moment d'écoute chaque jour" },
-      { property: "og:description", content: "Dix minutes d'écoute par jour, calmes et intelligentes." },
+      { title: "Connexions by Nutrileading — Comprendre. Retrouver. S'exprimer." },
+      { name: "description", content: "Une séance quotidienne pour comprendre, retrouver ses connaissances et s'exprimer, à partir de sujets qui vous intéressent." },
+      { property: "og:title", content: "Connexions by Nutrileading — Comprendre. Retrouver. S'exprimer." },
+      { property: "og:description", content: "Comprendre. Retrouver. S'exprimer. Des séances courtes adaptées à vos centres d'intérêt." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -35,10 +35,11 @@ function Index() {
 
   const today = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
+  const INTEREST_LIST = ["Santé & nutrition", "Sciences", "Médecine", "Histoire", "Art & culture", "Géographie & voyages", "Actualité", "Nature", "Littérature", "Technologie", "Cuisine", "Sport"];
+
   return (
     <main className="paper-grain relative flex min-h-screen flex-col">
-      <header className="flex items-center justify-between px-8 py-6">
-        <span className="font-serif text-2xl">Écoute</span>
+      <header className="flex items-center justify-end px-8 py-6">
         {state === "in" && (
           <Link to="/aidant" className="text-sm text-muted-foreground underline-offset-4 hover:underline">
             Connexion
@@ -52,21 +53,24 @@ function Index() {
       </header>
       <section className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-12 px-8 pb-16 md:grid-cols-2">
         <div className="animate-rise">
-          <p className="text-lg capitalize text-muted-foreground">{today}</p>
-          <p className="mt-4 font-serif text-5xl italic text-muted-foreground md:text-6xl">Bonjour {name}</p>
-          <h1 className="mt-3 text-4xl leading-[1.12] md:text-5xl">Une séance d'écoute chaque jour</h1>
-          <p className="mt-6 font-serif text-3xl italic text-muted-foreground">On commence ?</p>
-          {state === "in" && (
-            <div className="mt-8 space-y-1 text-lg text-muted-foreground">
-              <p>{todayGoal().label}</p>
-              {week && <p>{week}</p>}
-            </div>
-          )}
+          <p className="text-lg capitalize text-muted-foreground">
+            {today}
+            {state === "in" && <span className="normal-case"> · Bonjour {name}</span>}
+          </p>
+          <h1 className="mt-6 text-6xl leading-none md:text-7xl">Connexions</h1>
+          <p className="mt-3 font-serif text-2xl italic text-muted-foreground">by Nutrileading</p>
+          <p className="mt-8 text-2xl">Comprendre. Retrouver. S'exprimer.</p>
           <div className="mt-10">
             <Link to="/seance" className="inline-flex items-center rounded-full bg-primary px-14 py-6 text-2xl font-medium text-primary-foreground shadow-lg transition hover:opacity-90">
               Commencer
             </Link>
             {state === "out" && <p className="mt-4 text-base text-muted-foreground">Sans compte, la séance n'est pas enregistrée.</p>}
+            {state === "in" && (
+              <div className="mt-6 space-y-1 text-lg text-muted-foreground">
+                <p>{todayGoal().label}</p>
+                {week && <p>{week}</p>}
+              </div>
+            )}
           </div>
         </div>
         <div className="animate-rise overflow-hidden rounded-3xl shadow-2xl [animation-delay:150ms]">
@@ -76,34 +80,33 @@ function Index() {
 
       <section className="border-t border-border/70">
         <div className="mx-auto w-full max-w-6xl px-8 py-20">
-          <h2 className="font-serif text-3xl leading-tight md:text-4xl">Ce que propose Écoute</h2>
+          <h2 className="font-serif text-3xl leading-tight md:text-4xl">Connexions</h2>
           <p className="mt-6 max-w-3xl text-xl leading-relaxed text-muted-foreground">
-            Écoute est une application d'écoute quotidienne&nbsp;: chaque jour, une séance d'une quinzaine d'activités
-            courtes, soit une dizaine de minutes. On écoute une phrase, on donne son avis, on retrouve un mot, puis on
-            le redit à voix haute. Une seule activité à la fois, en grands caractères, sans chronomètre et sans note.
+            Une expérience quotidienne conçue pour stimuler la compréhension, la réflexion, la mémoire des connaissances
+            et l'expression orale à partir de sujets qui vous intéressent réellement.
           </p>
-          <ul className="mt-12 grid gap-x-10 gap-y-9 md:grid-cols-2">
+          <p className="mt-4 max-w-3xl text-xl leading-relaxed text-muted-foreground">
+            Chaque séance propose quelques activités courtes : écouter une information, comprendre une idée, retrouver un
+            mot, donner son avis, expliquer un concept ou reformuler une réponse.
+          </p>
+
+          <h3 className="mt-14 text-2xl">Des séances adaptées à vos centres d'intérêt</h3>
+          <ul className="mt-5 flex max-w-4xl flex-wrap gap-2">
+            {INTEREST_LIST.map((t) => (
+              <li key={t} className="rounded-full border bg-card px-4 py-2 text-base">{t}</li>
+            ))}
+          </ul>
+          <p className="mt-5 max-w-3xl text-lg leading-relaxed text-muted-foreground">
+            Les exercices sont ensuite adaptés à ces thèmes afin de mobiliser des connaissances familières et de rendre
+            les séances plus intéressantes et plus motivantes.
+          </p>
+
+          <ul className="mt-14 grid gap-x-10 gap-y-9 md:grid-cols-2">
             {[
-              [
-                "Nutrition et alimentation",
-                "Protéines, fibres, glucides, lipides, micronutriments, hydratation, régime méditerranéen.",
-              ],
-              [
-                "Votre avis de praticien",
-                "Mini-cas du quotidien et conseils à donner à un patient fictif.",
-              ],
-              [
-                "Sciences et culture médicale",
-                "Ce qu'un terme désigne vraiment, son origine, la culture scientifique et générale.",
-              ],
-              [
-                "Repères du temps et organisation",
-                "Jours, saisons, horaires et organisation de la journée.",
-              ],
-              [
-                "Mots et formulation",
-                "Retrouver le mot juste, l'entendre, le reformuler, le répéter.",
-              ],
+              ["Comprendre", "Écouter une information, identifier son sens, suivre une idée ou comprendre une courte situation."],
+              ["Retrouver ses connaissances", "Mobiliser son vocabulaire, ses connaissances et son expérience à travers des questions adaptées à ses centres d'intérêt."],
+              ["S'exprimer", "Trouver le mot juste, donner son avis, expliquer une idée, reformuler et parler à voix haute."],
+              ["Progresser", "Les séances s'adaptent progressivement aux réussites et aux difficultés, tout en valorisant l'effort, la participation et la régularité."],
             ].map(([title, text]) => (
               <li key={title} className="border-l border-border/70 pl-6">
                 <h3 className="text-2xl">{title}</h3>
@@ -112,11 +115,16 @@ function Index() {
             ))}
           </ul>
           <p className="mt-12 max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Une page discrète conserve une trace de la régularité et de l'évolution des réponses, sans jamais
-            afficher de résultat pendant la séance.
+            Une seule activité à la fois, sans chronomètre, sans note et sans pression.
           </p>
         </div>
       </section>
+
+      <footer className="border-t border-border/70 px-8 py-10 text-center">
+        <p className="font-serif text-lg italic text-muted-foreground">
+          Une initiative Nutrileading, inspirée par le parcours du Dr Hafid Halhol.
+        </p>
+      </footer>
     </main>
   );
 }
