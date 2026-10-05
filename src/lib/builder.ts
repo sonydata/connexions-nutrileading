@@ -1,5 +1,6 @@
 import { BANK, BY_ID, FOLLOW_IDS, SCENE, topicOf, type Item, type Opt, type Skill, type Theme, type Topic } from "./content";
 import { interestsOf } from "./interests";
+import { SEQUENCES, SEQ_TITLE, STAGE_OF, type Stage } from "./sequences";
 
 export type PastAttempt = { item_id: string | null; skill: string; outcome: string; created_at: string; response_ms: number | null };
 
@@ -21,6 +22,8 @@ export type PlayItem = {
   options: Opt[];
   correctIndex: number;
   level: number;
+  stage: Stage | null; // step inside a thematic mini-sequence
+  seqTitle: string | null;
 };
 
 const shuffle = <T,>(a: T[]) => {
@@ -62,7 +65,7 @@ export function skillLevels(past: PastAttempt[], base: number): Record<string, n
 }
 
 function toPlay(item: Item, level: number): PlayItem {
-  const base = { id: item.id, kind: item.kind, theme: item.theme, topic: topicOf(item), skill: item.skill, level, question: null, keyword: null, hint: null, answerText: null, image: null, model: null, syllable: null, options: [] as Opt[], correctIndex: -1 };
+  const base = { id: item.id, kind: item.kind, theme: item.theme, topic: topicOf(item), skill: item.skill, level, question: null, keyword: null, hint: null, answerText: null, image: null, model: null, syllable: null, options: [] as Opt[], correctIndex: -1, stage: STAGE_OF.get(item.id) ?? null, seqTitle: SEQ_TITLE.get(item.id) ?? null };
   if (item.kind === "mcq") {
     let opts = shuffle([item.answer, ...item.distractors.slice(0, level)]);
     // Photos only when every option has one, and never for advice/actions
@@ -116,7 +119,7 @@ const PLAN: Slot[] = [
 const WITH_CONTENT = new Set<Topic>(["sante", "medecine", "sciences", "histoire", "art", "geographie", "nature", "litterature", "technologie", "cuisine", "sport"]);
 
 /** `topics` = caregiver_settings.topics (interests stored with an "i:" prefix). */
-export function buildSession(past: PastAttempt[], topics: string[], base: number): PlayItem[] {
+function buildSlotSession(past: PastAttempt[], topics: string[], base: number): PlayItem[] {
   const levels = skillLevels(past, base);
   const now = Date.now();
   const recent = new Set(past.slice(0, 40).map((p) => p.item_id));
@@ -180,4 +183,40 @@ export function buildSession(past: PastAttempt[], topics: string[], base: number
     if (got) take(got);
   }
   return picks.map((i) => toPlay(i, levels[i.skill] ?? base));
+}
+
+/**
+ * Session = 3 thematic mini-sequences (Comprendre → Retrouver → S'exprimer → Reformuler),
+ * each on one chosen subject, plus one transversal time/organisation item.
+ * Choice questions stay ≈ a quarter of the session. Falls back to the slot plan if needed.
+ */
+export function buildSession(past: PastAttempt[], topics: string[], base: number): PlayItem[] {
+  const levels = skillLevels(past, base);
+  let chosen = interestsOf(topics).filter((x): x is Topic => WITH_CONTENT.has(x as Topic));
+  if (!chosen.length) chosen = ["sante", "medecine", "sciences", "art"];
+  const lastSeen = new Map<string, number>();
+  for (const p of past) if (p.item_id && !lastSeen.has(p.item_id)) lastSeen.set(p.item_id, new Date(p.created_at).getTime());
+  const seqScore = (id: string) => {
+    const t = lastSeen.get(`${id}-c`);
+    return Math.random() + (t ? Math.min(3, (Date.now() - t) / (3 * 864e5)) : 4);
+  };
+  const avail = SEQUENCES.filter((s) => chosen.includes(s.topic)).sort((a, b) => seqScore(b.id) - seqScore(a.id));
+  const picked: typeof SEQUENCES = [];
+  const usedTopics = new Set<string>();
+  for (const s of avail) if (picked.length < 3 && !usedTopics.has(s.topic)) { picked.push(s); usedTopics.add(s.topic); }
+  for (const s of avail) if (picked.length < 3 && !picked.includes(s)) picked.push(s);
+  for (const s of SEQUENCES.slice().sort((a, b) => seqScore(b.id) - seqScore(a.id))) if (picked.length < 3 && !picked.includes(s)) picked.push(s);
+  if (!picked.length) return buildSlotSession(past, topics, base);
+
+  const recent = new Set(past.slice(0, 40).map((p) => p.item_id));
+  const general = BANK.filter((i) => !FOLLOW_IDS.has(i.id) && topicOf(i) === "general" && i.skill === "temps" && !recent.has(i.id));
+  const pool = general.length ? general : BANK.filter((i) => topicOf(i) === "general" && i.skill === "temps");
+  const extra = shuffle(pool)[0];
+
+  const out: Item[] = [];
+  picked.forEach((s, k) => {
+    out.push(...s.items);
+    if (k === 0 && extra) out.push(extra);
+  });
+  return out.map((i) => toPlay(i, levels[i.skill] ?? base));
 }
