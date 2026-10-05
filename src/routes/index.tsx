@@ -94,7 +94,7 @@ function Index() {
             <img src={symbol.url} alt="" className="mt-6 h-24 w-auto md:h-28" />
             <h1 className="mt-4 text-7xl leading-[0.9] tracking-tight md:text-8xl">Connexions</h1>
             <p className="mt-3 flex items-center gap-2 text-base text-muted-foreground">
-              by <img src={logo.url} alt="" className="h-5 w-5" /> <span className="font-bold text-foreground">Nutrileading</span>
+              by <img src={logo.url} alt="" className="h-7 w-7" /> <span className="font-bold text-foreground">Nutrileading</span>
             </p>
             <p className="mt-10 text-3xl font-semibold leading-tight tracking-tight md:text-4xl">
               Comprendre. <span className="text-brand">Retrouver.</span> S'exprimer.
@@ -259,7 +259,7 @@ function Index() {
 
       <footer className="bg-background">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-4 px-6 py-12 text-center md:px-8">
-          <img src={logo.url} alt="Nutrileading" className="h-9 w-9" />
+          <img src={logo.url} alt="Nutrileading" className="h-12 w-12" />
           <p className="text-base text-muted-foreground">Une initiative Nutrileading, inspirée par le parcours du Dr Hafid Halhol.</p>
 
         </div>

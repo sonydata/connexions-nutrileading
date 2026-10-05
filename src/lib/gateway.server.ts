@@ -1,7 +1,7 @@
 // Server-only helpers for Lovable AI Gateway calls.
 const BASE = "https://ai.gateway.lovable.dev";
 const TTS_MODEL = "google/gemini-3.1-flash-tts-preview";
-const TTS_VOICE = "Kore";
+const TTS_VOICE = "Vindemiatrix";
 
 export class GatewayError extends Error {
   constructor(public status: number, message: string) {
