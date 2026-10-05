@@ -67,5 +67,5 @@ export const LIBRARY_IDS = new Set(LIBRARY.map((i) => i.id));
 export function imageSrc(id: string | null | undefined): string | null {
   if (!id) return null;
   const key = Object.keys(files).find((k) => k.endsWith(`/${id}.jpg`));
-  return key ? files[key] : null;
+  return key ? (files[key] ?? null) : null;
 }
