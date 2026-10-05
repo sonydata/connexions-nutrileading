@@ -91,3 +91,19 @@ export const speak = createServerFn({ method: "POST" })
     if (up.error && !/exists|duplicate/i.test(up.error.message)) console.error("voice cache upload failed:", up.error.message);
     return { audio: Buffer.from(buf).toString("base64") };
   });
+
+/**
+ * Discovery mode (no account): read-only access to the shared voice cache.
+ * Never synthesises — a missing clip returns null and the browser voice is used,
+ * so visitors without an account can never create a paid call.
+ */
+export const speakCached = createServerFn({ method: "POST" })
+  .inputValidator((d) => z.object({ text: z.string().trim().min(1).max(400) }).parse(d))
+  .handler(async ({ data }) => {
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`v1|${data.text}`));
+    const name = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("") + ".wav";
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const cached = await supabaseAdmin.storage.from("voice").download(name);
+    if (cached.data && cached.data.size > 0) return { audio: Buffer.from(await cached.data.arrayBuffer()).toString("base64") };
+    return { audio: null as string | null };
+  });
