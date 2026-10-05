@@ -2,7 +2,7 @@
 // the recording stays in the browser memory and is discarded after each exercise.
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type Rec = { start(): void; stop(): void; abort(): void; lang: string; continuous: boolean; interimResults: boolean; onresult: ((e: any) => void) | null; onerror: (() => void) | null };
+type Rec = { start(): void; stop(): void; abort(): void; lang: string; continuous: boolean; interimResults: boolean; onresult: ((e: any) => void) | null; onerror: (() => void) | null; onend?: (() => void) | null };
 
 export function useVoiceInput() {
   const [listening, setListening] = useState(false);
@@ -37,6 +37,15 @@ export function useVoiceInput() {
           setTranscript(text.current);
         };
         r.onerror = () => {};
+        // Pause tolerance: browsers end recognition after a silence; restart until
+        // the person taps "Terminer ma réponse" — searching for a word takes time.
+        r.onend = () => {
+          if (rec.current === r) {
+            try {
+              r.start();
+            } catch {}
+          }
+        };
         r.start();
         rec.current = r;
       } catch {}

@@ -1,11 +1,14 @@
+import { TOPIC_BANK } from "./content-topics";
 // Local, reusable content bank. No AI is used to build sessions.
 // Language stays short; content stays professional ("langage simple ≠ contenu simple").
 
 export type Theme = "nutrition" | "avis" | "sciences" | "temps" | "expression";
 export type Skill = "lexique" | "conseil" | "information" | "temps" | "completion" | "expression" | "evocation" | "elocution";
+/** Subject used to carry the exercise — independent of the skill trained. "general" = transversal (time, language). */
+export type Topic = "sante" | "medecine" | "sciences" | "histoire" | "art" | "geographie" | "nature" | "litterature" | "technologie" | "cuisine" | "sport" | "general";
 export type Opt = { label: string; image?: string | undefined };
 
-type Base = { id: string; theme: Theme; skill: Skill };
+type Base = { id: string; theme: Theme; skill: Skill; topic?: Topic };
 export type McqItem = Base & {
   kind: "mcq";
   audio: string;
@@ -49,7 +52,7 @@ const evoke = (id: string, theme: Theme, audio: string, answer: string, hint: st
   id, theme, skill: "evocation", kind: "evoke", audio, answer, hint, syllable, model,
 });
 
-export const BANK: Item[] = [
+const CORE: Item[] = [
   // ——— 1. Questions de nutrition ———
   mcq("n-omega3", "nutrition", "lexique", "Quel aliment apporte le plus d'oméga-3 ?", "oméga-3", o("saumon", "salmon"), [o("pain blanc", "bread"), o("poulet", "chicken"), o("œufs", "eggs")]),
   mcq("n-med-fat", "nutrition", "lexique", "Quelle graisse est privilégiée dans le régime méditerranéen ?", "méditerranéen", o("huile d'olive", "olive_oil"), [o("soda", "soda"), o("beurre", "butter"), o("fromage", "cheese")], { audioShort: "Quelle graisse pour le régime méditerranéen ?" }),
@@ -299,6 +302,22 @@ export const BANK: Item[] = [
   ]),
 ];
 
+const TOPIC_BY_ID: Record<string, Topic> = {
+  "cu-joconde": "art", "cu-monet": "art", "cu-rome": "geographie", "cu-thames": "geographie", "cu-gaudi": "art", "cu-eiffel": "geographie",
+  "cu-pasteur": "sciences", "cu-fleming": "medecine", "cu-curie": "sciences", "cu-mercury": "sciences", "cu-hippo": "medecine",
+  "v-glyc": "medecine", "v-insul": "medecine", "v-hta": "medecine", "v-chol": "medecine", "v-diab": "medecine", "tf-insulin": "medecine",
+  "e-med": "sante", "e-sleep": "medecine", "e-activity": "medecine", "e-muscle": "medecine", "i-sleep": "medecine", "i-walk": "medecine",
+};
+/** Existing core items: clinical nutrition → santé, medical notions → médecine, time → general. */
+export function topicOf(i: Item): Topic {
+  if (i.topic) return i.topic;
+  if (TOPIC_BY_ID[i.id]) return TOPIC_BY_ID[i.id]!;
+  if (i.theme === "temps") return "general";
+  if (i.id.startsWith("m-")) return "medecine";
+  return "sante";
+}
+
+export const BANK: Item[] = [...CORE, ...TOPIC_BANK];
 export const BY_ID = new Map(BANK.map((i) => [i.id, i]));
 export const FOLLOW_IDS = new Set(BANK.flatMap((i) => (i.kind === "oral" && i.follow ? [i.follow] : [])));
 

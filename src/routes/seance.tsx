@@ -9,6 +9,7 @@ import { imageSrc } from "@/lib/library";
 import { heardWord, useVoiceInput, wordCount } from "@/lib/voice-input";
 import { praise, praiseChoice } from "@/lib/praise";
 import { todayGoal, weekLine, weekSummary } from "@/lib/week";
+import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, PREFIX } from "@/lib/interests";
 
 export const Route = createFileRoute("/seance")({
   ssr: false,
@@ -47,6 +48,18 @@ function speakLocally(text: string, rate: number): Promise<void> {
 }
 
 const MODE_TITLE: Record<string, string> = { expliquer: "Votre avis", lire: "Formulation", reformuler: "Avec vos mots", nommer: "Regard d'expert" };
+const TOPIC_TITLE: Record<string, string> = { ...Object.fromEntries(INTERESTS.map((x) => [x.id, x.label])), sante: "Santé & nutrition", general: "Organisation" };
+/** Spoken "your turn" cue, chosen by exercise type and varied. */
+function turnCue(it: PlayItem, n: number): string {
+  if (it.kind === "oral" && it.mode === "lire") return "À vous. Répétez la phrase.";
+  if (it.kind === "oral" && it.mode === "reformuler") return "À vous. Dites-le avec vos mots.";
+  if (it.kind === "oral" && it.mode === "expliquer") {
+    if (/conseil/i.test(it.audio)) return "À vous. Quel serait votre conseil ?";
+    if (/avis|frappe/i.test(it.audio)) return "À vous. Quel est votre avis ?";
+    return n % 2 ? "Vous pouvez répondre à voix haute." : "À vous. Comment l'expliqueriez-vous ?";
+  }
+  return "À vous de répondre.";
+}
 const THEME_TITLE: Record<string, string> = { nutrition: "Nutrition", avis: "Cas pratique", sciences: "Culture scientifique", temps: "Organisation" };
 const THEME_FR: Record<string, string> = { nutrition: "de nutrition", avis: "les cas pratiques", sciences: "de culture scientifique", temps: "d'organisation" };
 
@@ -76,6 +89,8 @@ function Seance() {
   const [step, setStep] = useState<"ask" | "model">("ask");
   const [heard, setHeard] = useState("");
   const [repeated, setRepeated] = useState(false);
+  const [reading, setReading] = useState(-1); // option index being read aloud
+  const [cue, setCue] = useState<string | null>(null);
 
   const cache = useRef(new Map<string, Promise<string>>());
   const audio = useRef<HTMLAudioElement | null>(null);
@@ -132,29 +147,35 @@ function Seance() {
     setSpeaking(false);
   }, []);
   const play = useCallback(
-    async (texts: (string | null)[], slow = false) => {
+    async (texts: (string | null)[], slow = false, onStep?: (k: number) => void) => {
       const id = ++playId.current;
       audio.current?.pause();
       setSpeaking(true);
+      let completed = false;
       try {
-        let first = true;
-        for (const t of texts) {
+        let prev: string | null = null;
+        for (let k = 0; k < texts.length; k++) {
+          const t = texts[k];
           if (!t) continue;
-          if (id !== playId.current) return;
-          if (!first) await sleep(700);
-          if (id !== playId.current) return;
+          if (id !== playId.current) return false;
+          if (prev) await sleep(/^Réponse \d\.$/.test(prev) ? 200 : 700);
+          if (id !== playId.current) return false;
+          onStep?.(k);
           await playOne(t, slow ? 0.85 : 1);
-          first = false;
+          prev = t;
         }
+        completed = id === playId.current;
         setNeedsTap(false);
       } catch {
         setNeedsTap(true);
       } finally {
         if (id === playId.current) {
           setSpeaking(false);
+          setReading(-1);
           shownAt.current = Date.now();
         }
       }
+      return completed;
     },
     [playOne],
   );
@@ -169,7 +190,12 @@ function Seance() {
         // Discovery mode: built locally, nothing saved.
         guest.current = true;
         setIsGuest(true);
-        return { sessionId: "", items: buildSession([], ["nutrition", "avis", "sciences", "temps", "expression"], 1) };
+        let mine: string[] = DEFAULT_INTERESTS.map((x) => PREFIX + x);
+        try {
+          const saved = JSON.parse(localStorage.getItem(GUEST_KEY) ?? "null");
+          if (Array.isArray(saved) && saved.length) mine = saved;
+        } catch {}
+        return { sessionId: "", items: buildSession([], mine, 1) };
       })
       .then((r) => {
         if (!r.items.length) throw new Error("empty");
@@ -184,13 +210,27 @@ function Seance() {
 
   const it = items[i] as PlayItem;
   /** Full prompt read aloud: sentence, question, then each answer. */
-  const spoken = (x: PlayItem) => [x.audio, x.question, ...(x.kind === "mcq" ? x.options.map((o) => o.label) : [])];
+  const spoken = (x: PlayItem) => [x.audio, x.question, ...(x.kind === "mcq" || x.kind === "tf" ? x.options.flatMap((o, k) => [`Réponse ${k + 1}.`, o.label]) : [])];
+  /** Read the prompt; highlight each answer while it is read; then say clearly when it is his turn to speak. */
+  const readItem = async (x: PlayItem, slow = false, questionOnly = false) => {
+    setCue(null);
+    const texts = questionOnly ? [x.audio, x.question] : spoken(x);
+    const h = x.question ? 2 : 1;
+    const done = await play(texts, slow, (k) => setReading(k >= h ? Math.floor((k - h) / 2) : -1));
+    const open = x.kind === "oral" || x.kind === "evoke" || x.kind === "complete";
+    if (done && open && !questionOnly) {
+      const c = turnCue(x, i);
+      setCue(c);
+      const ok = await play([c]);
+      if (ok && !(x.kind === "oral" && x.mode === "lire")) voice.start();
+    }
+  };
 
   useEffect(() => {
     if (phase !== "play" || !it) return;
     setCanHint(false);
     const t = setTimeout(() => setCanHint(true), 5000);
-    play(spoken(it));
+    readItem(it);
     const next = items[i + 1];
     if (next) {
       clip(next.audio).catch(() => {});
@@ -227,6 +267,8 @@ function Seance() {
     setMessage(null);
     setSuccess(false);
     setStep("ask");
+    setCue(null);
+    setReading(-1);
     setHeard("");
     setRepeated(false);
     if (i + 1 >= items.length + added) {
@@ -253,12 +295,12 @@ function Seance() {
       setStage(1);
       setMessage("Écoutons encore.");
       await sleep(900);
-      play(spoken(it), true);
+      readItem(it, true);
     } else if (stage === 1) {
       setStage(2);
       setMessage("Voici un indice.");
       await sleep(500);
-      play(spoken(it), true);
+      readItem(it, true);
     } else {
       setStage(3);
       setChosen(it.correctIndex);
@@ -307,11 +349,13 @@ function Seance() {
       const t = voice.stop();
       setHeard(t);
       settle("spontaneous", Math.max(1, wordCount(t)));
-      setMessage(praise("oral"));
+      const m = praise("oral");
+      setMessage(m);
       setSuccess(true);
       setStep("model");
-      await sleep(600);
-      play([it.model]);
+      setCue(null);
+      await sleep(400);
+      play([m, it.model ? "Une formulation possible :" : null, it.model]);
       return;
     }
     await voice.start();
@@ -358,7 +402,7 @@ function Seance() {
   const isRecall = it.kind === "evoke" || it.kind === "complete" || (it.kind === "oral" && it.mode === "nommer");
   const isOpen = it.kind === "oral" && (it.mode === "expliquer" || it.mode === "reformuler");
   const isLire = it.kind === "oral" && it.mode === "lire";
-  const title = it.kind === "oral" ? MODE_TITLE[it.mode ?? ""] : it.kind === "complete" ? "Notion à compléter" : it.kind === "evoke" ? "Le terme juste" : it.kind === "tf" ? "Affirmation" : THEME_TITLE[it.theme];
+  const title = it.kind === "oral" ? MODE_TITLE[it.mode ?? ""] : it.kind === "complete" ? "Notion à compléter" : it.kind === "evoke" ? "Le terme juste" : it.kind === "tf" ? "Affirmation" : (TOPIC_TITLE[it.topic] ?? THEME_TITLE[it.theme]);
 
   return (
     <main className="paper-grain flex min-h-screen flex-col px-6 py-6 md:px-12">
@@ -377,7 +421,7 @@ function Seance() {
       <section key={i} className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center animate-rise">
         <p className="mb-6 text-sm uppercase tracking-[0.25em] text-muted-foreground">{title}</p>
         <button
-          onClick={() => play(step === "model" && it.model ? [it.model] : spoken(it), stage > 0)}
+          onClick={() => (step === "model" && it.model ? play([it.model]) : readItem(it, stage > 0))}
           disabled={speaking || voice.listening}
           aria-label="Réécouter"
           className="relative flex h-24 w-24 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl transition hover:scale-105 disabled:opacity-90"
@@ -386,8 +430,12 @@ function Seance() {
           <Volume2 className="relative h-10 w-10" />
         </button>
         <p className="mt-3 h-7 text-lg text-muted-foreground">{needsTap ? "Touchez pour écouter" : speaking ? "" : "Réécouter"}</p>
+        {isChoice && !speaking && it.question && chosen === null && (
+          <button onClick={() => readItem(it, false, true)} className="mt-1 text-sm text-muted-foreground underline underline-offset-4">Question seulement</button>
+        )}
+        {cue && step === "ask" && <TurnCue text={cue} listening={voice.listening} />}
 
-        {isChoice && <ChoiceBody it={it} stage={stage} wrong={wrong} chosen={chosen} message={message} success={success} onChoose={choose} onNext={goNext} />}
+        {isChoice && <ChoiceBody it={it} reading={reading} stage={stage} wrong={wrong} chosen={chosen} message={message} success={success} onChoose={choose} onNext={goNext} />}
 
         {isRecall && (
           <div className="mt-4 w-full text-center">
@@ -431,7 +479,7 @@ function Seance() {
               <>
                 <Heard text={voice.transcript} />
                 <Actions>
-                  <MicBtn listening={voice.listening} onClick={answerOpen} label="Répondre" doneLabel="J'ai terminé" />
+                  <MicBtn listening={voice.listening} onClick={answerOpen} label="Répondre" doneLabel="Terminer ma réponse" />
                   {!voice.listening && canHint && <Btn subtle onClick={skipToModel}>Voir une formulation</Btn>}
                 </Actions>
               </>
@@ -465,7 +513,7 @@ function Seance() {
 }
 
 function RepeatActions({ voice, repeated, onListen, onRepeat, onNext }: { voice: ReturnType<typeof useVoiceInput>; repeated: boolean; onListen: () => void; onRepeat: () => void; onNext: () => void }) {
-  if (voice.listening) return <MicBtn listening onClick={onRepeat} label="Répéter" doneLabel="J'ai terminé" />;
+  if (voice.listening) return <MicBtn listening onClick={onRepeat} label="Répéter" doneLabel="Terminer ma réponse" />;
   return (
     <>
       {voice.recording && (
@@ -482,7 +530,7 @@ function RepeatActions({ voice, repeated, onListen, onRepeat, onNext }: { voice:
   );
 }
 
-function ChoiceBody({ it, stage, wrong, chosen, message, success, onChoose, onNext }: { it: PlayItem; stage: number; wrong: number[]; chosen: number | null; message: string | null; success: boolean; onChoose: (k: number) => void; onNext: () => void }) {
+function ChoiceBody({ it, reading, stage, wrong, chosen, message, success, onChoose, onNext }: { it: PlayItem; reading: number; stage: number; wrong: number[]; chosen: number | null; message: string | null; success: boolean; onChoose: (k: number) => void; onNext: () => void }) {
   const hasImages = it.options.length > 0 && it.options.every((o) => o.image);
   const n = it.options.length;
   const cols = n === 4 ? "grid-cols-2 lg:grid-cols-4" : n === 3 ? "grid-cols-3" : "grid-cols-2";
@@ -506,8 +554,9 @@ function ChoiceBody({ it, stage, wrong, chosen, message, success, onChoose, onNe
             <button
               key={k}
               onClick={() => onChoose(k)}
-              className={`relative overflow-hidden rounded-3xl border-2 bg-card shadow-sm transition ${right ? "border-calm ring-4 ring-calm-soft animate-glow" : "border-transparent hover:-translate-y-1 hover:shadow-lg"} ${dim ? "opacity-35" : ""}`}
+              className={`relative overflow-hidden rounded-3xl border-2 bg-card shadow-sm transition ${right ? "border-calm ring-4 ring-calm-soft animate-glow" : reading === k ? "border-calm/70 ring-4 ring-calm-soft scale-[1.02]" : "border-transparent hover:-translate-y-1 hover:shadow-lg"} ${dim ? "opacity-35" : ""}`}
             >
+              <span className="absolute left-4 top-3 text-sm text-muted-foreground">Réponse {k + 1}</span>
               {hasImages && <div className="aspect-square w-full bg-muted">{src && <img src={src} alt={o.label} className="h-full w-full object-cover" />}</div>}
               <div className={`px-4 text-center ${hasImages ? "py-4 text-2xl" : "py-9 font-serif text-3xl"}`}>{o.label}</div>
               {right && success && (
@@ -521,6 +570,26 @@ function ChoiceBody({ it, stage, wrong, chosen, message, success, onChoose, onNe
       </div>
       <div className="mt-6 h-14">{stage === 3 && <button onClick={onNext} className="rounded-full bg-primary px-12 py-4 text-xl text-primary-foreground">Continuer</button>}</div>
     </>
+  );
+}
+
+function TurnCue({ text, listening }: { text: string; listening: boolean }) {
+  return (
+    <div className="mt-4 flex flex-col items-center gap-1 animate-rise">
+      <p className="font-serif text-2xl text-calm">{text}</p>
+      <p className="flex h-7 items-center gap-2 text-lg text-muted-foreground">
+        {listening && (
+          <>
+            <span className="flex items-end gap-0.5" aria-hidden>
+              {[0, 1, 2, 3].map((b) => (
+                <span key={b} className="w-1 rounded-full bg-calm animate-breathe" style={{ height: 8 + (b % 2) * 8, animationDelay: `${b * 0.2}s` }} />
+              ))}
+            </span>
+            Je vous écoute
+          </>
+        )}
+      </p>
+    </div>
   );
 }
 
@@ -545,7 +614,7 @@ function Actions({ children }: { children: React.ReactNode }) {
   return <div className="mt-8 flex flex-wrap items-center justify-center gap-3">{children}</div>;
 }
 
-function MicBtn({ listening, onClick, label, doneLabel = "J'ai terminé", subtle }: { listening: boolean; onClick: () => void; label: string; doneLabel?: string; subtle?: boolean }) {
+function MicBtn({ listening, onClick, label, doneLabel = "Terminer ma réponse", subtle }: { listening: boolean; onClick: () => void; label: string; doneLabel?: string; subtle?: boolean }) {
   return (
     <button
       onClick={onClick}
