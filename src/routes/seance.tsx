@@ -2,13 +2,16 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Mic, Play, Square, Volume2 } from "lucide-react";
-import { completeSession, recordAttempt, speak, startSession, type PlayItem } from "@/lib/session.functions";
+import { completeSession, recordAttempt, speak, speakCached, startSession, type PlayItem } from "@/lib/session.functions";
+import { buildSession } from "@/lib/builder";
+import { supabase } from "@/integrations/supabase/client";
 import { imageSrc } from "@/lib/library";
 import { heardWord, useVoiceInput, wordCount } from "@/lib/voice-input";
 import { praise, praiseChoice } from "@/lib/praise";
 import { todayGoal, weekLine, weekSummary } from "@/lib/week";
 
-export const Route = createFileRoute("/_authenticated/seance")({
+export const Route = createFileRoute("/seance")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Séance du jour — Écoute" },
@@ -50,9 +53,12 @@ const THEME_FR: Record<string, string> = { nutrition: "de nutrition", avis: "les
 function Seance() {
   const start = useServerFn(startSession);
   const speakFn = useServerFn(speak);
+  const cachedFn = useServerFn(speakCached);
   const record = useServerFn(recordAttempt);
   const complete = useServerFn(completeSession);
   const voice = useVoiceInput();
+  const guest = useRef(false);
+  const [isGuest, setIsGuest] = useState(false);
 
   const [phase, setPhase] = useState<"loading" | "play" | "done" | "error">("loading");
   const [sessionId, setSessionId] = useState("");
@@ -84,7 +90,8 @@ function Seance() {
     (text: string) => {
       let p = cache.current.get(text);
       if (!p) {
-        p = speakFn({ data: { text } }).then(({ audio: b64 }) => {
+        p = (guest.current ? cachedFn({ data: { text } }) : speakFn({ data: { text } })).then(({ audio: b64 }) => {
+          if (!b64) throw new Error("not cached");
           const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
           return URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
         });
@@ -93,7 +100,7 @@ function Seance() {
       }
       return p;
     },
-    [speakFn],
+    [speakFn, cachedFn],
   );
 
   const playOne = useCallback(
@@ -155,7 +162,15 @@ function Seance() {
   useEffect(() => {
     if (started.current) return;
     started.current = true;
-    start()
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (data.session) return start();
+        // Discovery mode: built locally, nothing saved.
+        guest.current = true;
+        setIsGuest(true);
+        return { sessionId: "", items: buildSession([], ["nutrition", "avis", "sciences", "temps", "expression"], 1) };
+      })
       .then((r) => {
         if (!r.items.length) throw new Error("empty");
         setSessionId(r.sessionId);

@@ -12,8 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as SeanceRouteImport } from './routes/seance'
 import { Route as AuthenticatedAidantRouteImport } from './routes/_authenticated/aidant'
-import { Route as AuthenticatedSeanceRouteImport } from './routes/_authenticated/seance'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -29,55 +29,56 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SeanceRoute = SeanceRouteImport.update({
+  id: '/seance',
+  path: '/seance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAidantRoute = AuthenticatedAidantRouteImport.update({
   id: '/aidant',
   path: '/aidant',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSeanceRoute = AuthenticatedSeanceRouteImport.update({
-  id: '/seance',
-  path: '/seance',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/seance': typeof SeanceRoute
   '/aidant': typeof AuthenticatedAidantRoute
-  '/seance': typeof AuthenticatedSeanceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/seance': typeof SeanceRoute
   '/aidant': typeof AuthenticatedAidantRoute
-  '/seance': typeof AuthenticatedSeanceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/seance': typeof SeanceRoute
   '/_authenticated/aidant': typeof AuthenticatedAidantRoute
-  '/_authenticated/seance': typeof AuthenticatedSeanceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/aidant' | '/seance'
+  fullPaths: '/' | '/auth' | '/seance' | '/aidant'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/aidant' | '/seance'
+  to: '/' | '/auth' | '/seance' | '/aidant'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/seance'
     | '/_authenticated/aidant'
-    | '/_authenticated/seance'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  SeanceRoute: typeof SeanceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -103,6 +104,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/seance': {
+      id: '/seance'
+      path: '/seance'
+      fullPath: '/seance'
+      preLoaderRoute: typeof SeanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/aidant': {
       id: '/_authenticated/aidant'
       path: '/aidant'
@@ -110,24 +118,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAidantRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/seance': {
-      id: '/_authenticated/seance'
-      path: '/seance'
-      fullPath: '/seance'
-      preLoaderRoute: typeof AuthenticatedSeanceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAidantRoute: typeof AuthenticatedAidantRoute
-  AuthenticatedSeanceRoute: typeof AuthenticatedSeanceRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAidantRoute: AuthenticatedAidantRoute,
-  AuthenticatedSeanceRoute: AuthenticatedSeanceRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -137,6 +136,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  SeanceRoute: SeanceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
