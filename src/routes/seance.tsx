@@ -218,9 +218,10 @@ function Seance() {
   const isChoiceItem = (x: PlayItem) => x.kind === "mcq" || x.kind === "tf";
   const spoken = (x: PlayItem) => [...intro(x), x.audio, x.question, ...(isChoiceItem(x) ? ["Voici les réponses possibles.", ...x.options.flatMap((o, k) => [`Réponse ${k + 1}.`, o.label])] : [])];
   /** Read the prompt; highlight each answer while it is read; then say clearly when it is his turn to speak. */
-  const readItem = async (x: PlayItem, slow = false, questionOnly = false) => {
+  const readItem = async (x: PlayItem, slow = false, questionOnly = false, announce = true) => {
     setCue(null);
-    const texts = questionOnly ? [x.audio, x.question] : spoken(x);
+    const full = spoken(x);
+    const texts = questionOnly ? [x.audio, x.question] : announce ? full : full.filter((t) => t !== "Voici les réponses possibles.");
     const h = questionOnly ? 2 : intro(x).length + (x.question ? 2 : 1) + (isChoiceItem(x) ? 1 : 0);
     const done = await play(texts, slow, (k) => setReading(k >= h ? Math.floor((k - h) / 2) : -1));
     const open = x.kind === "oral" || x.kind === "evoke" || x.kind === "complete";
@@ -290,9 +291,11 @@ function Seance() {
     if (idx === it.correctIndex) {
       setChosen(idx);
       setSuccess(true);
-      setMessage(praiseChoice(stage === 0, it.skill === "conseil"));
+      const p = praiseChoice(stage === 0, it.skill === "conseil");
+      setMessage(p);
       settle(stage === 0 ? "spontaneous" : stage === 1 ? "after_repeat" : "after_cue");
-      await sleep(1800);
+      await play([p]);
+      await sleep(900);
       goNext();
       return;
     }
@@ -300,19 +303,19 @@ function Seance() {
     if (stage === 0) {
       setStage(1);
       setMessage("Écoutons encore.");
-      await sleep(900);
-      readItem(it, true);
+      await play(["Écoutons encore."]);
+      readItem(it, true, false, false);
     } else if (stage === 1) {
       setStage(2);
       setMessage("Voici un indice.");
-      await sleep(500);
-      readItem(it, true);
+      await play(["Voici un indice."]);
+      readItem(it, true, false, false);
     } else {
       setStage(3);
       setChosen(it.correctIndex);
       setMessage("Voici la réponse.");
       settle("revealed");
-      play([it.options[it.correctIndex]?.label ?? null]);
+      play(["Voici la réponse.", it.options[it.correctIndex]?.label ?? null]);
     }
   }
 
