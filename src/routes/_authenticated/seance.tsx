@@ -7,6 +7,7 @@ import { imageSrc } from "@/lib/library";
 import { heardWord, useVoiceInput, wordCount } from "@/lib/voice-input";
 import { praise, praiseChoice } from "@/lib/praise";
 import { todayGoal, weekLine, weekSummary } from "@/lib/week";
+import morning from "@/assets/library/morning.jpg";
 
 export const Route = createFileRoute("/_authenticated/seance")({
   head: () => ({
@@ -437,7 +438,7 @@ function Seance() {
         {isLire && (
           <div className="mt-4 w-full text-center">
             <p className="mx-auto max-w-3xl font-serif text-5xl leading-tight">{it.audio}</p>
-            <p className="mt-4 text-lg text-muted-foreground">{repeated ? "" : "Écoutez, puis répétez la phrase."}</p>
+            <p className="mt-4 text-2xl font-medium">{repeated ? "" : "Écoutez, puis répétez la phrase."}</p>
             <Feedback message={message} success={success} />
             <Actions>
               <RepeatActions voice={voice} repeated={repeated} onListen={() => play([it.audio])} onRepeat={repeatModel} onNext={goNext} />
@@ -567,28 +568,23 @@ function Summary({ log, minutes }: { log: Done[]; minutes: number }) {
   const goal = todayGoal();
   const reached = goal.id === "oral" ? oral >= goal.target : goal.id === "cases" ? cases >= goal.target : minutes >= goal.target;
   const lines = [
-    `Vous avez travaillé compréhension et expression pendant ${minutes} minute${minutes > 1 ? "s" : ""}.`,
     spont > 0 && `${spont} réponse${spont > 1 ? "s" : ""} retrouvée${spont > 1 ? "s" : ""} spontanément.`,
     oral > 0 && `${oral} réponse${oral > 1 ? "s" : ""} formulée${oral > 1 ? "s" : ""} à l'oral.`,
-    best && `Très bonne aisance sur les questions ${THEME_FR[best]}.`,
   ].filter(Boolean) as string[];
   return (
     <Center>
-      <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-calm-soft text-calm animate-pop">
-        <Check className="h-10 w-10" />
-      </span>
+      <img src={morning} alt="Lever du soleil sur les toits de Paris" className="mx-auto w-full max-w-xl rounded-3xl object-cover shadow-xl animate-pop aspect-[16/9]" />
       <p className="mt-8 text-sm uppercase tracking-[0.25em] text-muted-foreground">Séance terminée</p>
-      <h1 className="mt-3 text-6xl">{spont >= log.length / 2 ? "Belle séance aujourd'hui." : "Très bonne participation."}</h1>
+      <h1 className="mt-3 text-6xl">Excellente séance aujourd'hui.</h1>
       <ul className="mx-auto mt-8 max-w-2xl space-y-2 font-serif text-2xl text-muted-foreground">
         {lines.map((l) => <li key={l}>{l}</li>)}
       </ul>
       {reached && (
         <p className="mt-8 inline-flex items-center gap-3 rounded-full bg-card px-6 py-3 text-lg shadow-sm animate-rise [animation-delay:400ms]">
-          <Check className="h-5 w-5 text-calm" /> {goal.label.replace("Aujourd'hui : ", "")} — objectif atteint.
+          Objectif atteint <Check className="h-5 w-5 text-calm" /> Votre progression se confirme.
         </p>
       )}
-      {week && <p className="mt-5 text-lg text-muted-foreground">{week}</p>}
-      <p className="mt-6 font-serif text-2xl italic text-muted-foreground">Merci pour votre éclairage. À demain.</p>
+      <p className="mt-8 font-serif text-3xl italic text-muted-foreground">À demain.</p>
       <Link to="/" className="mt-10 inline-block rounded-full border bg-card px-10 py-4 text-lg">Accueil</Link>
     </Center>
   );

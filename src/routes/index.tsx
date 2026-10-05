@@ -64,7 +64,7 @@ function Index() {
             )}
             {state === "out" && (
               <Link to="/auth" className="inline-flex items-center rounded-full bg-primary px-10 py-5 text-xl text-primary-foreground transition hover:opacity-90">
-                Connexion aidant
+                Connexion
               </Link>
             )}
           </div>

@@ -6,10 +6,10 @@ import { lovable } from "@/integrations/lovable/index";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Connexion aidant — Écoute" },
-      { name: "description", content: "Espace aidant : connectez-vous pour lancer les séances et suivre les progrès." },
-      { property: "og:title", content: "Connexion aidant — Écoute" },
-      { property: "og:description", content: "Espace aidant pour lancer les séances et suivre les progrès." },
+      { title: "Connexion — Écoute" },
+      { name: "description", content: "Connectez-vous pour lancer les séances et suivre les progrès." },
+      { property: "og:title", content: "Connexion — Écoute" },
+      { property: "og:description", content: "Connectez-vous pour lancer les séances et suivre les progrès." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
