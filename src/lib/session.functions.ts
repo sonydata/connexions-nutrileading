@@ -78,7 +78,10 @@ export const speak = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`v1|${data.text}`));
     const name = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("") + ".wav";
-    const bucket = context.supabase.storage.from("voice");
+    // Privileged client: the voice bucket is a shared, server-only cache —
+    // direct client access is revoked by policy, so reads/writes go through here.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const bucket = supabaseAdmin.storage.from("voice");
     const cached = await bucket.download(name);
     if (cached.data && cached.data.size > 0) return { audio: Buffer.from(await cached.data.arrayBuffer()).toString("base64") };
     const { synthesizeSpeech } = await import("./gateway.server");
