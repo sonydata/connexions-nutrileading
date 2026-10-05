@@ -22,3 +22,4 @@
 - [x] « Voici les réponses possibles » ne se répète plus lors des relectures
 - [x] La voix dit un encouragement à voix haute après chaque réponse (bonne ou mauvaise)
 - [x] Accueil : date en en-tête (remplace le symbole), « by Nutrileading » et logo agrandis, « Connexions » plus dupliqué
+- [x] Nom de la personne connectée dans l’en-tête (pastille avec initiale)
