@@ -123,24 +123,32 @@ function Index() {
             </p>
           </div>
 
-          {/* Moodboard éditorial : tailles variées, légers décalages et rotations */}
-          <div className="relative hidden h-[640px] md:block" aria-hidden>
+          {/* Moodboard éditorial : deux rangées resserrées, tailles généreuses, légères rotations */}
+          <div className="hidden md:block" aria-hidden>
             {[
-              { src: artImg, label: "Art", pos: "object-[60%_40%]", box: "left-0 top-0 w-[72%] aspect-[4/3] -rotate-[1.2deg] z-10" },
-              { src: img("astronomy"), label: "Sciences", pos: "object-center", box: "right-0 top-6 w-[40%] aspect-[3/4] rotate-[1.5deg]" },
-              { src: img("rome"), label: "Histoire", pos: "object-center", box: "left-[2%] top-[330px] w-[52%] aspect-[4/3] rotate-[0.8deg]" },
-              { src: litteratureImg, label: "Littérature", pos: "object-[50%_70%]", box: "left-[52%] top-[300px] w-[30%] aspect-[4/5] -rotate-[1.5deg] z-20" },
-              { src: santeImg, label: "Santé", pos: "object-center", box: "right-0 top-[400px] w-[38%] aspect-[4/3] rotate-[1deg]" },
-            ].map((c) => (
-              <figure key={c.label} className={`absolute ${c.box.replace(/aspect-\S+/, "")} transition duration-500 hover:z-30 hover:rotate-0`}>
-                <div className={`overflow-hidden rounded-2xl bg-card p-1.5 shadow-xl ${c.box.match(/aspect-\S+/)?.[0]}`}>
-                  <img src={c.src} alt="" className={`h-full w-full rounded-xl object-cover ${c.pos}`} />
-                </div>
-                <figcaption className="mt-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand">
-                  <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-                  {c.label}
-                </figcaption>
-              </figure>
+              [
+                { src: artImg, label: "Art", pos: "object-[60%_40%]", box: "w-[59%] aspect-[4/3] -rotate-[1.2deg]" },
+                { src: img("astronomy"), label: "Sciences", pos: "object-center", box: "w-[37%] aspect-[3/4] mt-10 rotate-[1.5deg]" },
+              ],
+              [
+                { src: img("rome"), label: "Histoire", pos: "object-center", box: "w-[40%] aspect-[4/3] rotate-[0.8deg]" },
+                { src: litteratureImg, label: "Littérature", pos: "object-[50%_70%]", box: "w-[23%] aspect-[4/5] mt-4 -rotate-[1.5deg]" },
+                { src: santeImg, label: "Santé", pos: "object-center", box: "w-[31%] aspect-[4/3] mt-12 rotate-[1deg]" },
+              ],
+            ].map((row, r) => (
+              <div key={r} className={`flex items-start gap-4 ${r === 1 ? "mt-5" : ""}`}>
+                {row.map((c) => (
+                  <figure key={c.label} className={`transition duration-500 hover:z-30 hover:rotate-0 ${c.box.replace(/aspect-\S+/, "")}`}>
+                    <div className={`overflow-hidden rounded-2xl bg-card p-1.5 shadow-xl ${c.box.match(/aspect-\S+/)?.[0]}`}>
+                      <img src={c.src} alt="" className={`h-full w-full rounded-xl object-cover ${c.pos}`} />
+                    </div>
+                    <figcaption className="mt-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand">
+                      <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+                      {c.label}
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
             ))}
           </div>
         </div>
