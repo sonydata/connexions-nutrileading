@@ -4,9 +4,11 @@
 import type { EvokeItem, McqItem, OralItem, TfItem, Topic } from "./content";
 
 const opt = (label: string) => ({ label });
+/** Key word of the question (never the answer) — shown as a gentle cue. */
+const keyOf = (s: string) => s.replace(/[?.,']/g, " ").split(/\s+/).filter((w) => w.length > 5).slice(-1)[0] ?? "";
 
 const q = (id: string, topic: Topic, audio: string, answer: string, distractors: [string, string, string]): McqItem => ({
-  id, topic, theme: "sciences", skill: "information", kind: "mcq", audio, keyword: answer.split(" ").slice(-1)[0]!, answer: opt(answer), distractors: distractors.map(opt),
+  id, topic, theme: "sciences", skill: "information", kind: "mcq", audio, keyword: keyOf(audio), answer: opt(answer), distractors: distractors.map(opt),
 });
 const t = (id: string, topic: Topic, audio: string, answer: boolean, keyword: string): TfItem => ({
   id, topic, theme: "sciences", skill: "information", kind: "tf", audio, answer, keyword,
