@@ -249,7 +249,7 @@ function Index() {
           <p className="mt-6 font-serif text-4xl leading-tight md:text-6xl">
             Relier ce que l'on <span className="text-brand">entend</span>, ce que l'on sait et ce que l'on exprime.
           </p>
-          <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">Comprendre, retrouver, s'exprimer — à partir de ce qui vous passionne.</p>
+          <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">{"\n"}</p>
           <p className="mt-8 text-sm font-semibold uppercase tracking-[0.25em] text-brand">Connexions by Nutrileading</p>
         </div>
       </section>
