@@ -37,5 +37,6 @@ export function themesFor(topics: string[]): string[] {
   if (has("sciences", "histoire", "art", "geographie", "nature", "litterature", "technologie", "sport", "actualite")) themes.add("sciences");
   if (themes.size === 2) themes.add("sciences");
   const caregiver = topics.filter((t) => !t.startsWith(PREFIX));
-  return caregiver.length ? [...themes].filter((t) => caregiver.includes(t)).concat(themes.has("temps") ? [] : []) : [...themes];
+  const both = [...themes].filter((t) => caregiver.includes(t));
+  return both.length ? both : [...themes];
 }

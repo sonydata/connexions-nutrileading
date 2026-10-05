@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildSession } from "./builder";
+import { themesFor } from "./interests";
 
 export type { PlayItem } from "./builder";
 
@@ -16,7 +17,7 @@ export const startSession = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(300);
-    const items = buildSession(past ?? [], settings?.topics ?? ["nutrition", "avis", "sciences", "temps", "expression"], settings?.difficulty ?? 1);
+    const items = buildSession(past ?? [], themesFor(settings?.topics ?? []), settings?.difficulty ?? 1);
     const { data: session, error } = await supabase.from("practice_sessions").insert({ user_id: userId }).select("id").single();
     if (error) throw new Error(error.message);
     return { sessionId: session.id, items };
