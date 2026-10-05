@@ -20,6 +20,8 @@ export type Database = {
           concept: string | null
           created_at: string
           id: string
+          item_id: string | null
+          kind: string | null
           option_count: number
           outcome: string
           prompt: string
@@ -34,6 +36,8 @@ export type Database = {
           concept?: string | null
           created_at?: string
           id?: string
+          item_id?: string | null
+          kind?: string | null
           option_count?: number
           outcome: string
           prompt: string
@@ -48,6 +52,8 @@ export type Database = {
           concept?: string | null
           created_at?: string
           id?: string
+          item_id?: string | null
+          kind?: string | null
           option_count?: number
           outcome?: string
           prompt?: string

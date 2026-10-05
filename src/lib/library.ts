@@ -1,4 +1,4 @@
-// Curated photo library. The AI may only reference these ids.
+// Curated photo library used by the content bank.
 const files = import.meta.glob("@/assets/library/*.jpg", { eager: true, import: "default" }) as Record<string, string>;
 
 export type LibraryItem = { id: string; label: string; group: string };
@@ -23,6 +23,15 @@ export const LIBRARY: LibraryItem[] = [
   { id: "coffee", label: "tasse de café", group: "nutrition" },
   { id: "cheese", label: "fromage", group: "nutrition" },
   { id: "cooking", label: "cuisiner des légumes", group: "nutrition" },
+  { id: "chicken", label: "poulet", group: "nutrition" },
+  { id: "almonds", label: "amandes", group: "nutrition" },
+  { id: "oats", label: "flocons d'avoine", group: "nutrition" },
+  { id: "salt", label: "sel", group: "nutrition" },
+  { id: "butter", label: "beurre", group: "nutrition" },
+  { id: "soda", label: "soda", group: "nutrition" },
+  { id: "breakfast_sweet", label: "pain blanc, confiture, jus", group: "nutrition" },
+  { id: "vegetables", label: "légumes variés", group: "nutrition" },
+  { id: "sardines", label: "sardines", group: "nutrition" },
   { id: "market", label: "marché de fruits et légumes", group: "nutrition" },
   // Daily objects
   { id: "phone", label: "téléphone", group: "daily" },

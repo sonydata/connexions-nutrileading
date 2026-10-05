@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Project rules
-- Exercise photos come only from the curated library in `src/lib/library.ts`; the AI must reference those ids (validated server-side) — keeps sessions fast and cheap.
-- Session generation, attempt logging and voice synthesis are authenticated server functions in `src/lib/session.functions.ts`; AI gateway calls live in `src/lib/gateway.server.ts` — keeps keys server-side.
-- Adaptation is computed per skill from recent `attempts` outcomes (spontaneous / after_repeat / after_cue / revealed) at session start — no separate state to drift.
+- Session content comes from the local bank in `src/lib/content.ts`, assembled by rules in `src/lib/builder.ts` — no AI per session, to keep costs low and facts controlled.
+- Exercise photos come only from the curated library in `src/lib/library.ts`.
+- Spoken audio is synthesised once per sentence and cached in the private `voice` storage bucket — repeat plays cost nothing.
+- Adaptation is computed per skill from recent `attempts` outcomes at session start; oral exercises are rated by the caregiver, never by AI.
