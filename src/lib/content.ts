@@ -82,7 +82,7 @@ export const BANK: Item[] = [
   // ——— 5. Courtes informations scientifiques ———
   mcq("i-nuts", "sciences", "information", "Les noix apportent des acides gras insaturés.", "noix", o("des graisses", "walnuts"), [o("des sucres"), o("du sel", "salt"), o("des fibres")], { question: "De quel type de nutriment parlait-on ?" }),
   mcq("i-muscle", "sciences", "information", "Les protéines aident à maintenir la masse musculaire.", "protéines", o("le muscle"), [o("les os"), o("la peau"), o("le foie")], { question: "Quel tissu cherche-t-on à préserver ?" }),
-  mcq("i-fibres", "sciences", "information", "Les fibres favorisent un bon transit intestinal.", "fibres", o("l'intestin"), [o("le cœur"), o("les poumons"), o("l'estomac")], { question: "Quel organe était concerné ?" }),
+  mcq("i-fibres", "sciences", "information", "Les fibres favorisent un bon transit intestinal.", "fibres", o("l'intestin"), [o("le cœur"), o("les poumons"), o("l'estomac")], { question: "De quel organe s'agit-il ?" }),
   mcq("i-vitd", "sciences", "information", "La vitamine D aide à fixer le calcium.", "vitamine D", o("les os"), [o("les cheveux"), o("les yeux"), o("les muscles")], { question: "Quelle partie du corps en profite surtout ?" }),
   mcq("i-salt", "sciences", "information", "Un excès de sel peut augmenter la tension artérielle.", "tension", o("la tension"), [o("la vue"), o("la glycémie"), o("le cholestérol")], { question: "Qu'est-ce qui peut augmenter ?" }),
   mcq("i-olive", "sciences", "information", "L'huile d'olive est au cœur du régime crétois.", "crétois", o("l'huile d'olive", "olive_oil"), [o("le beurre", "butter"), o("le soda", "soda"), o("le fromage", "cheese")], { question: "De quel aliment parlait-on ?" }),

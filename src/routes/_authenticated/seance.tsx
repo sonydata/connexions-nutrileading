@@ -437,7 +437,7 @@ function Seance() {
         {isLire && (
           <div className="mt-4 w-full text-center">
             <p className="mx-auto max-w-3xl font-serif text-5xl leading-tight">{it.audio}</p>
-            <p className="mt-4 text-lg text-muted-foreground">{repeated ? "" : "Écoutez, puis répétez la phrase."}</p>
+            <p className="mt-4 text-2xl font-medium">{repeated ? "" : "Écoutez, puis répétez la phrase."}</p>
             <Feedback message={message} success={success} />
             <Actions>
               <RepeatActions voice={voice} repeated={repeated} onListen={() => play([it.audio])} onRepeat={repeatModel} onNext={goNext} />

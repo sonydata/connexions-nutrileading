@@ -1,6 +1,6 @@
 import { BANK, BY_ID, FOLLOW_IDS, SCENE, type Item, type Opt, type Skill, type Theme } from "./content";
 
-export type PastAttempt = { item_id: string | null; skill: string; outcome: string; created_at: string };
+export type PastAttempt = { item_id: string | null; skill: string; outcome: string; created_at: string; response_ms: number | null };
 
 export type PlayItem = {
   id: string;
@@ -44,9 +44,15 @@ export function skillLevels(past: PastAttempt[], base: number): Record<string, n
     const rows = past.filter((p) => p.skill === s).slice(0, 20);
     let lvl = base;
     if (rows.length >= 4) {
-      const rate = rows.filter((r) => r.outcome === "spontaneous").length / rows.length;
+      const spont = rows.filter((r) => r.outcome === "spontaneous");
+      const rate = spont.length / rows.length;
+      // Level up only when answers are spontaneous AND quick (median < 8 s);
+      // ease + speed together signal the skill is getting comfortable.
+      const times = spont.map((r) => r.response_ms).filter((t): t is number => t != null && t > 0).sort((a, b) => a - b);
+      const median = times.length ? times[Math.floor(times.length / 2)]! : null;
+      const fast = median == null || median < 8000;
       if (rate < 0.45) lvl -= 1;
-      else if (rate > 0.8) lvl += 1;
+      else if (rate > 0.8 && fast) lvl += 1;
     }
     out[s] = Math.max(1, Math.min(3, lvl));
   }
@@ -85,8 +91,8 @@ function toPlay(item: Item, level: number): PlayItem {
   return { ...base, mode: item.mode, audio: step, image: item.image ?? null, answerText: item.answer ?? null, hint: item.hint ?? null, syllable: item.answer ? firstSound(item.answer) : null, model };
 }
 
-// One session ≈ 10 activities: comprehension, 2 mini-cases, 2 oral expression,
-// 1 word retrieval, 1 elocution, 1 time/culture. Alternatives vary the day.
+// One session ≈ 15 activities: comprehension, mini-cases, oral expression,
+// word retrieval, elocution, time/culture. Alternatives vary the day.
 type Slot = { theme?: Theme; skill?: Skill; kind?: Item["kind"]; modes?: string[] };
 const PLAN: Slot[][] = [
   [{ theme: "avis", skill: "conseil", kind: "mcq" }],
@@ -99,6 +105,11 @@ const PLAN: Slot[][] = [
   [{ kind: "oral", modes: ["lire"] }],
   [{ theme: "temps" }, { theme: "sciences", kind: "mcq" }],
   [{ kind: "oral", modes: ["reformuler", "expliquer"] }],
+  [{ theme: "avis", skill: "conseil", kind: "mcq" }, { skill: "information", kind: "mcq" }],
+  [{ kind: "evoke" }, { kind: "complete" }],
+  [{ theme: "nutrition", skill: "lexique", kind: "mcq" }, { kind: "tf" }],
+  [{ kind: "oral", modes: ["expliquer", "nommer"] }],
+  [{ theme: "temps" }, { theme: "sciences" }, { kind: "evoke" }],
 ];
 
 export function buildSession(past: PastAttempt[], topics: string[], base: number): PlayItem[] {

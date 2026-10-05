@@ -12,7 +12,7 @@ export const startSession = createServerFn({ method: "POST" })
     const { data: settings } = await supabase.from("caregiver_settings").select("topics, difficulty").eq("user_id", userId).maybeSingle();
     const { data: past } = await supabase
       .from("attempts")
-      .select("item_id, skill, outcome, created_at")
+      .select("item_id, skill, outcome, created_at, response_ms")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(300);
