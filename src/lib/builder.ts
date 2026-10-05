@@ -1,4 +1,5 @@
-import { BANK, BY_ID, FOLLOW_IDS, SCENE, type Item, type Opt, type Skill, type Theme } from "./content";
+import { BANK, BY_ID, FOLLOW_IDS, SCENE, topicOf, type Item, type Opt, type Skill, type Theme, type Topic } from "./content";
+import { interestsOf } from "./interests";
 
 export type PastAttempt = { item_id: string | null; skill: string; outcome: string; created_at: string; response_ms: number | null };
 
@@ -7,6 +8,7 @@ export type PlayItem = {
   kind: Item["kind"];
   mode?: string;
   theme: Theme;
+  topic: Topic;
   skill: Skill;
   audio: string;
   question: string | null;
@@ -60,7 +62,7 @@ export function skillLevels(past: PastAttempt[], base: number): Record<string, n
 }
 
 function toPlay(item: Item, level: number): PlayItem {
-  const base = { id: item.id, kind: item.kind, theme: item.theme, skill: item.skill, level, question: null, keyword: null, hint: null, answerText: null, image: null, model: null, syllable: null, options: [] as Opt[], correctIndex: -1 };
+  const base = { id: item.id, kind: item.kind, theme: item.theme, topic: topicOf(item), skill: item.skill, level, question: null, keyword: null, hint: null, answerText: null, image: null, model: null, syllable: null, options: [] as Opt[], correctIndex: -1 };
   if (item.kind === "mcq") {
     let opts = shuffle([item.answer, ...item.distractors.slice(0, level)]);
     // Photos only when every option has one, and never for advice/actions
@@ -91,27 +93,29 @@ function toPlay(item: Item, level: number): PlayItem {
   return { ...base, mode: item.mode, audio: step, image: item.image ?? null, answerText: item.answer ?? null, hint: item.hint ?? null, syllable: item.answer ? firstSound(item.answer) : null, model };
 }
 
-// One session ≈ 15 activities: comprehension, mini-cases, oral expression,
-// word retrieval, elocution, time/culture. Alternatives vary the day.
-type Slot = { theme?: Theme; skill?: Skill; kind?: Item["kind"]; modes?: string[] };
-const PLAN: Slot[][] = [
-  [{ theme: "avis", skill: "conseil", kind: "mcq" }],
-  [{ skill: "information", kind: "mcq" }, { kind: "tf" }],
-  [{ kind: "oral", modes: ["expliquer"] }],
-  [{ theme: "nutrition", skill: "lexique", kind: "mcq" }, { kind: "complete" }],
-  [{ kind: "evoke" }, { kind: "oral", modes: ["nommer"] }],
-  [{ theme: "avis", skill: "conseil", kind: "mcq" }],
-  [{ kind: "tf" }, { skill: "information", kind: "mcq" }],
-  [{ kind: "oral", modes: ["lire"] }],
-  [{ theme: "temps" }, { theme: "sciences", kind: "mcq" }],
-  [{ kind: "oral", modes: ["reformuler", "expliquer"] }],
-  [{ theme: "avis", skill: "conseil", kind: "mcq" }, { skill: "information", kind: "mcq" }],
-  [{ kind: "evoke" }, { kind: "complete" }],
-  [{ theme: "nutrition", skill: "lexique", kind: "mcq" }, { kind: "tf" }],
-  [{ kind: "oral", modes: ["expliquer", "nommer"] }],
-  [{ theme: "temps" }, { theme: "sciences" }, { kind: "evoke" }],
+// One session = 15 activities. ~80 % come from the person's chosen subjects
+// (rotated so each interest appears), ~20 % are transversal (time, language).
+type Slot = { kinds: Item["kind"][]; modes?: string[]; general?: boolean };
+const PLAN: Slot[] = [
+  { kinds: ["mcq"] },
+  { kinds: ["mcq", "tf"] },
+  { kinds: ["oral"], modes: ["expliquer"] },
+  { kinds: ["mcq"] },
+  { kinds: ["evoke", "complete"] },
+  { kinds: ["mcq"] },
+  { kinds: ["oral"], modes: ["lire"] },
+  { kinds: ["mcq"], general: true },
+  { kinds: ["tf", "mcq"] },
+  { kinds: ["oral"], modes: ["expliquer", "reformuler"] },
+  { kinds: ["mcq"] },
+  { kinds: ["evoke", "oral"], modes: ["nommer"] },
+  { kinds: ["mcq"], general: true },
+  { kinds: ["oral"], modes: ["expliquer"] },
+  { kinds: ["mcq", "tf"], general: true },
 ];
+const WITH_CONTENT = new Set<Topic>(["sante", "medecine", "sciences", "histoire", "art", "geographie", "nature", "litterature", "technologie", "cuisine", "sport"]);
 
+/** `topics` = caregiver_settings.topics (interests stored with an "i:" prefix). */
 export function buildSession(past: PastAttempt[], topics: string[], base: number): PlayItem[] {
   const levels = skillLevels(past, base);
   const now = Date.now();
@@ -123,15 +127,9 @@ export function buildSession(past: PastAttempt[], topics: string[], base: number
     if (!lastSeen.has(p.item_id)) lastSeen.set(p.item_id, new Date(p.created_at).getTime());
     if (p.outcome === "revealed" || p.outcome === "after_cue") struggled.add(p.item_id);
   }
+  let chosen = interestsOf(topics).filter((x): x is Topic => WITH_CONTENT.has(x as Topic));
+  if (!chosen.length) chosen = ["sante", "medecine", "sciences", "art"];
 
-  const allowed = (i: Item) => {
-    if (FOLLOW_IDS.has(i.id)) return false;
-    if (i.kind === "complete") return topics.includes("nutrition");
-    if (i.kind === "tf") return topics.includes("sciences") || topics.includes("nutrition");
-    if (i.kind === "oral") return topics.includes("expression") || (i.mode === "nommer" && topics.includes("nutrition"));
-    if (i.kind === "evoke") return topics.includes("expression") || topics.includes(i.theme);
-    return topics.includes(i.theme);
-  };
   const score = (i: Item) => {
     const seen = lastSeen.get(i.id);
     let s = Math.random();
@@ -143,32 +141,43 @@ export function buildSession(past: PastAttempt[], topics: string[], base: number
   };
 
   const used = new Set<string>();
+  const perTopic = new Map<string, number>();
   const picks: Item[] = [];
-  const pick = (pool: Item[]) => {
-    const best = pool.filter((i) => !used.has(i.id)).sort((a, b) => score(b) - score(a))[0];
-    if (best) {
-      used.add(best.id);
-      picks.push(best);
-      if (best.kind === "oral" && best.follow) {
-        const f = BY_ID.get(best.follow);
-        if (f) {
-          used.add(f.id);
-          picks.push(f);
-        }
+  const take = (best: Item) => {
+    used.add(best.id);
+    picks.push(best);
+    perTopic.set(topicOf(best), (perTopic.get(topicOf(best)) ?? 0) + 1);
+    if (best.kind === "oral" && best.follow) {
+      const f = BY_ID.get(best.follow);
+      if (f) {
+        used.add(f.id);
+        picks.push(f);
       }
     }
-    return !!best;
   };
+  const bestOf = (pool: Item[]) => pool.filter((i) => !used.has(i.id)).sort((a, b) => score(b) - score(a))[0];
 
-  const pool = BANK.filter(allowed);
-  const fits = (slot: Slot) => (i: Item) =>
-    (!slot.theme || i.theme === slot.theme) &&
-    (!slot.skill || i.skill === slot.skill) &&
-    (!slot.kind || i.kind === slot.kind) &&
-    (!slot.modes || (i.kind === "oral" && slot.modes.includes(i.mode)));
-  for (const alts of PLAN) {
-    const order = shuffle(alts);
-    if (!order.some((slot) => pick(pool.filter(fits(slot))))) pick(pool);
+  const pool = BANK.filter((i) => !FOLLOW_IDS.has(i.id));
+  const fits = (slot: Slot) => (i: Item) => slot.kinds.includes(i.kind) && (!slot.modes || i.kind !== "oral" || slot.modes.includes(i.mode));
+  const interest = pool.filter((i) => chosen.includes(topicOf(i)));
+  const general = pool.filter((i) => topicOf(i) === "general");
+
+  for (const slot of PLAN) {
+    if (slot.general) {
+      // Transversal slot: time/organisation, else a chosen-subject item.
+      const g = bestOf(general) ?? bestOf(interest);
+      if (g) take(g);
+      continue;
+    }
+    // Rotate subjects: least-used chosen subject that has a fitting item.
+    const order = shuffle(chosen).sort((a, b) => (perTopic.get(a) ?? 0) - (perTopic.get(b) ?? 0));
+    let got: Item | undefined;
+    for (const tp of order) {
+      got = bestOf(interest.filter((i) => topicOf(i) === tp).filter(fits(slot)));
+      if (got) break;
+    }
+    got ??= bestOf(interest) ?? bestOf(general);
+    if (got) take(got);
   }
   return picks.map((i) => toPlay(i, levels[i.skill] ?? base));
 }
