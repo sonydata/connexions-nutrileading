@@ -16,4 +16,5 @@
 - Adaptation is computed per skill from recent `attempts` outcomes at session start — local rules, never AI.
 - Spoken answers use the free browser SpeechRecognition (fr-FR) as an indicative signal only, never a score; recordings stay in browser memory and are discarded after each exercise — no paid transcription, no upload.
 - Oral rows in `attempts` reuse existing columns: `kind` = oral mode, `option_count` = approximate spoken word count, `concept` suffixed `#rep` when the model sentence was repeated — avoids a schema change.
-- Choice photos are shown only when every option has one, and never for advice/action answers, so an image never contradicts the answer.
+- Choice photos are shown only when every option has one, and never for advice/action answers, so an image never contradicts the answer; otherwise a context photo from `SCENE` illustrates the situation, never the answer.
+- Choice questions read the sentence, the question and every answer aloud; tapping an answer interrupts the reading.

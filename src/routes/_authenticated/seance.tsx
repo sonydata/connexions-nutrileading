@@ -117,14 +117,25 @@ function Seance() {
     [clip],
   );
 
+  const playId = useRef(0);
+  const stopAudio = useCallback(() => {
+    playId.current++;
+    audio.current?.pause();
+    window.speechSynthesis?.cancel();
+    setSpeaking(false);
+  }, []);
   const play = useCallback(
     async (texts: (string | null)[], slow = false) => {
+      const id = ++playId.current;
+      audio.current?.pause();
       setSpeaking(true);
       try {
         let first = true;
         for (const t of texts) {
           if (!t) continue;
+          if (id !== playId.current) return;
           if (!first) await sleep(700);
+          if (id !== playId.current) return;
           await playOne(t, slow ? 0.85 : 1);
           first = false;
         }
@@ -132,8 +143,10 @@ function Seance() {
       } catch {
         setNeedsTap(true);
       } finally {
-        setSpeaking(false);
-        shownAt.current = Date.now();
+        if (id === playId.current) {
+          setSpeaking(false);
+          shownAt.current = Date.now();
+        }
       }
     },
     [playOne],
@@ -155,12 +168,14 @@ function Seance() {
   }, [start, clip]);
 
   const it = items[i] as PlayItem;
+  /** Full prompt read aloud: sentence, question, then each answer. */
+  const spoken = (x: PlayItem) => [x.audio, x.question, ...(x.kind === "mcq" ? x.options.map((o) => o.label) : [])];
 
   useEffect(() => {
     if (phase !== "play" || !it) return;
     setCanHint(false);
     const t = setTimeout(() => setCanHint(true), 5000);
-    play([it.audio, it.question]);
+    play(spoken(it));
     const next = items[i + 1];
     if (next) {
       clip(next.audio).catch(() => {});
@@ -175,8 +190,7 @@ function Seance() {
   }
 
   function goNext() {
-    audio.current?.pause();
-    window.speechSynthesis?.cancel();
+    stopAudio();
     const p = pending.current ?? { outcome: "after_cue" as Outcome, spoken: 0, responseMs: null };
     const kind = it.kind === "oral" ? (it.mode ?? "oral") : it.kind;
     record({
@@ -208,7 +222,8 @@ function Seance() {
 
   // ——— Multiple choice / true-false ———
   async function choose(idx: number) {
-    if (speaking || chosen !== null || wrong.includes(idx) || stage === 3) return;
+    if (chosen !== null || wrong.includes(idx) || stage === 3) return;
+    stopAudio();
     if (idx === it.correctIndex) {
       setChosen(idx);
       setSuccess(true);
@@ -223,12 +238,12 @@ function Seance() {
       setStage(1);
       setMessage("Écoutons encore.");
       await sleep(900);
-      play([it.audio, it.question], true);
+      play(spoken(it), true);
     } else if (stage === 1) {
       setStage(2);
       setMessage("Voici un indice.");
       await sleep(500);
-      play([it.audio, it.question], true);
+      play(spoken(it), true);
     } else {
       setStage(3);
       setChosen(it.correctIndex);
@@ -347,7 +362,7 @@ function Seance() {
       <section key={i} className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center animate-rise">
         <p className="mb-6 text-sm uppercase tracking-[0.25em] text-muted-foreground">{title}</p>
         <button
-          onClick={() => play(step === "model" && it.model ? [it.model] : [it.audio, it.question], stage > 0)}
+          onClick={() => play(step === "model" && it.model ? [it.model] : spoken(it), stage > 0)}
           disabled={speaking || voice.listening}
           aria-label="Réécouter"
           className="relative flex h-24 w-24 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl transition hover:scale-105 disabled:opacity-90"
@@ -459,7 +474,10 @@ function ChoiceBody({ it, stage, wrong, chosen, message, success, onChoose, onNe
   return (
     <>
       <div className="mt-2 min-h-24 text-center">
-        <p className="mx-auto max-w-3xl font-serif text-3xl leading-snug">{stage >= 1 || !it.question ? it.audio : ""}</p>
+        {it.image && (
+          <img src={imageSrc(it.image) ?? ""} alt="" className="mx-auto mb-5 max-h-64 w-auto max-w-full rounded-3xl shadow-md" />
+        )}
+        <p className="mx-auto max-w-3xl font-serif text-3xl leading-snug">{it.audio}</p>
         {it.question && <p className="mt-2 font-serif text-2xl italic text-muted-foreground">{it.question}</p>}
         {stage >= 2 && it.keyword && <span className="mt-3 inline-block rounded-full bg-gold/25 px-5 py-1.5 text-xl">{it.keyword}</span>}
         <Feedback message={message} success={success} />

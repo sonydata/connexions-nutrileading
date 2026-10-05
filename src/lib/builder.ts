@@ -1,4 +1,4 @@
-import { BANK, BY_ID, FOLLOW_IDS, type Item, type Opt, type Skill, type Theme } from "./content";
+import { BANK, BY_ID, FOLLOW_IDS, SCENE, type Item, type Opt, type Skill, type Theme } from "./content";
 
 export type PastAttempt = { item_id: string | null; skill: string; outcome: string; created_at: string };
 
@@ -68,10 +68,11 @@ function toPlay(item: Item, level: number): PlayItem {
       keyword: item.keyword,
       options: opts,
       correctIndex: opts.indexOf(answer),
+      image: opts.every((o) => o.image) ? null : (SCENE[item.id] ?? null),
     };
   }
   if (item.kind === "tf") {
-    return { ...base, audio: item.audio, question: "Vrai ou faux ?", keyword: item.keyword, options: [{ label: "Vrai" }, { label: "Faux" }], correctIndex: item.answer ? 0 : 1 };
+    return { ...base, audio: item.audio, question: "Vrai ou faux ?", keyword: item.keyword, options: [{ label: "Vrai" }, { label: "Faux" }], correctIndex: item.answer ? 0 : 1, image: SCENE[item.id] ?? null };
   }
   if (item.kind === "complete") {
     return { ...base, audio: item.audio, hint: item.hint, answerText: item.answer, syllable: firstSound(item.answer), model: item.audio.replace(/…$/, item.answer + ".") };
