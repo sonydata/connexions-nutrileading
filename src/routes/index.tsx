@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import morning from "@/assets/library/morning.jpg";
 import logo from "@/assets/nutrileading-logo.png.asset.json";
 import { todayGoal, weekLine, weekSummary } from "@/lib/week";
+import { GUEST_KEY, hasInterests } from "@/lib/interests";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,12 +24,17 @@ function Index() {
   const [state, setState] = useState<"loading" | "out" | "in">("loading");
   const [name, setName] = useState("Hafid");
   const [week, setWeek] = useState<string | null>(null);
+  const [configured, setConfigured] = useState(true);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
-      if (!data.user) return setState("out");
-      const { data: s } = await supabase.from("caregiver_settings").select("patient_name").eq("user_id", data.user.id).maybeSingle();
+      if (!data.user) {
+        setConfigured(!!localStorage.getItem(GUEST_KEY));
+        return setState("out");
+      }
+      const { data: s } = await supabase.from("caregiver_settings").select("patient_name, topics").eq("user_id", data.user.id).maybeSingle();
       if (s?.patient_name) setName(s.patient_name);
+      setConfigured(hasInterests(s?.topics ?? []));
       setState("in");
       weekSummary().then((w) => setWeek(weekLine(w))).catch(() => {});
     });
@@ -48,9 +54,10 @@ function Index() {
     <main className="paper-grain relative flex min-h-screen flex-col">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-8 py-6">
         <img src={logo.url} alt="Nutrileading" className="h-11 w-11" />
-        <Link to={state === "in" ? "/aidant" : "/auth"} className="text-sm text-muted-foreground underline-offset-4 hover:underline">
-          Connexion
-        </Link>
+        <nav className="flex items-center gap-6 text-sm text-muted-foreground">
+          <Link to="/interets" search={{ next: undefined }} className="underline-offset-4 hover:underline">Vos centres d'intérêt</Link>
+          <Link to={state === "in" ? "/aidant" : "/auth"} className="underline-offset-4 hover:underline">Connexion</Link>
+        </nav>
       </header>
 
       <section className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-14 px-8 pb-20 pt-6 md:grid-cols-[1.1fr_1fr]">
@@ -65,7 +72,7 @@ function Index() {
             Comprendre. Retrouver.<br />S'exprimer.
           </p>
           <div className="mt-12">
-            <Link to="/seance" className="inline-flex items-center rounded-full bg-primary px-14 py-6 text-2xl font-medium text-primary-foreground shadow-lg transition hover:opacity-90">
+            <Link to={configured ? "/seance" : "/interets"} search={configured ? undefined : { next: "seance" as const }} className="inline-flex items-center rounded-full bg-primary px-14 py-6 text-2xl font-medium text-primary-foreground shadow-lg transition hover:opacity-90">
               Commencer
             </Link>
             {state === "out" && <p className="mt-4 text-base text-muted-foreground">Sans compte, la séance n'est pas enregistrée.</p>}

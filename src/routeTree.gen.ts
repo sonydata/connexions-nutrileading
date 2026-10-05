@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as InteretsRouteImport } from './routes/interets'
 import { Route as SeanceRouteImport } from './routes/seance'
 import { Route as AuthenticatedAidantRouteImport } from './routes/_authenticated/aidant'
 
@@ -29,6 +30,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InteretsRoute = InteretsRouteImport.update({
+  id: '/interets',
+  path: '/interets',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SeanceRoute = SeanceRouteImport.update({
   id: '/seance',
   path: '/seance',
@@ -43,12 +49,14 @@ const AuthenticatedAidantRoute = AuthenticatedAidantRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/interets': typeof InteretsRoute
   '/seance': typeof SeanceRoute
   '/aidant': typeof AuthenticatedAidantRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/interets': typeof InteretsRoute
   '/seance': typeof SeanceRoute
   '/aidant': typeof AuthenticatedAidantRoute
 }
@@ -57,19 +65,21 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/interets': typeof InteretsRoute
   '/seance': typeof SeanceRoute
   '/_authenticated/aidant': typeof AuthenticatedAidantRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/seance' | '/aidant'
+  fullPaths: '/' | '/auth' | '/interets' | '/seance' | '/aidant'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/seance' | '/aidant'
+  to: '/' | '/auth' | '/interets' | '/seance' | '/aidant'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/interets'
     | '/seance'
     | '/_authenticated/aidant'
   fileRoutesById: FileRoutesById
@@ -78,6 +88,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  InteretsRoute: typeof InteretsRoute
   SeanceRoute: typeof SeanceRoute
 }
 
@@ -102,6 +113,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/interets': {
+      id: '/interets'
+      path: '/interets'
+      fullPath: '/interets'
+      preLoaderRoute: typeof InteretsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/seance': {
@@ -136,6 +154,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  InteretsRoute: InteretsRoute,
   SeanceRoute: SeanceRoute,
 }
 export const routeTree = rootRouteImport
