@@ -41,7 +41,7 @@ function Index() {
         <span className="font-serif text-2xl">Écoute</span>
         {state === "in" && (
           <Link to="/aidant" className="text-sm text-muted-foreground underline-offset-4 hover:underline">
-            Suivi
+            Connexion
           </Link>
         )}
         {state === "out" && (
