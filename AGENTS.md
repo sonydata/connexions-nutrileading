@@ -19,3 +19,4 @@
 - Choice photos are shown only when every option has one, and never for advice/action answers, so an image never contradicts the answer; otherwise a context photo from `SCENE` illustrates the situation, never the answer.
 - Choice questions read the sentence, the question and every answer aloud; tapping an answer interrupts the reading.
 - Discovery mode: /seance runs without an account — built locally, nothing saved, voice read from cache only (speakCached never synthesises) so visitors can't create paid calls.
+- Interests (subjects) are stored in caregiver_settings.topics with an "i:" prefix and mapped onto bank themes by src/lib/interests.ts; each item keeps skill (what is exercised) separate from theme (subject) — avoids a schema change.
