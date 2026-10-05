@@ -1,5 +1,5 @@
 // Curated photo library. The AI may only reference these ids.
-const files = import.meta.glob("@/assets/library/*.jpg", { eager: true, import: "default" }) as Record<string, string>;
+const files = (import.meta.glob ? import.meta.glob("@/assets/library/*.jpg", { eager: true, import: "default" }) : {}) as Record<string, string>;
 
 export type LibraryItem = { id: string; label: string; group: string };
 

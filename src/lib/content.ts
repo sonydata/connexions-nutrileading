@@ -3,7 +3,7 @@
 
 export type Theme = "nutrition" | "avis" | "sciences" | "temps" | "expression";
 export type Skill = "lexique" | "conseil" | "information" | "temps" | "completion" | "expression";
-export type Opt = { label: string; image?: string };
+export type Opt = { label: string; image?: string | undefined };
 
 type Base = { id: string; theme: Theme; skill: Skill };
 export type McqItem = Base & {
