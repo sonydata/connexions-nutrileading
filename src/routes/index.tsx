@@ -48,7 +48,8 @@ function Index() {
       <section className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-12 px-8 pb-16 md:grid-cols-2">
         <div className="animate-rise">
           <p className="text-lg capitalize text-muted-foreground">{today}</p>
-          <h1 className="mt-4 text-6xl leading-[1.05] md:text-7xl">Bonjour {name}</h1>
+          <p className="mt-4 font-serif text-5xl italic text-muted-foreground md:text-6xl">Bonjour {name}</p>
+          <h1 className="mt-3 text-4xl leading-[1.12] md:text-5xl">Une séance d'écoute chaque jour</h1>
           <p className="mt-6 font-serif text-3xl italic text-muted-foreground">On commence ?</p>
           {state === "in" && (
             <div className="mt-8 space-y-1 text-lg text-muted-foreground">
@@ -71,6 +72,50 @@ function Index() {
         </div>
         <div className="animate-rise overflow-hidden rounded-3xl shadow-2xl [animation-delay:150ms]">
           <img src={morning} alt="Lever du soleil sur les toits de Paris" className="aspect-[4/5] w-full object-cover" />
+        </div>
+      </section>
+
+      <section className="border-t border-border/70">
+        <div className="mx-auto w-full max-w-6xl px-8 py-20">
+          <h2 className="font-serif text-3xl leading-tight md:text-4xl">Ce que propose Écoute</h2>
+          <p className="mt-6 max-w-3xl text-xl leading-relaxed text-muted-foreground">
+            Écoute est une application d'écoute quotidienne&nbsp;: chaque jour, une séance d'une quinzaine d'activités
+            courtes, soit une dizaine de minutes. On écoute une phrase, on donne son avis, on retrouve un mot, puis on
+            le redit à voix haute. Une seule activité à la fois, en grands caractères, sans chronomètre et sans note.
+          </p>
+          <ul className="mt-12 grid gap-x-10 gap-y-9 md:grid-cols-2">
+            {[
+              [
+                "Nutrition et alimentation",
+                "Protéines, fibres, glucides, lipides, micronutriments, hydratation, régime méditerranéen.",
+              ],
+              [
+                "Votre avis de praticien",
+                "Mini-cas du quotidien et conseils à donner à un patient fictif.",
+              ],
+              [
+                "Sciences et culture médicale",
+                "Ce qu'un terme désigne vraiment, son origine, la culture scientifique et générale.",
+              ],
+              [
+                "Repères du temps et organisation",
+                "Jours, saisons, horaires et organisation de la journée.",
+              ],
+              [
+                "Mots et formulation",
+                "Retrouver le mot juste, l'entendre, le reformuler, le répéter.",
+              ],
+            ].map(([title, text]) => (
+              <li key={title} className="border-l border-border/70 pl-6">
+                <h3 className="text-2xl">{title}</h3>
+                <p className="mt-2 text-lg leading-relaxed text-muted-foreground">{text}</p>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-12 max-w-3xl text-lg leading-relaxed text-muted-foreground">
+            L'espace aidant conserve une trace discrète de la régularité et de l'évolution des réponses, sans jamais
+            afficher de résultat pendant la séance.
+          </p>
         </div>
       </section>
     </main>
