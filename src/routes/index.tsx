@@ -123,32 +123,52 @@ function Index() {
             </p>
           </div>
 
-          {/* Moodboard éditorial : deux rangées resserrées, tailles généreuses, légères rotations */}
-          <div className="hidden md:block" aria-hidden>
-            {[
-              [
-                { src: artImg, label: "Art", pos: "object-[60%_40%]", box: "w-[59%] aspect-[4/3] -rotate-[1.2deg]" },
-                { src: img("astronomy"), label: "Sciences", pos: "object-center", box: "w-[37%] aspect-[3/4] mt-10 rotate-[1.5deg]" },
-              ],
-              [
-                { src: img("rome"), label: "Histoire", pos: "object-center", box: "w-[40%] aspect-[4/3] rotate-[0.8deg]" },
-                { src: litteratureImg, label: "Littérature", pos: "object-[50%_70%]", box: "w-[23%] aspect-[4/5] mt-4 -rotate-[1.5deg]" },
-                { src: santeImg, label: "Santé", pos: "object-center", box: "w-[31%] aspect-[4/3] mt-12 rotate-[1deg]" },
-              ],
-            ].map((row, r) => (
-              <div key={r} className={`flex items-start gap-4 ${r === 1 ? "mt-5" : ""}`}>
-                {row.map((c) => (
-                  <figure key={c.label} className={`transition duration-500 hover:z-30 hover:rotate-0 ${c.box.replace(/aspect-\S+/, "")}`}>
-                    <div className={`overflow-hidden rounded-2xl bg-card p-1.5 shadow-xl ${c.box.match(/aspect-\S+/)?.[0]}`}>
-                      <img src={c.src} alt="" className={`h-full w-full rounded-xl object-cover ${c.pos}`} />
-                    </div>
-                    <figcaption className="mt-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand">
-                      <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-                      {c.label}
-                    </figcaption>
-                  </figure>
+          {/* Constellation de sujets reliés par des lignes fines, comme le symbole Connexions */}
+          <div className="relative hidden aspect-[10/9] md:block" aria-hidden>
+            <svg viewBox="0 0 100 90" preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible">
+              <g fill="none" stroke="var(--brand)" strokeWidth="1.1" strokeLinecap="round" opacity="0.6">
+                {[
+                  "M52 47 C 44 40, 36 34, 30 24",
+                  "M52 47 C 62 38, 70 30, 78 20",
+                  "M52 47 C 42 54, 30 58, 22 65",
+                  "M52 47 C 54 52, 55 55, 56 56",
+                  "M52 47 C 64 52, 74 58, 82 67",
+                  "M30 24 C 50 6, 64 8, 78 20",
+                  "M22 65 C 40 88, 66 90, 82 67",
+                ].map((d, i) => (
+                  <path key={i} d={d} vectorEffect="non-scaling-stroke" strokeDasharray={i > 4 ? "2 3" : undefined} />
                 ))}
-              </div>
+              </g>
+            </svg>
+            {[
+              { x: 52, y: 52, s: 14 },
+              { x: 41, y: 37, s: 6 }, { x: 66, y: 34, s: 6 }, { x: 36, y: 64, s: 6 },
+              { x: 69, y: 64, s: 6 }, { x: 54, y: 9, s: 5 }, { x: 52, y: 96, s: 5 },
+            ].map((n, i) => (
+              <span
+                key={i}
+                className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${i === 0 ? "border border-brand/50 bg-background" : "bg-brand/70"}`}
+                style={{ left: `${n.x}%`, top: `${n.y}%`, width: n.s, height: n.s }}
+              >
+                {i === 0 && <span className="absolute inset-[3px] rounded-full bg-brand" />}
+              </span>
+            ))}
+            {[
+              { src: artImg, label: "Art", pos: "object-[60%_40%]", x: 7, y: 6, w: 44, a: "aspect-[4/3]" },
+              { src: img("astronomy"), label: "Sciences", pos: "object-center", x: 66, y: 0, w: 28, a: "aspect-[3/4]" },
+              { src: img("rome"), label: "Histoire", pos: "object-center", x: 4, y: 60, w: 32, a: "aspect-[4/3]" },
+              { src: litteratureImg, label: "Littérature", pos: "object-[50%_70%]", x: 45, y: 58, w: 21, a: "aspect-[4/5]" },
+              { src: santeImg, label: "Santé", pos: "object-center", x: 70, y: 64, w: 28, a: "aspect-[4/3]" },
+            ].map((c) => (
+              <figure key={c.label} className="absolute transition duration-500 hover:-translate-y-1" style={{ left: `${c.x}%`, top: `${c.y}%`, width: `${c.w}%` }}>
+                <div className={`overflow-hidden rounded-2xl bg-card p-1.5 shadow-xl ${c.a}`}>
+                  <img src={c.src} alt="" className={`h-full w-full rounded-xl object-cover ${c.pos}`} />
+                </div>
+                <figcaption className="mt-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand">
+                  <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+                  {c.label}
+                </figcaption>
+              </figure>
             ))}
           </div>
         </div>
