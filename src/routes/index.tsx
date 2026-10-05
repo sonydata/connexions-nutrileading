@@ -9,7 +9,7 @@ import litteratureImg from "@/assets/home/litterature.jpg";
 import artImg from "@/assets/home/art.jpg";
 import santeImg from "@/assets/home/sante.jpg";
 import { Apple, BookOpen, ChefHat, Cpu, Landmark, Leaf, Map as MapIcon, Microscope, Newspaper, Palette, Sparkles, Stethoscope, Trophy } from "lucide-react";
-import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, hasInterests, interestsOf, otherInterest } from "@/lib/interests";
+import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, PREFIX, hasInterests, interestsOf, otherInterest } from "@/lib/interests";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -31,6 +31,7 @@ function Index() {
   const [week, setWeek] = useState<{ sessions: number; minutes: number; days: number } | null>(null);
   const [topics, setTopics] = useState<string[]>([]);
   const [configured, setConfigured] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -42,6 +43,7 @@ function Index() {
         } catch {}
         return setState("out");
       }
+      setUserId(data.user.id);
       const { data: s } = await supabase.from("caregiver_settings").select("patient_name, topics").eq("user_id", data.user.id).maybeSingle();
       if (s?.patient_name) setName(s.patient_name);
       setConfigured(hasInterests(s?.topics ?? []));
@@ -63,6 +65,21 @@ function Index() {
   const quote = QUOTES[Math.floor(Date.now() / 864e5) % QUOTES.length]!;
   const img = (id: string) => imageSrc(id) ?? "";
   const startLink = { to: configured ? "/seance" : "/interets", search: configured ? {} : { next: "seance" as const } } as const;
+
+  async function toggleInterest(id: string) {
+    const cur = interestsOf(topics).filter((x) => x !== "actualite");
+    const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
+    if (!next.length) return;
+    const mine = next.map((x) => PREFIX + x);
+    const updated = userId ? [...topics.filter((t) => !t.startsWith(PREFIX)), ...mine] : mine;
+    setTopics(updated);
+    setConfigured(true);
+    if (userId) {
+      await supabase.from("caregiver_settings").upsert({ user_id: userId, topics: updated, updated_at: new Date().toISOString() });
+    } else {
+      localStorage.setItem(GUEST_KEY, JSON.stringify(mine));
+    }
+  }
 
   return (
     <main className="relative flex min-h-screen flex-col bg-background">
@@ -171,6 +188,37 @@ function Index() {
         </div>
       </section>
 
+      {/* CENTRES D'INTÉRÊT — sélection rapide directement sous le hero */}
+      <section className="paper-grain border-t border-border">
+        <div className="mx-auto w-full max-w-6xl px-6 py-12 md:px-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="font-sans text-xl font-semibold tracking-tight">Vos centres d'intérêt</h2>
+              <p className="mt-1 text-base text-muted-foreground">Touchez un sujet pour l'ajouter ou le retirer.</p>
+            </div>
+            <Link to="/interets" search={{ next: undefined }} className="shrink-0 self-start text-base font-semibold text-brand underline underline-offset-4 hover:opacity-80 md:self-center">
+              Tous les sujets
+            </Link>
+          </div>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            {INTERESTS.filter((t) => !t.soon).map((t) => {
+              const on = myIds.includes(t.id);
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => toggleInterest(t.id)}
+                  aria-pressed={on}
+                  className={`rounded-full border px-5 py-2.5 text-lg transition ${on ? "border-brand bg-brand-soft font-semibold text-brand" : "border-border bg-card text-foreground hover:border-brand"}`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+            {other && <span className="rounded-full border border-border bg-card px-5 py-2.5 text-lg text-muted-foreground">{other}</span>}
+          </div>
+        </div>
+      </section>
+
       {/* COMPRENDRE / RETROUVER / S'EXPRIMER — trois piliers de poids égal */}
       <section className="bg-card">
         <div className="mx-auto w-full max-w-6xl px-6 py-24 md:px-8">
@@ -194,28 +242,6 @@ function Index() {
                 <img src={img(p.ph)} alt="" className="mt-auto aspect-[16/9] w-full rounded-2xl object-cover pt-7" />
               </article>,
             ])}
-          </div>
-        </div>
-      </section>
-
-      {/* CENTRES D'INTÉRÊT — simple rappel, seul « Modifier » est interactif */}
-      <section className="paper-grain">
-        <div className="mx-auto w-full max-w-6xl px-6 py-14 md:px-8">
-          <div className="flex flex-col gap-5 border-t border-border pt-8 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="font-sans text-xl font-semibold tracking-tight">Vos centres d'intérêt</h2>
-              <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-lg text-muted-foreground">
-                {[...myIds.map(label), ...(other ? [other] : [])].map((t, i) => (
-                  <span key={t} className="flex items-center gap-3">
-                    {i > 0 && <span className="text-brand" aria-hidden>·</span>}
-                    <span className="text-foreground">{t}</span>
-                  </span>
-                ))}
-              </p>
-            </div>
-            <Link to="/interets" search={{ next: undefined }} className="shrink-0 self-start text-base font-semibold text-brand underline underline-offset-4 hover:opacity-80 md:self-center">
-              Modifier
-            </Link>
           </div>
         </div>
       </section>
