@@ -41,7 +41,7 @@ function Index() {
         <span className="font-serif text-2xl">Écoute</span>
         {state === "in" && (
           <Link to="/aidant" className="text-sm text-muted-foreground underline-offset-4 hover:underline">
-            Espace aidant
+            Connexion
           </Link>
         )}
       </header>
@@ -113,7 +113,7 @@ function Index() {
             ))}
           </ul>
           <p className="mt-12 max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            L'espace aidant conserve une trace discrète de la régularité et de l'évolution des réponses, sans jamais
+            Une page discrète conserve une trace de la régularité et de l'évolution des réponses, sans jamais
             afficher de résultat pendant la séance.
           </p>
         </div>

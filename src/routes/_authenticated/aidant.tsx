@@ -6,9 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated/aidant")({
   head: () => ({
     meta: [
-      { title: "Espace aidant — Écoute" },
+      { title: "Suivi — Écoute" },
       { name: "description", content: "Suivi de la compréhension et réglages des séances." },
-      { property: "og:title", content: "Espace aidant — Écoute" },
+      { property: "og:title", content: "Suivi — Écoute" },
       { property: "og:description", content: "Suivi de la compréhension et réglages des séances." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -158,7 +158,7 @@ function Aidant() {
       </header>
 
       <div className="mx-auto mt-10 max-w-6xl">
-        <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Espace aidant</p>
+        <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Suivi</p>
         <h1 className="mt-2 text-5xl">Suivi de {name}</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">60 derniers jours. Ces indicateurs servent au suivi de l'entraînement ; ils ne constituent pas un diagnostic médical.</p>
 

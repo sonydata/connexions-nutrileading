@@ -55,7 +55,7 @@ function AuthPage() {
   return (
     <main className="paper-grain flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-md animate-rise">
-        <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Espace aidant</p>
+        <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Connexion</p>
         <h1 className="mt-3 text-5xl">{mode === "in" ? "Connexion" : "Créer un compte"}</h1>
         <form onSubmit={submit} className="mt-10 space-y-4">
           <input className="w-full rounded-xl border bg-card px-5 py-4 text-lg outline-none focus:ring-2 focus:ring-ring" type="email" required placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} />
