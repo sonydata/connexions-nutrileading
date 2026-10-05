@@ -5,6 +5,8 @@ import logo from "@/assets/nutrileading-logo.png.asset.json";
 import symbol from "@/assets/connexions-symbol.png.asset.json";
 import { weekSummary } from "@/lib/week";
 import { imageSrc } from "@/lib/library";
+import litteratureImg from "@/assets/home/litterature.jpg";
+import santeImg from "@/assets/home/sante.jpg";
 import { Apple, BookOpen, ChefHat, Cpu, Landmark, Leaf, Map as MapIcon, Microscope, Newspaper, Palette, Sparkles, Stethoscope, Trophy } from "lucide-react";
 import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, hasInterests, interestsOf, otherInterest } from "@/lib/interests";
 
@@ -120,36 +122,26 @@ function Index() {
             </p>
           </div>
 
-          {/* Composition structurée : 1 carte principale, 2 secondaires, 2 accents — les univers explorés */}
+          {/* Sélection éditoriale : 1 carte principale + 4 secondaires alignées */}
           <div className="hidden md:block" aria-hidden>
-            <p className="mb-5 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-brand">
-              Les univers explorés
-              <span className="h-px flex-1 bg-border" />
-            </p>
-            <div className="grid h-[520px] grid-cols-[1.15fr_1fr] grid-rows-[1.3fr_1.05fr_0.8fr] gap-5">
-              {/* Carte principale */}
-              <figure className="row-span-2 flex rotate-[-1.25deg] flex-col overflow-hidden rounded-3xl bg-card p-2.5 shadow-xl transition duration-300 hover:rotate-0 hover:shadow-2xl">
-                <img src={img("monet")} alt="" className="min-h-0 w-full flex-1 rounded-2xl object-cover" />
-                <figcaption className="px-2 py-3 text-xs font-bold uppercase tracking-widest text-brand">Art</figcaption>
-              </figure>
-              {/* Secondaires */}
-              <figure className="flex rotate-[1deg] flex-col overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition duration-300 hover:rotate-0 hover:shadow-2xl">
-                <img src={img("astronomy")} alt="" className="min-h-0 w-full flex-1 rounded-xl object-cover" />
-                <figcaption className="px-1.5 py-2 text-xs font-bold uppercase tracking-widest text-brand">Sciences</figcaption>
-              </figure>
-              <figure className="flex rotate-[-0.75deg] flex-col overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition duration-300 hover:rotate-0 hover:shadow-2xl">
-                <img src={img("rome")} alt="" className="min-h-0 w-full flex-1 rounded-xl object-cover" />
-                <figcaption className="px-1.5 py-2 text-xs font-bold uppercase tracking-widest text-brand">Histoire</figcaption>
-              </figure>
-              {/* Accents */}
-              <figure className="flex rotate-[0.75deg] flex-col overflow-hidden rounded-xl bg-card p-1.5 shadow-lg transition duration-300 hover:rotate-0 hover:shadow-xl">
-                <img src={img("book")} alt="" className="min-h-0 w-full flex-1 rounded-lg object-cover" />
-                <figcaption className="px-1 py-1.5 text-[11px] font-bold uppercase tracking-widest text-brand">Littérature</figcaption>
-              </figure>
-              <figure className="flex rotate-[-0.5deg] flex-col overflow-hidden rounded-xl bg-card p-1.5 shadow-lg transition duration-300 hover:rotate-0 hover:shadow-xl">
-                <img src={img("vegetables")} alt="" className="min-h-0 w-full flex-1 rounded-lg object-cover" />
-                <figcaption className="px-1 py-1.5 text-[11px] font-bold uppercase tracking-widest text-brand">Santé</figcaption>
-              </figure>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { src: img("monet"), label: "Art", pos: "object-center", main: true },
+                { src: img("astronomy"), label: "Sciences", pos: "object-center" },
+                { src: img("rome"), label: "Histoire", pos: "object-center" },
+                { src: litteratureImg, label: "Littérature", pos: "object-[50%_70%]" },
+                { src: santeImg, label: "Santé", pos: "object-[35%_60%]" },
+              ].map((c) => (
+                <figure key={c.label} className={c.main ? "col-span-2" : ""}>
+                  <div className={`overflow-hidden rounded-2xl bg-muted shadow-md ${c.main ? "aspect-[16/8]" : "aspect-[4/3]"}`}>
+                    <img src={c.src} alt="" className={`h-full w-full object-cover ${c.pos} transition duration-500 hover:scale-[1.03]`} />
+                  </div>
+                  <figcaption className="mt-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-foreground">
+                    <span className="h-px w-4 bg-brand" />
+                    {c.label}
+                  </figcaption>
+                </figure>
+              ))}
             </div>
           </div>
         </div>
