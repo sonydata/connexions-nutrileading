@@ -214,12 +214,14 @@ function Seance() {
 
   const it = items[i] as PlayItem;
   /** Full prompt read aloud: sentence, question, then each answer. */
-  const spoken = (x: PlayItem) => [x.audio, x.question, ...(x.kind === "mcq" || x.kind === "tf" ? x.options.flatMap((o, k) => [`Réponse ${k + 1}.`, o.label]) : [])];
+  const intro = (x: PlayItem) => (x.stage === "comprendre" ? ["Écoutez cette information."] : []);
+  const isChoiceItem = (x: PlayItem) => x.kind === "mcq" || x.kind === "tf";
+  const spoken = (x: PlayItem) => [...intro(x), x.audio, x.question, ...(isChoiceItem(x) ? ["Voici les réponses possibles.", ...x.options.flatMap((o, k) => [`Réponse ${k + 1}.`, o.label])] : [])];
   /** Read the prompt; highlight each answer while it is read; then say clearly when it is his turn to speak. */
   const readItem = async (x: PlayItem, slow = false, questionOnly = false) => {
     setCue(null);
     const texts = questionOnly ? [x.audio, x.question] : spoken(x);
-    const h = x.question ? 2 : 1;
+    const h = questionOnly ? 2 : intro(x).length + (x.question ? 2 : 1) + (isChoiceItem(x) ? 1 : 0);
     const done = await play(texts, slow, (k) => setReading(k >= h ? Math.floor((k - h) / 2) : -1));
     const open = x.kind === "oral" || x.kind === "evoke" || x.kind === "complete";
     if (done && open && !questionOnly) {
@@ -406,7 +408,8 @@ function Seance() {
   const isRecall = it.kind === "evoke" || it.kind === "complete" || (it.kind === "oral" && it.mode === "nommer");
   const isOpen = it.kind === "oral" && (it.mode === "expliquer" || it.mode === "reformuler");
   const isLire = it.kind === "oral" && it.mode === "lire";
-  const title = it.kind === "oral" ? MODE_TITLE[it.mode ?? ""] : it.kind === "complete" ? "Notion à compléter" : it.kind === "evoke" ? "Le terme juste" : it.kind === "tf" ? "Affirmation" : (TOPIC_TITLE[it.topic] ?? THEME_TITLE[it.theme]);
+  const STAGE_LABEL = { comprendre: "Comprendre", retrouver: "Retrouver", exprimer: "S'exprimer", reformuler: "Reformuler" } as const;
+  const title = it.stage ? `${STAGE_LABEL[it.stage]} · ${it.seqTitle}` : it.kind === "oral" ? MODE_TITLE[it.mode ?? ""] : it.kind === "complete" ? "Notion à compléter" : it.kind === "evoke" ? "Le terme juste" : it.kind === "tf" ? "Affirmation" : (TOPIC_TITLE[it.topic] ?? THEME_TITLE[it.theme]);
 
   return (
     <main className="paper-grain flex min-h-screen flex-col px-6 py-6 md:px-12">
