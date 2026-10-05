@@ -322,11 +322,12 @@ function Seance() {
   // ——— Word retrieval (evoke, complete, nommer) ———
   function found(viaVoice: boolean, spoken = "") {
     setSuccess(true);
-    setMessage(stage === 0 ? praise("found") : praise("foundAfterCue"));
+    const m = stage === 0 ? praise("found") : praise("foundAfterCue");
+    setMessage(m);
     settle(stage === 0 ? "spontaneous" : "after_cue", viaVoice ? wordCount(spoken) : 1);
     setStage(3);
     setStep("model");
-    play([it.model]);
+    play([m, it.model]);
   }
   function nextCue() {
     const s = stage + 1;
@@ -334,7 +335,10 @@ function Seance() {
     if (s === 1) {
       setMessage("Voici un indice.");
       if (it.hint) play([it.hint]);
-    } else if (s === 2) setMessage("Regardons cela autrement.");
+    } else if (s === 2) {
+      setMessage("Regardons cela autrement.");
+      play(["Regardons cela autrement."]);
+    }
     else {
       setMessage(null);
       settle("revealed");
@@ -381,7 +385,9 @@ function Seance() {
       voice.stop();
       setRepeated(true);
       setSuccess(true);
-      setMessage(praise("repeat"));
+      const m = praise("repeat");
+      setMessage(m);
+      play([m]);
       if (it.kind === "oral" && it.mode === "lire") settle("spontaneous", 1);
       return;
     }
