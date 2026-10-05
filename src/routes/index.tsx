@@ -85,7 +85,7 @@ function Index() {
 
       {/* HERO */}
       <section className="paper-grain">
-        <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-6 pb-20 pt-10 md:grid-cols-[1.15fr_1fr] md:px-8 md:pt-16">
+        <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-6 pb-20 pt-10 md:grid-cols-[1fr_1.1fr] md:px-8 md:pt-16">
           <div className="animate-rise">
             <p className="text-sm font-medium capitalize text-muted-foreground">
               {today}
