@@ -36,6 +36,7 @@ export const recordAttempt = createServerFn({ method: "POST" })
         optionCount: z.number().int(),
         outcome: z.enum(["spontaneous", "after_repeat", "after_cue", "revealed"]),
         responseMs: z.number().int().nullable(),
+        repeated: z.boolean().optional(),
       })
       .parse(d),
   )
@@ -48,7 +49,7 @@ export const recordAttempt = createServerFn({ method: "POST" })
       category: data.category,
       skill: data.skill,
       prompt: data.prompt,
-      concept: data.itemId,
+      concept: data.repeated ? `${data.itemId}#rep` : data.itemId, // "#rep" = model sentence repeated aloud
       word_count: data.prompt.trim().split(/\s+/).length,
       option_count: data.optionCount,
       outcome: data.outcome,

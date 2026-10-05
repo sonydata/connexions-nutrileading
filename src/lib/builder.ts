@@ -14,6 +14,8 @@ export type PlayItem = {
   hint: string | null;
   answerText: string | null;
   image: string | null;
+  model: string | null; // formulation modèle, heard and repeated after the attempt
+  syllable: string | null; // first-sound cue for word retrieval
   options: Opt[];
   correctIndex: number;
   level: number;
@@ -28,9 +30,17 @@ const shuffle = <T,>(a: T[]) => {
   return b;
 };
 
+const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+/** "sarcopénie" → "sar…" : roughly the first syllable. */
+export function firstSound(w: string) {
+  const m = w.match(/^[^aeiouyéèêàâîôû]*[aeiouyéèêàâîôû]+[^aeiouyéèêàâîôû\s']?/i);
+  const s = m ? m[0] : w.slice(0, 2);
+  return (s.length >= w.length ? w.slice(0, Math.max(1, w.length - 1)) : s) + "…";
+}
+
 export function skillLevels(past: PastAttempt[], base: number): Record<string, number> {
   const out: Record<string, number> = {};
-  for (const s of ["lexique", "conseil", "information", "temps", "completion", "expression"]) {
+  for (const s of ["lexique", "conseil", "information", "temps", "completion", "expression", "evocation", "elocution"]) {
     const rows = past.filter((p) => p.skill === s).slice(0, 20);
     let lvl = base;
     if (rows.length >= 4) {
@@ -44,7 +54,7 @@ export function skillLevels(past: PastAttempt[], base: number): Record<string, n
 }
 
 function toPlay(item: Item, level: number): PlayItem {
-  const base = { id: item.id, kind: item.kind, theme: item.theme, skill: item.skill, level, question: null, keyword: null, hint: null, answerText: null, image: null, options: [] as Opt[], correctIndex: -1 };
+  const base = { id: item.id, kind: item.kind, theme: item.theme, skill: item.skill, level, question: null, keyword: null, hint: null, answerText: null, image: null, model: null, syllable: null, options: [] as Opt[], correctIndex: -1 };
   if (item.kind === "mcq") {
     const opts = shuffle([item.answer, ...item.distractors.slice(0, level)]);
     return {
@@ -60,24 +70,30 @@ function toPlay(item: Item, level: number): PlayItem {
     return { ...base, audio: item.audio, question: "Vrai ou faux ?", keyword: item.keyword, options: [{ label: "Vrai" }, { label: "Faux" }], correctIndex: item.answer ? 0 : 1 };
   }
   if (item.kind === "complete") {
-    return { ...base, audio: item.audio, hint: item.hint, answerText: item.answer };
+    return { ...base, audio: item.audio, hint: item.hint, answerText: item.answer, syllable: firstSound(item.answer), model: item.audio.replace(/…$/, item.answer + ".") };
+  }
+  if (item.kind === "evoke") {
+    return { ...base, audio: item.audio, hint: item.hint, answerText: item.answer, syllable: item.syllable, model: item.model };
   }
   const step = item.steps[Math.min(level - 1, item.steps.length - 1)]!;
-  return { ...base, mode: item.mode, audio: step, image: item.image ?? null, answerText: item.answer ?? null };
+  const model = item.mode === "lire" ? step : item.mode === "nommer" && item.answer ? cap(item.answer) + "." : (item.model ?? null);
+  return { ...base, mode: item.mode, audio: step, image: item.image ?? null, answerText: item.answer ?? null, hint: item.hint ?? null, syllable: item.answer ? firstSound(item.answer) : null, model };
 }
 
-type Slot = { theme?: Theme; skill?: Skill; kind?: Item["kind"]; mode?: string };
-const PLAN: Slot[] = [
-  { theme: "nutrition", skill: "lexique", kind: "mcq" },
-  { theme: "avis", skill: "conseil" },
-  { theme: "sciences", kind: "mcq" },
-  { theme: "temps" },
-  { kind: "oral", mode: "nommer" },
-  { theme: "avis", skill: "conseil" },
-  { kind: "tf" },
-  { kind: "complete" },
-  { theme: "nutrition", skill: "lexique", kind: "mcq" },
-  { theme: "expression" },
+// One session ≈ 10 activities: comprehension, 2 mini-cases, 2 oral expression,
+// 1 word retrieval, 1 elocution, 1 time/culture. Alternatives vary the day.
+type Slot = { theme?: Theme; skill?: Skill; kind?: Item["kind"]; modes?: string[] };
+const PLAN: Slot[][] = [
+  [{ theme: "avis", skill: "conseil", kind: "mcq" }],
+  [{ skill: "information", kind: "mcq" }, { kind: "tf" }],
+  [{ kind: "oral", modes: ["expliquer"] }],
+  [{ theme: "nutrition", skill: "lexique", kind: "mcq" }, { kind: "complete" }],
+  [{ kind: "evoke" }, { kind: "oral", modes: ["nommer"] }],
+  [{ theme: "avis", skill: "conseil", kind: "mcq" }],
+  [{ kind: "tf" }, { skill: "information", kind: "mcq" }],
+  [{ kind: "oral", modes: ["lire"] }],
+  [{ theme: "temps" }, { theme: "sciences", kind: "mcq" }],
+  [{ kind: "oral", modes: ["reformuler", "expliquer"] }],
 ];
 
 export function buildSession(past: PastAttempt[], topics: string[], base: number): PlayItem[] {
@@ -97,13 +113,15 @@ export function buildSession(past: PastAttempt[], topics: string[], base: number
     if (i.kind === "complete") return topics.includes("nutrition");
     if (i.kind === "tf") return topics.includes("sciences") || topics.includes("nutrition");
     if (i.kind === "oral") return topics.includes("expression") || (i.mode === "nommer" && topics.includes("nutrition"));
+    if (i.kind === "evoke") return topics.includes("expression") || topics.includes(i.theme);
     return topics.includes(i.theme);
   };
   const score = (i: Item) => {
     const seen = lastSeen.get(i.id);
     let s = Math.random();
     if (!seen) s += 2;
-    else if (struggled.has(i.id) && now - seen > 2 * 864e5) s += 3; // difficult concepts come back later
+    else if (struggled.has(i.id) && now - seen > 2 * 864e5) s += 3; // difficult concepts return after 2 days
+    else if (now - seen > 7 * 864e5) s += 1.5; // and everything resurfaces after a week
     if (recent.has(i.id)) s -= 5;
     return s;
   };
@@ -127,15 +145,14 @@ export function buildSession(past: PastAttempt[], topics: string[], base: number
   };
 
   const pool = BANK.filter(allowed);
-  for (const slot of PLAN) {
-    const match = pool.filter(
-      (i) =>
-        (!slot.theme || i.theme === slot.theme) &&
-        (!slot.skill || i.skill === slot.skill) &&
-        (!slot.kind || i.kind === slot.kind) &&
-        (!slot.mode || (i.kind === "oral" && i.mode === slot.mode)),
-    );
-    if (!pick(match)) pick(pool);
+  const fits = (slot: Slot) => (i: Item) =>
+    (!slot.theme || i.theme === slot.theme) &&
+    (!slot.skill || i.skill === slot.skill) &&
+    (!slot.kind || i.kind === slot.kind) &&
+    (!slot.modes || (i.kind === "oral" && slot.modes.includes(i.mode)));
+  for (const alts of PLAN) {
+    const order = shuffle(alts);
+    if (!order.some((slot) => pick(pool.filter(fits(slot))))) pick(pool);
   }
   return picks.map((i) => toPlay(i, levels[i.skill] ?? base));
 }
