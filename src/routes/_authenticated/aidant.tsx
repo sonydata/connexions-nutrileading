@@ -178,13 +178,13 @@ function Aidant() {
           <Card title="Par compétence">
             <ul className="space-y-3">
               {stats.bySkill.map((s) => (
-                <Bar key={s.key} label={SKILL_LABELS[s.key]} value={s.spont} n={s.n} />
+                <Bar key={s.key} label={SKILL_LABELS[s.key] ?? s.key} value={s.spont} n={s.n} />
               ))}
             </ul>
           </Card>
           <Card title="Par thème">
             <ul className="space-y-3">
-              {stats.byCat.length ? stats.byCat.map((c) => <Bar key={c.key} label={CAT_LABELS[c.key]} value={c.spont} n={c.n} />) : <p className="text-muted-foreground">Pas encore de données.</p>}
+              {stats.byCat.length ? stats.byCat.map((c) => <Bar key={c.key} label={CAT_LABELS[c.key] ?? c.key} value={c.spont} n={c.n} />) : <p className="text-muted-foreground">Pas encore de données.</p>}
             </ul>
             {stats.difficult.length > 0 && (
               <>
