@@ -9,3 +9,7 @@
 - [x] Image motivante en fin de séance
 - [ ] Vérifier reconnaissance vocale réelle et iPad (bloqué : nécessite un vrai micro/appareil)
 - [ ] Bouton « Créer de nouveaux exercices » IA (en attente de la décision de Sonia)
+- [x] Centres d'intérêt réels (écran /interets au premier démarrage, sauvegardés) et séances ~80 % issues des sujets choisis
+- [x] Banque étendue : médecine, sciences, histoire, art, géographie, nature, littérature, technologie, cuisine, sport
+- [x] Guidage oral : « Réponse 1… » lues avec mise en évidence, « À vous… » dit à voix haute, « Je vous écoute », tolérance aux pauses
+- [ ] Actualité : en attente d'une source fiable (affichée « Bientôt disponible »)
