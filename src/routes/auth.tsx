@@ -6,9 +6,9 @@ import { lovable } from "@/integrations/lovable/index";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Connexion — Connexions by Nutrileading" },
+      { title: "Mon espace — Connexions by Nutrileading" },
       { name: "description", content: "Connectez-vous pour lancer les séances et suivre les progrès." },
-      { property: "og:title", content: "Connexion — Connexions by Nutrileading" },
+      { property: "og:title", content: "Mon espace — Connexions by Nutrileading" },
       { property: "og:description", content: "Connectez-vous pour lancer les séances et suivre les progrès." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -55,8 +55,8 @@ function AuthPage() {
   return (
     <main className="paper-grain flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-md animate-rise">
-        <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Connexion</p>
-        <h1 className="mt-3 text-5xl">{mode === "in" ? "Connexion" : "Créer un compte"}</h1>
+        <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Mon espace</p>
+        <h1 className="mt-3 text-5xl">{mode === "in" ? "Mon espace" : "Créer un compte"}</h1>
         <form onSubmit={submit} className="mt-10 space-y-4">
           <input className="w-full rounded-xl border bg-card px-5 py-4 text-lg outline-none focus:ring-2 focus:ring-ring" type="email" required placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} />
           <input className="w-full rounded-xl border bg-card px-5 py-4 text-lg outline-none focus:ring-2 focus:ring-ring" type="password" required minLength={6} placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} />
