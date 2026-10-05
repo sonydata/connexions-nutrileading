@@ -13,4 +13,7 @@
 - Session content comes from the local bank in `src/lib/content.ts`, assembled by rules in `src/lib/builder.ts` — no AI per session, to keep costs low and facts controlled.
 - Exercise photos come only from the curated library in `src/lib/library.ts`.
 - Spoken audio is synthesised once per sentence and cached in the private `voice` storage bucket — repeat plays cost nothing.
-- Adaptation is computed per skill from recent `attempts` outcomes at session start; oral exercises are rated by the caregiver, never by AI.
+- Adaptation is computed per skill from recent `attempts` outcomes at session start — local rules, never AI.
+- Spoken answers use the free browser SpeechRecognition (fr-FR) as an indicative signal only, never a score; recordings stay in browser memory and are discarded after each exercise — no paid transcription, no upload.
+- Oral rows in `attempts` reuse existing columns: `kind` = oral mode, `option_count` = approximate spoken word count, `concept` suffixed `#rep` when the model sentence was repeated — avoids a schema change.
+- Choice photos are shown only when every option has one, and never for advice/action answers, so an image never contradicts the answer.

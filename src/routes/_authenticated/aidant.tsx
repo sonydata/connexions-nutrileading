@@ -31,10 +31,15 @@ const SKILL_LABELS: Record<string, string> = {
   temps: "Notions de temps",
   completion: "Complétion de phrases",
   expression: "Expression orale",
+  evocation: "Évocation lexicale",
+  elocution: "Élocution",
 };
 const CAT_LABELS: Record<string, string> = { nutrition: "Nutrition", avis: "Votre avis", sciences: "Sciences", temps: "Temps", expression: "Expression" };
 
-type Attempt = { skill: string; category: string; outcome: string; word_count: number; response_ms: number | null; created_at: string; prompt: string };
+type Attempt = { skill: string; category: string; outcome: string; word_count: number; response_ms: number | null; created_at: string; prompt: string; kind: string | null; option_count: number; concept: string | null };
+const CHOICE = new Set(["mcq", "tf"]);
+const OPEN = new Set(["expliquer", "reformuler", "oral"]);
+const RECALL = new Set(["evoke", "complete", "nommer"]);
 
 const pct = (n: number, d: number) => (d ? Math.round((n / d) * 100) : null);
 
@@ -47,6 +52,7 @@ function Aidant() {
   const [saved, setSaved] = useState(false);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [days, setDays] = useState<string[]>([]);
+  const [sessions, setSessions] = useState<{ started_at: string; completed_at: string | null }[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -56,7 +62,7 @@ function Aidant() {
       const since = new Date(Date.now() - 60 * 864e5).toISOString();
       const [s, a, p] = await Promise.all([
         supabase.from("caregiver_settings").select("*").eq("user_id", u.user.id).maybeSingle(),
-        supabase.from("attempts").select("skill, category, outcome, word_count, response_ms, created_at, prompt").gte("created_at", since).order("created_at"),
+        supabase.from("attempts").select("skill, category, outcome, word_count, response_ms, created_at, prompt, kind, option_count, concept").gte("created_at", since).order("created_at"),
         supabase.from("practice_sessions").select("started_at, completed_at").gte("started_at", since),
       ]);
       if (s.data) {
@@ -65,6 +71,7 @@ function Aidant() {
         setDifficulty(s.data.difficulty);
       }
       setAttempts((a.data as Attempt[]) ?? []);
+      setSessions(p.data ?? []);
       setDays(Array.from(new Set((p.data ?? []).filter((x) => x.completed_at).map((x) => x.started_at.slice(0, 10)))));
     })();
   }, []);
@@ -110,9 +117,34 @@ function Aidant() {
     }));
     const difficult = attempts.filter((a) => a.outcome === "revealed").slice(-6).reverse();
 
-    return { total, spont: pct(spont, total), helped: pct(spont + helped, total), afterRepeat: pct(afterRepeat, total), afterCue: pct(afterCue, total), avgTime, avgLen, bySkill, byCat, trend, difficult };
+    const choice = attempts.filter((a) => !a.kind || CHOICE.has(a.kind));
+    const sp = (rows: Attempt[]) => pct(rows.filter((r) => r.outcome === "spontaneous").length, rows.length);
+    const comp = {
+      spont: sp(choice),
+      helped: pct(choice.filter((r) => r.outcome !== "revealed").length, choice.length),
+      short: sp(choice.filter((r) => r.word_count <= 8)),
+      long: sp(choice.filter((r) => r.word_count > 8)),
+      temps: sp(choice.filter((r) => r.skill === "temps")),
+      cases: sp(choice.filter((r) => r.skill === "conseil")),
+    };
+    const open = attempts.filter((a) => a.kind && OPEN.has(a.kind));
+    const recall = attempts.filter((a) => a.kind && RECALL.has(a.kind));
+    const spokenLens = attempts.filter((a) => a.kind && OPEN.has(a.kind) && a.option_count > 1).map((a) => a.option_count);
+    const expr = {
+      spont: sp(open),
+      support: pct(open.filter((r) => r.outcome === "after_cue").length, open.length),
+      tried: open.filter((r) => r.outcome === "spontaneous").length + attempts.filter((a) => a.kind === "lire" && a.outcome === "spontaneous").length,
+      wordsSpont: recall.filter((r) => r.outcome === "spontaneous").length,
+      wordsCue: recall.filter((r) => r.outcome === "after_cue").length,
+      repeated: attempts.filter((a) => a.concept?.endsWith("#rep")).length,
+      reformulated: attempts.filter((a) => a.kind === "reformuler" && a.outcome === "spontaneous").length,
+      avgWords: spokenLens.length ? Math.round(spokenLens.reduce((x, y) => x + y, 0) / spokenLens.length) : null,
+    };
+    const ranked = byCat.filter((c) => c.n >= 3 && c.spont !== null).sort((a, b) => b.spont! - a.spont!);
+    return { comp, expr, preferred: ranked[0]?.key ?? null, hardest: ranked.length > 1 ? ranked[ranked.length - 1]!.key : null, total, spont: pct(spont, total), helped: pct(spont + helped, total), afterRepeat: pct(afterRepeat, total), afterCue: pct(afterCue, total), avgTime, avgLen, bySkill, byCat, trend, difficult };
   }, [attempts]);
 
+  const totalMinutes = Math.round(sessions.filter((x) => x.completed_at).reduce((t, x) => t + Math.min(40, (new Date(x.completed_at!).getTime() - new Date(x.started_at).getTime()) / 60000), 0));
   const last14 = Array.from({ length: 14 }, (_, k) => new Date(Date.now() - (13 - k) * 864e5).toISOString().slice(0, 10));
 
   return (
@@ -130,27 +162,49 @@ function Aidant() {
         <h1 className="mt-2 text-5xl">Suivi de {name}</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">60 derniers jours. Ces indicateurs servent au suivi de l'entraînement ; ils ne constituent pas un diagnostic médical.</p>
 
-        <div className="mt-10 grid gap-5 md:grid-cols-4">
-          <Metric big label="Compréhension spontanée" value={stats.spont} suffix="%" note="Correct avant toute aide" />
-          <Metric big label="Compréhension avec aide" value={stats.helped} suffix="%" note="Après répétition ou indice écrit" />
+        <h2 className="mt-10 text-3xl">Compréhension</h2>
+        <div className="mt-4 grid gap-5 md:grid-cols-4">
+          <Metric big label="Compréhension spontanée" value={stats.comp.spont} suffix="%" note="Correct avant toute aide" />
+          <Metric big label="Compréhension avec aide" value={stats.comp.helped} suffix="%" note="Après répétition, indice ou mot écrit" />
+          <Metric label="Phrases courtes" value={stats.comp.short} suffix="%" note="8 mots ou moins, spontanément" />
+          <Metric label="Phrases plus longues" value={stats.comp.long} suffix="%" note="Plus de 8 mots, spontanément" />
+          <Metric label="Notions temporelles" value={stats.comp.temps} suffix="%" note="Spontanément" />
+          <Metric label="Mini-cas" value={stats.comp.cases} suffix="%" note="Réussis spontanément" />
           <Metric label="Temps de réponse moyen" value={stats.avgTime} suffix=" s" note="Réponses spontanées" />
-          <Metric label="Longueur de phrase comprise" value={stats.avgLen} suffix=" mots" note="Moyenne, spontanément" />
+          <Metric label="Après répétition" value={stats.afterRepeat} suffix="%" note="Part des réponses" />
         </div>
 
-        <div className="mt-5 grid gap-5 md:grid-cols-3">
+        <h2 className="mt-10 text-3xl">Expression</h2>
+        <div className="mt-4 grid gap-5 md:grid-cols-4">
+          <Metric big label="Expression spontanée" value={stats.expr.spont} suffix="%" note="Réponse orale sans indice ni modèle" />
+          <Metric big label="Expression avec soutien" value={stats.expr.support} suffix="%" note="Après indice ou formulation modèle" />
+          <Metric label="Réponses orales tentées" value={stats.expr.tried} suffix="" note="Votre avis, reformulation, élocution" />
+          <Metric label="Longueur des réponses" value={stats.expr.avgWords} suffix=" mots" note="Approximative, quand la transcription est disponible" />
+          <Metric label="Mots retrouvés spontanément" value={stats.expr.wordsSpont} suffix="" note="Évocation et complétion" />
+          <Metric label="Mots retrouvés après indice" value={stats.expr.wordsCue} suffix="" note="Indice, premier son" />
+          <Metric label="Phrases répétées" value={stats.expr.repeated} suffix="" note="Formulation modèle répétée" />
+          <Metric label="Reformulations" value={stats.expr.reformulated} suffix="" note="Avec ses propres mots" />
+        </div>
+
+        <h2 className="mt-10 text-3xl">Engagement</h2>
+        <div className="mt-4 grid gap-5 md:grid-cols-3">
           <Card title="Régularité (14 jours)">
             <div className="flex gap-1.5">
               {last14.map((d) => (
                 <span key={d} title={d} className={`h-8 flex-1 rounded-md ${days.includes(d) ? "bg-calm" : "bg-border"}`} />
               ))}
             </div>
-            <p className="mt-3 text-sm text-muted-foreground">{days.filter((d) => last14.includes(d)).length} séances terminées</p>
+            <p className="mt-3 text-sm text-muted-foreground">{days.filter((d) => last14.includes(d)).length} séances terminées · {Math.round((days.length / 60) * 7 * 10) / 10} par semaine en moyenne</p>
           </Card>
-          <Card title="Après répétition">
-            <p className="font-serif text-4xl">{stats.afterRepeat ?? "—"}{stats.afterRepeat !== null && "%"}</p>
+          <Card title="Temps total">
+            <p className="font-serif text-4xl">{totalMinutes} <span className="text-2xl">min</span></p>
+            <p className="mt-2 text-sm text-muted-foreground">{sessions.filter((x) => x.completed_at).length} séances terminées sur 60 jours</p>
           </Card>
-          <Card title="Après indice écrit">
-            <p className="font-serif text-4xl">{stats.afterCue ?? "—"}{stats.afterCue !== null && "%"}</p>
+          <Card title="Catégories">
+            <p className="text-sm text-muted-foreground">La plus à l'aise</p>
+            <p className="font-serif text-2xl">{stats.preferred ? CAT_LABELS[stats.preferred] : "—"}</p>
+            <p className="mt-3 text-sm text-muted-foreground">Demande le plus de soutien</p>
+            <p className="font-serif text-2xl">{stats.hardest ? CAT_LABELS[stats.hardest] : "—"}</p>
           </Card>
         </div>
 

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import morning from "@/assets/library/morning.jpg";
+import { todayGoal, weekLine, weekSummary } from "@/lib/week";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   const [state, setState] = useState<"loading" | "out" | "in">("loading");
   const [name, setName] = useState("Hafid");
+  const [week, setWeek] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -27,6 +29,7 @@ function Index() {
       const { data: s } = await supabase.from("caregiver_settings").select("patient_name").eq("user_id", data.user.id).maybeSingle();
       if (s?.patient_name) setName(s.patient_name);
       setState("in");
+      weekSummary().then((w) => setWeek(weekLine(w))).catch(() => {});
     });
   }, []);
 
@@ -46,8 +49,14 @@ function Index() {
         <div className="animate-rise">
           <p className="text-lg capitalize text-muted-foreground">{today}</p>
           <h1 className="mt-4 text-6xl leading-[1.05] md:text-7xl">Bonjour {name}</h1>
-          <p className="mt-6 font-serif text-3xl italic text-muted-foreground">On regarde quelque chose d'intéressant ?</p>
-          <div className="mt-12">
+          <p className="mt-6 font-serif text-3xl italic text-muted-foreground">On commence ?</p>
+          {state === "in" && (
+            <div className="mt-8 space-y-1 text-lg text-muted-foreground">
+              <p>{todayGoal().label}</p>
+              {week && <p>{week}</p>}
+            </div>
+          )}
+          <div className="mt-10">
             {state === "in" && (
               <Link to="/seance" className="inline-flex items-center rounded-full bg-primary px-14 py-6 text-2xl font-medium text-primary-foreground shadow-lg transition hover:opacity-90">
                 Commencer
