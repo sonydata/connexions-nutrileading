@@ -6,9 +6,9 @@ import { lovable } from "@/integrations/lovable/index";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Connexion — Connexions by Nutrileading" },
+      { title: "Mon espace — Connexions by Nutrileading" },
       { name: "description", content: "Connectez-vous pour lancer les séances et suivre les progrès." },
-      { property: "og:title", content: "Connexion — Connexions by Nutrileading" },
+      { property: "og:title", content: "Mon espace — Connexions by Nutrileading" },
       { property: "og:description", content: "Connectez-vous pour lancer les séances et suivre les progrès." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
