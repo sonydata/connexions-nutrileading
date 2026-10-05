@@ -120,28 +120,37 @@ function Index() {
             </p>
           </div>
 
-          {/* Composition asymétrique : la variété des sujets */}
-          <div className="relative hidden h-[560px] md:block" aria-hidden>
-            <figure className="absolute left-4 top-0 w-56 rotate-[-4deg] overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition hover:rotate-0">
-              <img src={img("monet")} alt="" className="aspect-[4/5] w-full rounded-xl object-cover" />
-              <figcaption className="px-1 pt-2 text-xs font-bold uppercase tracking-widest text-brand">Art</figcaption>
-            </figure>
-            <figure className="absolute right-0 top-10 w-48 rotate-[3deg] overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition hover:rotate-0">
-              <img src={img("astronomy")} alt="" className="aspect-square w-full rounded-xl object-cover" />
-              <figcaption className="px-1 pt-2 text-xs font-bold uppercase tracking-widest text-brand">Sciences</figcaption>
-            </figure>
-            <figure className="absolute left-40 top-[300px] w-52 rotate-[2deg] overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition hover:rotate-0">
-              <img src={img("rome")} alt="" className="aspect-[4/3] w-full rounded-xl object-cover" />
-              <figcaption className="px-1 pt-2 text-xs font-bold uppercase tracking-widest text-brand">Histoire</figcaption>
-            </figure>
-            <figure className="absolute right-6 top-[270px] w-40 rotate-[-3deg] overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition hover:rotate-0">
-              <img src={img("book")} alt="" className="aspect-[3/4] w-full rounded-xl object-cover" />
-              <figcaption className="px-1 pt-2 text-xs font-bold uppercase tracking-widest text-brand">Littérature</figcaption>
-            </figure>
-            <figure className="absolute bottom-[-10px] left-[-24px] w-36 rotate-[5deg] overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition hover:rotate-0">
-              <img src={img("vegetables")} alt="" className="aspect-square w-full rounded-xl object-cover" />
-              <figcaption className="px-1 pt-2 text-xs font-bold uppercase tracking-widest text-brand">Santé</figcaption>
-            </figure>
+          {/* Composition structurée : 1 carte principale, 2 secondaires, 2 accents — les univers explorés */}
+          <div className="hidden md:block" aria-hidden>
+            <p className="mb-5 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-brand">
+              Les univers explorés
+              <span className="h-px flex-1 bg-border" />
+            </p>
+            <div className="grid h-[520px] grid-cols-[1.15fr_1fr] grid-rows-[1.3fr_1.05fr_0.8fr] gap-5">
+              {/* Carte principale */}
+              <figure className="row-span-2 flex rotate-[-1.25deg] flex-col overflow-hidden rounded-3xl bg-card p-2.5 shadow-xl transition duration-300 hover:rotate-0 hover:shadow-2xl">
+                <img src={img("monet")} alt="" className="min-h-0 w-full flex-1 rounded-2xl object-cover" />
+                <figcaption className="px-2 py-3 text-xs font-bold uppercase tracking-widest text-brand">Art</figcaption>
+              </figure>
+              {/* Secondaires */}
+              <figure className="flex rotate-[1deg] flex-col overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition duration-300 hover:rotate-0 hover:shadow-2xl">
+                <img src={img("astronomy")} alt="" className="min-h-0 w-full flex-1 rounded-xl object-cover" />
+                <figcaption className="px-1.5 py-2 text-xs font-bold uppercase tracking-widest text-brand">Sciences</figcaption>
+              </figure>
+              <figure className="flex rotate-[-0.75deg] flex-col overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition duration-300 hover:rotate-0 hover:shadow-2xl">
+                <img src={img("rome")} alt="" className="min-h-0 w-full flex-1 rounded-xl object-cover" />
+                <figcaption className="px-1.5 py-2 text-xs font-bold uppercase tracking-widest text-brand">Histoire</figcaption>
+              </figure>
+              {/* Accents */}
+              <figure className="flex rotate-[0.75deg] flex-col overflow-hidden rounded-xl bg-card p-1.5 shadow-lg transition duration-300 hover:rotate-0 hover:shadow-xl">
+                <img src={img("book")} alt="" className="min-h-0 w-full flex-1 rounded-lg object-cover" />
+                <figcaption className="px-1 py-1.5 text-[11px] font-bold uppercase tracking-widest text-brand">Littérature</figcaption>
+              </figure>
+              <figure className="flex rotate-[-0.5deg] flex-col overflow-hidden rounded-xl bg-card p-1.5 shadow-lg transition duration-300 hover:rotate-0 hover:shadow-xl">
+                <img src={img("vegetables")} alt="" className="min-h-0 w-full flex-1 rounded-lg object-cover" />
+                <figcaption className="px-1 py-1.5 text-[11px] font-bold uppercase tracking-widest text-brand">Santé</figcaption>
+              </figure>
+            </div>
           </div>
         </div>
       </section>
