@@ -182,10 +182,12 @@ function Seance() {
     record({
       data: { sessionId, itemId: it.id, kind, category: it.theme, skill: it.skill, prompt: it.audio, optionCount: it.kind === "oral" ? p.spoken : it.options.length, outcome: p.outcome, responseMs: p.responseMs, repeated },
     }).catch(() => {});
-    log.current.push({ theme: it.theme, skill: it.skill, kind, outcome: p.outcome, spoken: p.spoken > 0 || p.outcome === "spontaneous" && it.kind === "oral" });
+    log.current.push({ theme: it.theme, skill: it.skill, kind, outcome: p.outcome, spoken: p.spoken > 0 });
     // A concept that needed the answer comes back once, later in the same session.
+    let added = 0;
     if (p.outcome === "revealed" && it.kind !== "oral" && !requeued.current.has(it.id) && items.length < 13) {
       requeued.current.add(it.id);
+      added = 1;
       setItems((xs) => [...xs, { ...it }]);
     }
     pending.current = null;
@@ -198,7 +200,7 @@ function Seance() {
     setStep("ask");
     setHeard("");
     setRepeated(false);
-    if (i + 1 >= items.length + (requeued.current.has(it.id) && p.outcome === "revealed" ? 1 : 0)) {
+    if (i + 1 >= items.length + added) {
       complete({ data: { sessionId } }).catch(() => {});
       setPhase("done");
     } else setI(i + 1);
