@@ -125,7 +125,7 @@ function Index() {
               <img src={img("astronomy")} alt="" className="aspect-square w-full rounded-xl object-cover" />
               <figcaption className="px-1 pt-2 text-xs font-bold uppercase tracking-widest text-brand">Sciences</figcaption>
             </figure>
-            <figure className="absolute left-24 top-[290px] w-52 rotate-[2deg] overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition hover:rotate-0">
+            <figure className="absolute left-40 top-[300px] w-52 rotate-[2deg] overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition hover:rotate-0">
               <img src={img("rome")} alt="" className="aspect-[4/3] w-full rounded-xl object-cover" />
               <figcaption className="px-1 pt-2 text-xs font-bold uppercase tracking-widest text-brand">Histoire</figcaption>
             </figure>
@@ -133,9 +133,9 @@ function Index() {
               <img src={img("book")} alt="" className="aspect-[3/4] w-full rounded-xl object-cover" />
               <figcaption className="px-1 pt-2 text-xs font-bold uppercase tracking-widest text-brand">Littérature</figcaption>
             </figure>
-            <figure className="absolute bottom-0 left-0 w-36 rotate-[5deg] overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition hover:rotate-0">
-              <img src={img("consultation")} alt="" className="aspect-square w-full rounded-xl object-cover" />
-              <figcaption className="px-1 pt-2 text-xs font-bold uppercase tracking-widest text-brand">Médecine</figcaption>
+            <figure className="absolute bottom-[-10px] left-[-24px] w-36 rotate-[5deg] overflow-hidden rounded-2xl bg-card p-2 shadow-xl transition hover:rotate-0">
+              <img src={img("vegetables")} alt="" className="aspect-square w-full rounded-xl object-cover" />
+              <figcaption className="px-1 pt-2 text-xs font-bold uppercase tracking-widest text-brand">Santé</figcaption>
             </figure>
           </div>
         </div>
@@ -153,10 +153,10 @@ function Index() {
               <img src={img("newspaper")} alt="" className="mt-8 aspect-[16/9] w-full rounded-2xl object-cover transition duration-500 group-hover:scale-[1.02]" />
             </article>
             <article className="group flex gap-5 rounded-3xl border bg-background p-6 transition hover:border-brand md:col-span-5">
-              <img src={img("book")} alt="" className="h-28 w-24 shrink-0 rounded-xl object-cover" />
+              <img src={img("glasses")} alt="" className="h-28 w-24 shrink-0 rounded-xl object-cover" />
               <div>
                 <p className="text-sm font-bold text-brand">02</p>
-                <h2 className="mt-1 text-3xl font-semibold tracking-tight">Retrouver</h2>
+                <h2 className="mt-1 text-3xl font-sans font-semibold tracking-tight">Retrouver</h2>
                 <p className="mt-2 text-base text-muted-foreground">Mobiliser ses connaissances et son vocabulaire.</p>
               </div>
             </article>
@@ -164,7 +164,7 @@ function Index() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-bold text-brand">03</p>
-                  <h2 className="mt-1 text-3xl font-semibold tracking-tight">S'exprimer</h2>
+                  <h2 className="mt-1 text-3xl font-sans font-semibold tracking-tight">S'exprimer</h2>
                   <p className="mt-2 text-base text-muted-foreground">Donner son avis, expliquer, reformuler.</p>
                 </div>
                 <img src={img("consultation")} alt="" className="h-24 w-24 shrink-0 rounded-full object-cover ring-4 ring-background" />
@@ -180,7 +180,7 @@ function Index() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.25em] text-brand">Vos centres d'intérêt</p>
-              <h2 className="mt-3 text-4xl font-semibold leading-tight tracking-tight md:text-5xl">Vos séances partent de ce qui vous passionne.</h2>
+              <h2 className="mt-3 font-sans text-4xl font-semibold leading-tight tracking-tight md:text-5xl">Vos séances partent de ce qui vous passionne.</h2>
             </div>
             <Link to="/interets" search={{ next: undefined }} className="rounded-full border-2 border-brand px-6 py-2.5 text-base font-semibold text-brand transition hover:bg-brand hover:text-primary-foreground">
               Modifier
