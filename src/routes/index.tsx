@@ -83,13 +83,18 @@ function Index() {
 
   return (
     <main className="relative flex min-h-screen flex-col bg-background">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5 md:px-8">
+      <header className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-3 px-6 py-5 md:px-8">
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-lg font-semibold capitalize text-foreground md:text-xl">
           <span className="h-2 w-2 rounded-full bg-brand" aria-hidden />
           {today}
-          {state === "in" && <span className="normal-case font-medium text-muted-foreground"> · Bonjour {name}</span>}
         </p>
-        <nav className="flex items-center gap-1 text-sm font-medium">
+        <nav className="flex flex-wrap items-center justify-end gap-1 text-sm font-medium">
+          {state === "in" && (
+            <span className="mr-2 flex items-center gap-2 rounded-full border border-border bg-card py-1.5 pl-2 pr-4">
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-brand text-xs font-bold text-primary-foreground">{name.charAt(0).toUpperCase()}</span>
+              <span className="text-foreground">{name}</span>
+            </span>
+          )}
           {[
             { to: "/interets" as const, label: "Mes centres d'intérêt", search: { next: undefined } },
             { to: (state === "in" ? "/aidant" : "/auth") as "/aidant" | "/auth", label: state === "in" ? "Vos progrès" : "Mon espace", search: undefined },
