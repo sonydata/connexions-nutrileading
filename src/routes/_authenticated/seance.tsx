@@ -453,9 +453,9 @@ function RepeatActions({ voice, repeated, onListen, onRepeat, onNext }: { voice:
 }
 
 function ChoiceBody({ it, stage, wrong, chosen, message, success, onChoose, onNext }: { it: PlayItem; stage: number; wrong: number[]; chosen: number | null; message: string | null; success: boolean; onChoose: (k: number) => void; onNext: () => void }) {
-  const hasImages = it.options.some((o) => o.image);
+  const hasImages = it.options.length > 0 && it.options.every((o) => o.image);
   const n = it.options.length;
-  const cols = n === 4 ? "grid-cols-2 md:grid-cols-4" : n === 3 ? "grid-cols-3" : "grid-cols-2";
+  const cols = n === 4 ? "grid-cols-2 lg:grid-cols-4" : n === 3 ? "grid-cols-3" : "grid-cols-2";
   return (
     <>
       <div className="mt-2 min-h-24 text-center">
@@ -464,7 +464,7 @@ function ChoiceBody({ it, stage, wrong, chosen, message, success, onChoose, onNe
         {stage >= 2 && it.keyword && <span className="mt-3 inline-block rounded-full bg-gold/25 px-5 py-1.5 text-xl">{it.keyword}</span>}
         <Feedback message={message} success={success} />
       </div>
-      <div className={`mt-4 grid w-full gap-5 ${cols}`}>
+      <div className={`mt-4 grid w-full gap-5 ${cols} ${hasImages && n === 2 ? "max-w-2xl" : ""}`}>
         {it.options.map((o, k) => {
           const src = imageSrc(o.image);
           const right = chosen === k;
@@ -475,7 +475,7 @@ function ChoiceBody({ it, stage, wrong, chosen, message, success, onChoose, onNe
               onClick={() => onChoose(k)}
               className={`relative overflow-hidden rounded-3xl border-2 bg-card shadow-sm transition ${right ? "border-calm ring-4 ring-calm-soft animate-glow" : "border-transparent hover:-translate-y-1 hover:shadow-lg"} ${dim ? "opacity-35" : ""}`}
             >
-              {hasImages && <div className="aspect-[4/3] w-full bg-muted">{src && <img src={src} alt={o.label} className="h-full w-full object-cover" />}</div>}
+              {hasImages && <div className="aspect-square w-full bg-muted">{src && <img src={src} alt={o.label} className="h-full w-full object-cover" />}</div>}
               <div className={`px-4 text-center ${hasImages ? "py-4 text-2xl" : "py-9 font-serif text-3xl"}`}>{o.label}</div>
               {right && success && (
                 <span className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-calm text-primary-foreground animate-pop">

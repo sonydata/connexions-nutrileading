@@ -56,14 +56,18 @@ export function skillLevels(past: PastAttempt[], base: number): Record<string, n
 function toPlay(item: Item, level: number): PlayItem {
   const base = { id: item.id, kind: item.kind, theme: item.theme, skill: item.skill, level, question: null, keyword: null, hint: null, answerText: null, image: null, model: null, syllable: null, options: [] as Opt[], correctIndex: -1 };
   if (item.kind === "mcq") {
-    const opts = shuffle([item.answer, ...item.distractors.slice(0, level)]);
+    let opts = shuffle([item.answer, ...item.distractors.slice(0, level)]);
+    // Photos only when every option has one, and never for advice/actions
+    // (a salt photo next to "réduire le sel" would say the opposite).
+    if (item.skill === "conseil" || !opts.every((o) => o.image)) opts = opts.map((o) => ({ label: o.label }));
+    const answer = opts.find((o) => o.label === item.answer.label)!;
     return {
       ...base,
       audio: level === 1 && item.audioShort ? item.audioShort : item.audio,
       question: item.question ?? null,
       keyword: item.keyword,
       options: opts,
-      correctIndex: opts.indexOf(item.answer),
+      correctIndex: opts.indexOf(answer),
     };
   }
   if (item.kind === "tf") {
