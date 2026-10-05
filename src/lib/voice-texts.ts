@@ -17,6 +17,12 @@ const FIXED = [
   "À vous. Comment l'expliqueriez-vous ?",
   "À vous de répondre.",
   "L'idée est là.", "Bonne formulation.", "Bonne mobilisation du langage.", "Réponse pertinente.",
+  // Encouragements (dits à voix haute après chaque réponse)
+  "Très juste.", "Bonne analyse.", "Très bon raisonnement.", "Belle précision.", "Tout à fait.",
+  "Réflexe de praticien.", "Analyse nutritionnelle pertinente.", "Bonne logique clinique.", "Bonne hiérarchisation.", "Très bonne interprétation.",
+  "C'est cela.", "Bonne démarche.", "Très bien, poursuivons.", "Oui, c'est bien cela.",
+  "Vous avez retrouvé le terme.", "Bonne évocation.", "Oui — vous l'avez retrouvé.", "Très bien dit.",
+  "Écoutons encore.", "Voici un indice.", "Voici la réponse.", "Regardons cela autrement.",
 ];
 
 const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
