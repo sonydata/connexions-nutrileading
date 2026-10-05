@@ -6,6 +6,7 @@ import symbol from "@/assets/connexions-symbol.png.asset.json";
 import { weekSummary } from "@/lib/week";
 import { imageSrc } from "@/lib/library";
 import litteratureImg from "@/assets/home/litterature.jpg";
+import artImg from "@/assets/home/art.jpg";
 import santeImg from "@/assets/home/sante.jpg";
 import { Apple, BookOpen, ChefHat, Cpu, Landmark, Leaf, Map as MapIcon, Microscope, Newspaper, Palette, Sparkles, Stethoscope, Trophy } from "lucide-react";
 import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, hasInterests, interestsOf, otherInterest } from "@/lib/interests";
@@ -123,21 +124,22 @@ function Index() {
           </div>
 
           {/* Sélection éditoriale : 1 carte principale + 4 secondaires alignées */}
-          <div className="hidden md:block" aria-hidden>
+          <div className="relative hidden md:block" aria-hidden>
+            <div className="absolute -inset-6 -z-10 rounded-[2.5rem] bg-brand-soft/60" />
             <div className="grid grid-cols-2 gap-4">
               {[
-                { src: img("monet"), label: "Art", pos: "object-center", main: true },
-                { src: img("astronomy"), label: "Sciences", pos: "object-center" },
-                { src: img("rome"), label: "Histoire", pos: "object-center" },
-                { src: litteratureImg, label: "Littérature", pos: "object-[50%_70%]" },
-                { src: santeImg, label: "Santé", pos: "object-[35%_60%]" },
+                { src: artImg, label: "Art", pos: "object-[60%_40%]", main: true },
+                { src: img("astronomy"), label: "Sciences", pos: "object-center", shift: "" },
+                { src: img("rome"), label: "Histoire", pos: "object-center", shift: "translate-y-4" },
+                { src: litteratureImg, label: "Littérature", pos: "object-[50%_70%]", shift: "" },
+                { src: santeImg, label: "Santé", pos: "object-center", shift: "translate-y-4" },
               ].map((c) => (
-                <figure key={c.label} className={c.main ? "col-span-2" : ""}>
-                  <div className={`overflow-hidden rounded-2xl bg-muted shadow-md ${c.main ? "aspect-[16/8]" : "aspect-[4/3]"}`}>
-                    <img src={c.src} alt="" className={`h-full w-full object-cover ${c.pos} transition duration-500 hover:scale-[1.03]`} />
+                <figure key={c.label} className={c.main ? "col-span-2" : c.shift}>
+                  <div className={`overflow-hidden rounded-2xl bg-card p-1.5 shadow-lg ${c.main ? "aspect-[16/8]" : "aspect-[4/3]"}`}>
+                    <img src={c.src} alt="" className={`h-full w-full rounded-xl object-cover ${c.pos} transition duration-500 hover:scale-[1.03]`} />
                   </div>
-                  <figcaption className="mt-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-foreground">
-                    <span className="h-px w-4 bg-brand" />
+                  <figcaption className="mt-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand">
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                     {c.label}
                   </figcaption>
                 </figure>
