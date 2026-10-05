@@ -7,6 +7,7 @@ import { imageSrc } from "@/lib/library";
 import { heardWord, useVoiceInput, wordCount } from "@/lib/voice-input";
 import { praise, praiseChoice } from "@/lib/praise";
 import { todayGoal, weekLine, weekSummary } from "@/lib/week";
+import morning from "@/assets/library/morning.jpg";
 
 export const Route = createFileRoute("/_authenticated/seance")({
   head: () => ({
@@ -572,9 +573,7 @@ function Summary({ log, minutes }: { log: Done[]; minutes: number }) {
   ].filter(Boolean) as string[];
   return (
     <Center>
-      <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-calm-soft text-calm animate-pop">
-        <Check className="h-10 w-10" />
-      </span>
+      <img src={morning} alt="Lever du soleil sur les toits de Paris" className="mx-auto w-full max-w-xl rounded-3xl object-cover shadow-xl animate-pop aspect-[16/9]" />
       <p className="mt-8 text-sm uppercase tracking-[0.25em] text-muted-foreground">Séance terminée</p>
       <h1 className="mt-3 text-6xl">Excellente séance aujourd'hui.</h1>
       <ul className="mx-auto mt-8 max-w-2xl space-y-2 font-serif text-2xl text-muted-foreground">
