@@ -17,7 +17,8 @@ export async function weekSummary() {
   const { data } = await supabase.from("practice_sessions").select("started_at, completed_at").gte("started_at", monday.toISOString()).not("completed_at", "is", null);
   const rows = data ?? [];
   const minutes = Math.round(rows.reduce((t, r) => t + Math.min(40, (new Date(r.completed_at!).getTime() - new Date(r.started_at).getTime()) / 60000), 0));
-  return { sessions: rows.length, minutes };
+  const days = new Set(rows.map((r) => r.started_at.slice(0, 10))).size;
+  return { sessions: rows.length, minutes, days };
 }
 
 /** Never punitive: nothing is shown when the week is empty. */
