@@ -17,3 +17,5 @@
 - [x] Une seule voix féminine (pas de bascule vers la voix du navigateur)
 - [x] Retirer les questions trop évidentes/enfantines de la banque
 - [x] Trois piliers Comprendre/Retrouver/S'exprimer harmonisés : poids égal, fond neutre identique, rose réservé au survol
+- [ ] Agrandir le logo Nutrileading sur l accueil (demande Sonia)
+- [ ] Terminer le pré-enregistrement des 1172 phrases avec la voix Vindemiatrix (en cours, ~720/1172)
