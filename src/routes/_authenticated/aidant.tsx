@@ -37,7 +37,7 @@ const SKILL_LABELS: Record<string, string> = {
 };
 const CAT_LABELS: Record<string, string> = { nutrition: "Nutrition", avis: "Votre avis", sciences: "Sciences", temps: "Temps", expression: "Expression" };
 
-type Attempt = { skill: string; category: string; outcome: string; word_count: number; response_ms: number | null; created_at: string; prompt: string; kind: string | null; option_count: number; concept: string | null };
+type Attempt = { item_id: string | null; session_id: string | null; skill: string; category: string; outcome: string; word_count: number; response_ms: number | null; created_at: string; prompt: string; kind: string | null; option_count: number; concept: string | null };
 const CHOICE = new Set(["mcq", "tf"]);
 const OPEN = new Set(["expliquer", "reformuler", "oral"]);
 const RECALL = new Set(["evoke", "complete", "nommer"]);
@@ -65,7 +65,7 @@ function Aidant() {
       const since = new Date(Date.now() - 60 * 864e5).toISOString();
       const [s, a, p] = await Promise.all([
         supabase.from("caregiver_settings").select("*").eq("user_id", u.user.id).maybeSingle(),
-        supabase.from("attempts").select("skill, category, outcome, word_count, response_ms, created_at, prompt, kind, option_count, concept").gte("created_at", since).order("created_at"),
+        supabase.from("attempts").select("item_id, session_id, skill, category, outcome, word_count, response_ms, created_at, prompt, kind, option_count, concept").gte("created_at", since).order("created_at"),
         supabase.from("practice_sessions").select("started_at, completed_at").gte("started_at", since),
       ]);
       if (s.data) {
@@ -151,6 +151,32 @@ function Aidant() {
   }, [attempts]);
 
   const totalMinutes = Math.round(sessions.filter((x) => x.completed_at).reduce((t, x) => t + Math.min(40, (new Date(x.completed_at!).getTime() - new Date(x.started_at).getTime()) / 60000), 0));
+  // Habits — local aggregations for the caregiver only, never shown to the main user.
+  const habits = (() => {
+    const done = sessions.filter((x) => x.completed_at);
+    const avg = done.length ? Math.round(totalMinutes / done.length) : null;
+    const perWeek = Math.round((done.length / 60) * 7 * 10) / 10;
+    const completion = pct(done.length, sessions.length);
+    const ORALK = new Set(["expliquer", "lire", "reformuler", "nommer"]);
+    const oralBySession = new Map<string, number>();
+    for (const a of attempts) if (a.session_id && ORALK.has(a.kind ?? "") && a.option_count > 0) oralBySession.set(a.session_id, (oralBySession.get(a.session_id) ?? 0) + 1);
+    const oralPer = done.length ? Math.round(([...oralBySession.values()].reduce((t, n) => t + n, 0) / done.length) * 10) / 10 : null;
+    const byTopic = new Map<string, { n: number; s: number }>();
+    const byKind = new Map<string, { n: number; s: number }>();
+    for (const a of attempts) {
+      const ok = a.outcome === "spontaneous" || (ORALK.has(a.kind ?? "") && a.option_count > 0) ? 1 : 0;
+      const t = topicOfId(a.item_id);
+      if (t && t !== "general") { const x = byTopic.get(t) ?? { n: 0, s: 0 }; x.n++; x.s += ok; byTopic.set(t, x); }
+      const k = a.kind ?? "";
+      const y = byKind.get(k) ?? { n: 0, s: 0 }; y.n++; y.s += ok; byKind.set(k, y);
+    }
+    const rank = (m: Map<string, { n: number; s: number }>) => [...m].filter(([, v]) => v.n >= 3).sort((a, b) => b[1].s / b[1].n - a[1].s / a[1].n || b[1].n - a[1].n).slice(0, 3).map(([k]) => k);
+    const dayList = [...new Set(done.map((x) => x.started_at.slice(0, 10)))].sort();
+    let returns = 0;
+    for (let k = 1; k < dayList.length; k++) if (new Date(dayList[k]!).getTime() - new Date(dayList[k - 1]!).getTime() > 3 * 864e5) returns++;
+    return { avg, perWeek, completion, oralPer, topics: rank(byTopic), kinds: rank(byKind), returns };
+  })();
+  const KIND_FR: Record<string, string> = { mcq: "Questions à choix", tf: "Vrai ou faux", evoke: "Retrouver un mot", complete: "Compléter une phrase", expliquer: "Donner son avis", reformuler: "Reformuler", lire: "Répéter une phrase", nommer: "Nommer" };
   const last14 = Array.from({ length: 14 }, (_, k) => new Date(Date.now() - (13 - k) * 864e5).toISOString().slice(0, 10));
 
   return (
@@ -190,6 +216,23 @@ function Aidant() {
           <Metric label="Mots retrouvés après indice" value={stats.expr.wordsCue} suffix="" note="Indice, premier son" />
           <Metric label="Phrases répétées" value={stats.expr.repeated} suffix="" note="Formulation modèle répétée" />
           <Metric label="Reformulations" value={stats.expr.reformulated} suffix="" note="Avec ses propres mots" />
+        </div>
+
+        <h2 className="mt-10 text-3xl">Habitudes</h2>
+        <div className="mt-4 grid gap-5 md:grid-cols-3">
+          <Card title="Rythme">
+            <p className="font-serif text-4xl">{habits.perWeek} <span className="text-2xl">séances / semaine</span></p>
+            <p className="mt-2 text-sm text-muted-foreground">Durée moyenne : {habits.avg ?? "—"} min · Séances terminées : {habits.completion ?? "—"} %</p>
+            <p className="mt-1 text-sm text-muted-foreground">Retours après une pause de plus de 3 jours : {habits.returns}</p>
+          </Card>
+          <Card title="Thèmes préférés">
+            <p className="font-serif text-2xl">{habits.topics.length ? habits.topics.map((t) => INTERESTS.find((x) => x.id === t)?.label ?? t).join(" · ") : "—"}</p>
+            <p className="mt-2 text-sm text-muted-foreground">Là où il répond le plus volontiers</p>
+          </Card>
+          <Card title="Formats engageants">
+            <p className="font-serif text-2xl">{habits.kinds.length ? habits.kinds.map((k) => KIND_FR[k] ?? k).join(" · ") : "—"}</p>
+            <p className="mt-2 text-sm text-muted-foreground">Réponses orales par séance : {habits.oralPer ?? "—"}</p>
+          </Card>
         </div>
 
         <h2 className="mt-10 text-3xl">Engagement</h2>
