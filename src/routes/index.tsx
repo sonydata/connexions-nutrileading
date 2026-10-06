@@ -157,7 +157,7 @@ function Index() {
               { src: img("astronomy"), label: "Sciences", pos: "object-center", x: 72, y: 18, w: 26, a: "aspect-[3/4]", r: "1.5deg" },
               { src: img("rome"), label: "Histoire", pos: "object-center", x: 6, y: 42, w: 34, a: "aspect-[4/3]", r: "0.5deg" },
               { src: litteratureImg, label: "Littérature", pos: "object-[50%_70%]", x: 36, y: 62, w: 26, a: "aspect-[4/5]", r: "-1.5deg" },
-              { src: santeImg, label: "Santé & nutrition", pos: "object-center", x: 64, y: 58, w: 32, a: "aspect-[4/3]", r: "1deg" },
+              { src: santeImg, label: "Échange & transmission", pos: "object-center", x: 64, y: 58, w: 32, a: "aspect-[4/3]", r: "1deg" },
             ].map((c) => (
               <figure key={c.label} className="absolute" style={{ left: `${c.x}%`, top: `${c.y}%`, width: `${c.w}%`, rotate: c.r }}>
                 <div className={`relative overflow-hidden rounded-2xl shadow-xl ${c.a}`}>
