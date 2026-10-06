@@ -63,7 +63,7 @@ function Index() {
   const label = (id: string) => INTERESTS.find((x) => x.id === id)?.label ?? id;
   const short = (id: string) => label(id).split(" &")[0]!;
   const other = otherInterest(topics);
-  const QUOTES = ["Faire vivre ses connaissances.", "La curiosité se cultive.", "\n", "Réfléchir, comprendre, transmettre.", "Votre expérience reste une richesse."];
+  const QUOTES = ["Faire vivre ses connaissances.", "La curiosité se cultive.", "Réfléchir, comprendre, transmettre.", "Votre expérience reste une richesse."];
   const quote = QUOTES[Math.floor(Date.now() / 864e5) % QUOTES.length]!;
   const img = (id: string) => imageSrc(id) ?? "";
   const startLink = { to: configured ? "/seance" : "/interets", search: configured ? {} : { next: "seance" as const } } as const;
