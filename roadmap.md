@@ -25,3 +25,12 @@
 - [x] Nom de la personne connectée dans l’en-tête (pastille avec initiale)
 
 - [x] Accueil : rapprocher visuellement de l image d inspiration (vert forêt principal, rouge en petit accent, hero éditorial, constellation organique des thèmes, carte Aujourd hui, pastilles de centres d intérêt)
+- [x] Double CTA de l accueil supprimé : un seul « Commencer », la carte « Aujourd hui » n est plus qu un aperçu
+- [x] Accueil : phrase « Faire vivre ses connaissances » retirée (rien à la place)
+- [x] Centres d'intérêt modifiables d'un seul geste : chaque sujet se touche directement, plus de bouton « Modifier »
+- [x] Fiche Sonia « UX et difficulté » : calibrer les questions (adultes, stimulantes, accessibles, jamais triviales ni inutilement complexes)
+- [x] Retirer les questions qui ne font que répéter littéralement une évidence (« Quand passe-t-il ? » → « demain matin ») ; préférer comparer/ordonner/raisonner
+- [x] Distracteurs plausibles et images réellement discriminantes (matin ≠ soir)
+- [x] Niveaux invisibles 1/2/3 (phrases courtes + 2 choix → 3 choix + distracteurs plausibles → mini-situations, séquençage, reformulation), jamais affichés
+- [x] Adaptation : réussites spontanées répétées → complexité légèrement supérieure ; échecs/demandes de répétition → phrase plus simple, moins de choix, plus de contexte
+- [x] Direction visuelle (fiche Sonia, 6 oct.) : fond ivoire chaud, vert profond principal, couleurs secondaires sobres par type d'activité (Comprendre bleu-vert, Retrouver ocre, S'exprimer prune, Reformuler argile, Temporalité bleu ardoise), boutons plus contrastés, cartes teintées et bordées, écrans d'exercice très lisibles, progression visible mais discrète, plus de variation entre les séances. Rouge réservé aux micro-accents, aucune gamification.

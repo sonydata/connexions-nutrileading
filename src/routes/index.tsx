@@ -6,10 +6,11 @@ import symbol from "@/assets/connexions-symbol.png.asset.json";
 import { weekPhrase, weekSummary, type Week } from "@/lib/week";
 import { COLLECTIONS, isFresh } from "@/lib/sequences";
 import { imageSrc } from "@/lib/library";
+import { ACCENTS, COLLECTION_CYCLE, PILLARS } from "@/lib/accents";
 import litteratureImg from "@/assets/home/litterature.jpg";
 import artImg from "@/assets/home/art.jpg";
 import santeImg from "@/assets/home/sante.jpg";
-import { Apple, ArrowRight, BookOpen, ChefHat, Cpu, Ear, Landmark, Leaf, Map as MapIcon, MessageCircle, Microscope, Newspaper, Palette, Pencil, Search, Stethoscope, Trophy } from "lucide-react";
+import { Apple, ArrowRight, BookOpen, ChefHat, Cpu, Ear, Landmark, Leaf, Map as MapIcon, MessageCircle, Microscope, Newspaper, Palette, Search, Stethoscope, Trophy } from "lucide-react";
 import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, PREFIX, hasInterests, interestsOf, otherInterest } from "@/lib/interests";
 
 export const Route = createFileRoute("/")({
@@ -33,7 +34,6 @@ function Index() {
   const [topics, setTopics] = useState<string[]>([]);
   const [configured, setConfigured] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -63,13 +63,12 @@ function Index() {
   const label = (id: string) => INTERESTS.find((x) => x.id === id)?.label ?? id;
   const short = (id: string) => label(id).split(" &")[0]!;
   const other = otherInterest(topics);
-  const QUOTES = ["Faire vivre ses connaissances.", "La curiosité se cultive.", "Réfléchir, comprendre, transmettre.", "Votre expérience reste une richesse."];
-  const quote = QUOTES[Math.floor(Date.now() / 864e5) % QUOTES.length]!;
   const img = (id: string) => imageSrc(id) ?? "";
   const startLink = { to: configured ? "/seance" : "/interets", search: configured ? {} : { next: "seance" as const } } as const;
 
   async function toggleInterest(id: string) {
-    const cur = interestsOf(topics).filter((x) => x !== "actualite");
+    const stored = interestsOf(topics).filter((x) => x !== "actualite");
+    const cur = stored.length ? stored : myIds;
     const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
     if (!next.length) return;
     const mine = next.map((x) => PREFIX + x);
@@ -167,10 +166,6 @@ function Index() {
                 </div>
               </figure>
             ))}
-            <p className="absolute -bottom-6 left-0 w-56 rotate-[-4deg] font-serif text-lg italic leading-snug text-muted-foreground">
-              {quote}
-              <span className="mt-1 block h-px w-20 bg-brand/60" />
-            </p>
           </div>
         </div>
       </section>
@@ -185,9 +180,6 @@ function Index() {
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-primary">Aujourd'hui · 10 minutes</p>
             <p className="mt-2 text-base text-muted-foreground">Votre séance explore</p>
             <p className="mt-1 font-serif text-3xl md:text-4xl">{myIds.slice(0, 3).map(short).join(" · ")}</p>
-            <Link {...startLink} className="mt-5 inline-flex items-center gap-3 rounded-full bg-primary px-9 py-4 text-lg font-semibold text-primary-foreground transition hover:opacity-95">
-              Commencer la séance <ArrowRight className="h-5 w-5" />
-            </Link>
           </div>
           <span className="hidden h-full w-px bg-border md:block" />
           <ul className="space-y-5">
@@ -197,7 +189,7 @@ function Index() {
               { I: MessageCircle, t: "S'exprimer", d: "Donner son avis, expliquer et reformuler." },
             ].map(({ I, t, d }) => (
               <li key={t} className="flex items-start gap-4">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sage-soft text-primary"><I className="h-5 w-5" /></span>
+                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${(PILLARS[t] ?? ACCENTS.comprendre).soft} ${(PILLARS[t] ?? ACCENTS.comprendre).text}`}><I className="h-5 w-5" /></span>
                 <span>
                   <span className="block text-base font-semibold">{t}</span>
                   <span className="block text-sm text-muted-foreground">{d}</span>
@@ -208,41 +200,30 @@ function Index() {
         </div>
       </section>
 
-      {/* CENTRES D'INTÉRÊT — rappel sobre ; « Modifier » ouvre la sélection */}
+      {/* CENTRES D'INTÉRÊT — modification directe : chaque sujet se touche pour l'ajouter ou le retirer */}
       <section className="mx-auto w-full max-w-6xl px-6 py-14 md:px-8">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <h2 className="font-serif text-3xl">Vos centres d'intérêt</h2>
-          <button onClick={() => setEditing((e) => !e)} className="inline-flex items-center gap-2 text-base font-medium text-foreground hover:text-primary">
-            {editing ? "Terminé" : "Modifier"} <Pencil className="h-4 w-4" />
-          </button>
+          <p className="text-sm text-muted-foreground">Touchez un sujet pour l'ajouter ou le retirer.</p>
         </div>
-        {!editing ? (
-          <div className="mt-5 flex flex-wrap gap-3">
-            {myIds.map((id) => {
-              const I = ICON[id] ?? Leaf;
-              return (
-                <span key={id} className="inline-flex items-center gap-2 rounded-full bg-muted px-5 py-2.5 text-base text-foreground">
-                  <I className="h-4 w-4 text-primary" /> {label(id)}
-                </span>
-              );
-            })}
-            {other && <span className="rounded-full bg-muted px-5 py-2.5 text-base text-muted-foreground">{other}</span>}
-          </div>
-        ) : (
-          <div className="mt-5">
-            <p className="text-base text-muted-foreground">Touchez un sujet pour l'ajouter ou le retirer. <Link to="/interets" search={{ next: undefined }} className="font-semibold text-primary underline underline-offset-4">Tous les sujets</Link></p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {INTERESTS.filter((t) => !t.soon).map((t) => {
-                const on = myIds.includes(t.id);
-                return (
-                  <button key={t.id} onClick={() => toggleInterest(t.id)} aria-pressed={on} className={`rounded-full border px-5 py-2.5 text-base transition ${on ? "border-primary bg-sage-soft font-semibold text-primary" : "border-border bg-card hover:border-primary"}`}>
-                    {t.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        <div className="mt-6 flex flex-wrap gap-3">
+          {INTERESTS.filter((t) => !t.soon).map((t) => {
+            const on = myIds.includes(t.id);
+            const I = ICON[t.id] ?? Leaf;
+            return (
+              <button
+                key={t.id}
+                onClick={() => toggleInterest(t.id)}
+                aria-pressed={on}
+                className={`inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-base transition ${on ? "border-primary bg-sage-soft font-semibold text-primary" : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"}`}
+              >
+                <I className="h-4 w-4" /> {t.label}
+              </button>
+            );
+          })}
+        </div>
+        {other && <p className="mt-4 text-base text-muted-foreground">Votre sujet libre : <span className="font-semibold text-foreground">{other}</span></p>}
+        <Link to="/interets" search={{ next: undefined }} className="mt-5 inline-block text-base font-semibold text-primary underline underline-offset-4">Tous les sujets</Link>
       </section>
 
       {/* CETTE SEMAINE — chaleureux */}
@@ -275,7 +256,7 @@ function Index() {
         <div className="mx-auto w-full max-w-6xl px-6 py-16 md:px-8">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-primary">Vos collections</p>
           <div className="mt-6 grid gap-x-12 gap-y-8 md:grid-cols-2">
-            {COLLECTIONS.map((c) => {
+            {COLLECTIONS.map((c, ci) => {
               const n = c.ids.filter((id) => week?.explored.includes(id)).length;
               return (
                 <div key={c.id}>
@@ -287,7 +268,7 @@ function Index() {
                     <p className="shrink-0 text-base text-muted-foreground">{n} / {c.ids.length} sujets explorés</p>
                   </div>
                   <div className="mt-3 h-1 rounded-full bg-border">
-                    <div className="h-1 rounded-full bg-primary transition-all" style={{ width: `${(n / c.ids.length) * 100}%` }} />
+                    <div className={`h-1 rounded-full ${(COLLECTION_CYCLE[ci % COLLECTION_CYCLE.length] ?? ACCENTS.comprendre).bar} transition-all`} style={{ width: `${(n / c.ids.length) * 100}%` }} />
                   </div>
                 </div>
               );

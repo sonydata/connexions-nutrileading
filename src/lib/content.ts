@@ -83,12 +83,12 @@ const CORE: Item[] = [
   mcq("cmp-meal", "avis", "conseil", "Pour le déjeuner, quel repas semble le plus équilibré ?", "équilibré", o("poisson, légumes, riz", "balanced_meal"), [o("burger, frites, soda", "fast_food"), o("salade verte seule")]),
 
   // ——— 5. Courtes informations scientifiques ———
-  mcq("i-nuts", "sciences", "information", "Les noix apportent des acides gras insaturés.", "noix", o("des graisses", "walnuts"), [o("des sucres"), o("du sel", "salt"), o("des fibres")], { question: "De quel type de nutriment parlait-on ?" }),
-  mcq("i-muscle", "sciences", "information", "Les protéines aident à maintenir la masse musculaire.", "protéines", o("le muscle"), [o("les os"), o("la peau"), o("le foie")], { question: "Quel tissu cherche-t-on à préserver ?" }),
+  mcq("i-nuts", "sciences", "information", "Les noix apportent des graisses insaturées.", "noix", o("l'huile d'olive", "olive_oil"), [o("le beurre", "butter"), o("le sucre"), o("le pain blanc", "bread")], { question: "Quel autre aliment apporte surtout ce même type de graisses ?" }),
+  mcq("i-muscle", "sciences", "information", "Les protéines aident à maintenir la masse musculaire.", "protéines", o("une perte de muscle"), [o("une tension trop élevée"), o("un excès de fibres"), o("un excès de vitamines")], { question: "Que risque une personne âgée qui n'en mange pas assez ?" }),
   mcq("i-fibres", "sciences", "information", "Les fibres favorisent un bon transit intestinal.", "fibres", o("l'intestin"), [o("le cœur"), o("les poumons"), o("l'estomac")], { question: "De quel organe s'agit-il ?" }),
   mcq("i-vitd", "sciences", "information", "La vitamine D aide à fixer le calcium.", "vitamine D", o("les os"), [o("les cheveux"), o("les yeux"), o("les muscles")], { question: "Quelle partie du corps en profite surtout ?" }),
   mcq("i-salt", "sciences", "information", "Un excès de sel peut augmenter la tension artérielle.", "tension", o("la tension"), [o("la fréquence cardiaque"), o("la glycémie"), o("le cholestérol")], { question: "Qu'est-ce qui peut augmenter ?" }),
-  mcq("i-olive", "sciences", "information", "L'huile d'olive est au cœur du régime crétois.", "crétois", o("l'huile d'olive", "olive_oil"), [o("le beurre", "butter"), o("l'huile de colza"), o("le fromage", "cheese")], { question: "De quel aliment parlait-on ?" }),
+  mcq("i-olive", "sciences", "information", "L'huile d'olive est au cœur du régime crétois.", "crétois", o("le régime méditerranéen"), [o("un régime sans gluten"), o("un régime hyperprotéiné"), o("un régime pauvre en fibres")], { question: "Quel régime aujourd'hui recommandé ce régime préfigure-t-il ?" }),
 
   // ——— 6. Vrai / faux ———
   tf("tf-olive", "L'huile d'olive est surtout composée de graisses insaturées.", true, "huile d'olive"),
@@ -120,13 +120,13 @@ const CORE: Item[] = [
   mcq("a-fastfood", "avis", "conseil", "Un patient déjeune souvent burger, frites et soda.", "déjeuner", o("poisson, légumes, riz", "balanced_meal"), [o("supprimer les féculents"), o("une salade composée sans protéines"), o("un sandwich jambon-beurre")], { question: "Quelle alternative suggéreriez-vous ?" }),
 
   // ——— 14. Temps, situations adultes ———
-  mcq("t-twice", "temps", "temps", "Un patient prend son traitement matin et soir.", "matin et soir", o("deux prises"), [o("cinq prises"), o("une prise"), o("trois prises")], { question: "Combien de prises par jour ?" }),
-  mcq("t-15h", "temps", "temps", "Le rendez-vous est prévu à 15 heures.", "15 heures", o("l'après-midi", "midday"), [o("la nuit", "night"), o("le matin", "morning")], { question: "Est-ce le matin ou l'après-midi ?" }),
-  mcq("t-bilan", "temps", "temps", "Le bilan sanguin se fait avant le déjeuner.", "avant", o("le matin, à jeun", "morning"), [o("la nuit", "night"), o("après le repas"), o("le soir", "evening")], { question: "Quand doit-il être réalisé ?" }),
-  mcq("t-meal", "temps", "temps", "Le comprimé se prend au milieu du repas.", "pendant", o("pendant le repas", "plate"), [o("la nuit", "night"), o("une heure avant"), o("après le dessert")], { question: "Quand faut-il le prendre ?" }),
+  mcq("t-twice", "temps", "temps", "Un patient prend un comprimé le matin et un autre au coucher.", "coucher", o("deux prises"), [o("une prise"), o("trois prises"), o("quatre prises")], { question: "Combien de prises dans la journée ?" }),
+  mcq("t-15h", "temps", "temps", "Le rendez-vous est à 15 heures, le déjeuner à midi.", "15 heures", o("après le déjeuner"), [o("avant le déjeuner"), o("pendant le déjeuner")], { question: "Le rendez-vous est-il avant ou après le déjeuner ?" }),
+  mcq("t-bilan", "temps", "temps", "Le bilan sanguin se fait avant le déjeuner.", "avant", o("le matin, à jeun", "morning"), [o("la nuit", "night"), o("après le repas"), o("après le dîner")], { question: "Quand doit-il être réalisé ?" }),
+  mcq("t-meal", "temps", "temps", "Le comprimé se prend au milieu du repas, jamais à jeun.", "pendant", o("pendant le repas", "plate"), [o("une heure avant le repas"), o("au réveil, avant de manger"), o("une heure après le dîner")], { question: "À quel moment faut-il le prendre ?" }),
   mcq("t-week", "temps", "temps", "Le contrôle a lieu une fois par semaine.", "semaine", o("sept jours"), [o("un an"), o("un jour"), o("un mois")], { question: "Combien de jours entre deux contrôles ?" }),
-  mcq("t-evening", "temps", "temps", "La consultation est prévue à 19 heures.", "19 heures", o("le soir", "evening"), [o("le matin", "morning"), o("midi", "midday")], { question: "À quel moment de la journée ?" }),
-  mcq("t-season", "temps", "temps", "Les fraises françaises arrivent au printemps.", "printemps", o("le printemps"), [o("l'hiver", "winter"), o("l'automne"), o("l'été", "summer")], { question: "De quelle saison parle-t-on ?" }),
+  mcq("t-evening", "temps", "temps", "La consultation est à 19 heures, le dîner à 20 heures.", "19 heures", o("avant le dîner"), [o("après le dîner"), o("pendant le dîner")], { question: "La consultation a-t-elle lieu avant ou après le dîner ?" }),
+  mcq("t-season", "temps", "temps", "Les fraises françaises mûrent en juin et en juillet.", "juin", o("l'été", "summer"), [o("le printemps", "spring"), o("l'automne", "autumn"), o("l'hiver", "winter")], { question: "De quelle saison parle-t-on ?" }),
 
   // ——— 8. Complétion ———
   comp("k-fattyfish", "Les poissons gras sont riches en…", "oméga-3", "un type de graisse"),
@@ -213,11 +213,11 @@ const CORE: Item[] = [
   mcq("c-microb", "avis", "conseil", "Un patient veut prendre soin de son microbiote.", "microbiote", o("manger varié et riche en fibres", "vegetables"), [o("prendre des probiotiques seuls"), o("éviter tous les féculents"), o("un jeûne régulier")], { question: "Quel conseil est le plus consensuel ?" }),
 
   // ——— Mini-informations ———
-  mcq("i-sleep", "sciences", "information", "Un bon sommeil aide la mémoire à se consolider.", "sommeil", o("la mémoire"), [o("l'audition"), o("la vue"), o("la digestion")], { question: "Quelle fonction est aidée ?" }),
-  mcq("i-walk", "sciences", "information", "Marcher trente minutes par jour aide le cœur.", "marcher", o("la marche"), [o("la lecture", "book"), o("le vélo"), o("la natation")], { question: "Quelle activité était citée ?" }),
-  mcq("i-thirst", "sciences", "information", "Avec l'âge, la sensation de soif diminue.", "soif", o("la soif", "water"), [o("la vue"), o("le sommeil"), o("la faim")], { question: "Qu'est-ce qui diminue ?" }),
-  mcq("i-combine", "sciences", "information", "Associer céréales et légumineuses améliore l'apport en protéines.", "protéines", o("les protéines"), [o("les graisses"), o("le sucre"), o("le sel")], { question: "Quel apport est amélioré ?" }),
-  mcq("i-microb", "sciences", "information", "Les fibres nourrissent les bactéries de l'intestin.", "bactéries", o("les bactéries intestinales"), [o("les cheveux"), o("les os"), o("les muscles")], { question: "Qui profite des fibres ?" }),
+  mcq("i-sleep", "sciences", "information", "Un bon sommeil aide la mémoire à se consolider.", "sommeil", o("des oublis plus fréquents"), [o("une tension trop basse"), o("une perte de poids"), o("des muscles plus faibles")], { question: "Que risque une personne qui dort très peu ?" }),
+  mcq("i-walk", "sciences", "information", "Marcher trente minutes par jour aide le cœur.", "marcher", o("la natation"), [o("la lecture", "book"), o("regarder la télévision"), o("rester au repos")], { question: "Un patient ne peut pas marcher. Quelle autre activité aurait le même intérêt ?" }),
+  mcq("i-thirst", "sciences", "information", "Avec l'âge, la sensation de soif diminue.", "soif", o("proposer de l'eau régulièrement"), [o("attendre qu'elle demande à boire"), o("donner surtout du café"), o("limiter les boissons")], { question: "Que faut-il en conclure pour la journée ?" }),
+  mcq("i-combine", "sciences", "information", "Associer céréales et légumineuses améliore l'apport en protéines.", "protéines", o("riz et lentilles", "lentils"), [o("pain et beurre", "butter"), o("pomme et fromage", "cheese"), o("café et sucre")], { question: "Quel duo d'aliments permet cela ?" }),
+  mcq("i-microb", "sciences", "information", "Les fibres nourrissent les bactéries de l'intestin.", "bactéries", o("des légumes et des légumineuses", "vegetables"), [o("du sel", "salt"), o("des sucres rapides"), o("des graisses saturées")], { question: "Que faut-il donc privilégier pour les nourrir ?" }),
 
   // ——— Culture générale et scientifique ———
   mcq("cu-joconde", "sciences", "information", "Qui a peint La Joconde ?", "Joconde", o("Léonard de Vinci", "mona_lisa"), [o("Rembrandt"), o("Picasso"), o("Michel-Ange")]),
@@ -227,17 +227,17 @@ const CORE: Item[] = [
   mcq("cu-gaudi", "sciences", "information", "Gaudí a conçu la Sagrada Família.", "Gaudí", o("Barcelone", "barcelona"), [o("Londres", "london"), o("Paris", "paris"), o("Rome", "rome")], { question: "Dans quelle ville se trouve-t-elle ?" }),
   mcq("cu-pasteur", "sciences", "information", "Quel savant a mis au point le vaccin contre la rage ?", "rage", o("Louis Pasteur"), [o("Isaac Newton"), o("Charles Darwin"), o("Marie Curie")]),
   mcq("cu-fleming", "sciences", "information", "Alexander Fleming a découvert la pénicilline.", "pénicilline", o("un antibiotique"), [o("une vitamine"), o("un vaccin"), o("un antalgique")], { question: "De quel type de médicament s'agit-il ?" }),
-  mcq("cu-curie", "sciences", "information", "Marie Curie a reçu deux prix Nobel.", "Nobel", o("deux"), [o("cinq"), o("trois"), o("un")], { question: "Combien de prix Nobel a-t-elle reçus ?" }),
+  mcq("cu-curie", "sciences", "information", "Marie Curie a reçu deux prix Nobel.", "Nobel", o("la physique et la chimie"), [o("la médecine et la physique"), o("la chimie et les mathématiques"), o("la biologie et la chimie")], { question: "Dans quels domaines travaillait-elle ?" }),
   mcq("cu-mercury", "sciences", "information", "Quelle planète est la plus proche du Soleil ?", "Soleil", o("Mercure", "astronomy"), [o("Jupiter"), o("Mars"), o("Vénus")]),
   mcq("cu-hippo", "sciences", "information", "Quel médecin grec est associé au serment médical ?", "serment", o("Hippocrate"), [o("Homère"), o("Platon"), o("Aristote")]),
-  mcq("cu-eiffel", "sciences", "information", "La tour Eiffel a été construite pour l'Exposition universelle de 1889.", "1889", o("1889", "paris"), [o("1950"), o("1789"), o("1920")], { question: "En quelle année ?" }),
+  mcq("cu-eiffel", "sciences", "information", "La tour Eiffel a été construite pour l'Exposition universelle de 1889.", "1889", o("le dix-neuvième siècle"), [o("le dix-huitième siècle"), o("le vingtième siècle"), o("le dix-septième siècle")], { question: "Dans quel siècle s'inscrit-elle ?" }),
 
   // ——— Temps, situations adultes (suite) ———
-  mcq("t-2h", "temps", "temps", "Le repas est prévu dans deux heures.", "deux heures", o("plus tard"), [o("tout de suite"), o("hier")], { question: "Est-ce immédiat ou plus tard ?" }),
-  mcq("t-dinner", "temps", "temps", "Le comprimé se prend après le dîner.", "dîner", o("le soir", "evening"), [o("le matin", "morning"), o("à midi", "midday")], { question: "À quel moment de la journée ?" }),
-  mcq("t-sequence", "temps", "temps", "D'abord la prise de sang, ensuite le petit-déjeuner.", "d'abord", o("la prise de sang"), [o("le petit-déjeuner", "breakfast_sweet"), o("la promenade")], { question: "Que fait-on en premier ?" }),
-  mcq("t-3x", "temps", "temps", "Le sirop se prend trois fois par jour.", "trois fois", o("trois"), [o("une"), o("six"), o("deux")], { question: "Combien de prises par jour ?" }),
-  mcq("t-kine", "temps", "temps", "Le kinésithérapeute passe demain matin.", "demain matin", o("demain matin", "morning"), [o("ce soir", "evening"), o("hier"), o("demain soir")], { question: "Quand passe-t-il ?" }),
+  mcq("t-2h", "temps", "temps", "Il est 10 h 30. Le repas est prévu à 12 h 30.", "deux heures", o("deux heures"), [o("trente minutes"), o("cinq heures")], { question: "Dans combien de temps va-t-on manger ?" }),
+  mcq("t-dinner", "temps", "temps", "Le traitement se prend après le petit-déjeuner et avant le dîner.", "deuxième dose", o("le soir", "evening"), [o("le matin", "breakfast_sweet"), o("au milieu de la nuit", "night")], { question: "À quel moment faut-il prendre la deuxième dose ?" }),
+  mcq("t-sequence", "temps", "temps", "La prise de sang doit être faite à jeun, avant le petit-déjeuner.", "à jeun", o("la prise de sang"), [o("le petit-déjeuner", "breakfast_sweet"), o("la promenade")], { question: "Que fait-on en premier ?" }),
+  mcq("t-3x", "temps", "temps", "Le sirop se prend toutes les huit heures.", "huit heures", o("trois"), [o("deux"), o("six"), o("quatre")], { question: "Combien de prises par jour ?" }),
+  mcq("t-kine", "temps", "temps", "Le médecin passe demain matin et le kinésithérapeute en fin d'après-midi.", "en premier", o("le médecin"), [o("le kinésithérapeute"), o("ils passent en même temps")], { question: "Qui passe en premier ?" }),
 
   // ——— Vrai / faux (suite) ———
   tf("tf-walnuts", "Les noix apportent des graisses insaturées.", true, "noix", "nutrition"),

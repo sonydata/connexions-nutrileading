@@ -39,6 +39,16 @@
   --color-brand-soft: var(--brand-soft);
   --color-sage: var(--sage);
   --color-sage-soft: var(--sage-soft);
+  --color-u-comprendre: var(--u-comprendre);
+  --color-u-comprendre-soft: var(--u-comprendre-soft);
+  --color-u-retrouver: var(--u-retrouver);
+  --color-u-retrouver-soft: var(--u-retrouver-soft);
+  --color-u-exprimer: var(--u-exprimer);
+  --color-u-exprimer-soft: var(--u-exprimer-soft);
+  --color-u-reformuler: var(--u-reformuler);
+  --color-u-reformuler-soft: var(--u-reformuler-soft);
+  --color-u-temps: var(--u-temps);
+  --color-u-temps-soft: var(--u-temps-soft);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -48,25 +58,25 @@
 
 :root {
   --radius: 1rem;
-  --background: oklch(0.975 0.012 85);
+  --background: oklch(0.972 0.018 82);
   --sage: oklch(0.68 0.05 150);
   --sage-soft: oklch(0.93 0.025 140);
-  --foreground: oklch(0.27 0 0);
-  --card: oklch(0.99 0.006 85);
-  --card-foreground: oklch(0.25 0.02 250);
+  --foreground: oklch(0.24 0.01 250);
+  --card: oklch(0.985 0.008 82);
+  --card-foreground: oklch(0.24 0.02 250);
   --popover: oklch(0.99 0.006 85);
   --popover-foreground: oklch(0.25 0.02 250);
-  --primary: oklch(0.42 0.07 158);
+  --primary: oklch(0.36 0.09 158);
   --primary-foreground: oklch(0.98 0.01 85);
   --secondary: oklch(0.93 0.02 80);
   --secondary-foreground: oklch(0.3 0.02 250);
   --muted: oklch(0.96 0.008 85);
-  --muted-foreground: oklch(0.5 0.02 250);
+  --muted-foreground: oklch(0.42 0.025 250);
   --accent: oklch(0.92 0.03 170);
   --accent-foreground: oklch(0.3 0.05 175);
   --destructive: oklch(0.55 0.15 30);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.88 0.015 85);
+  --border: oklch(0.85 0.02 82);
   --input: oklch(0.88 0.015 85);
   --ring: oklch(0.55 0.07 175);
   --calm: oklch(0.55 0.08 175);
@@ -75,6 +85,17 @@
   /* Nutrileading heritage red — used sparingly for brand marks and eyebrows */
   --brand: oklch(0.5 0.17 25);
   --brand-soft: oklch(0.94 0.03 30);
+  /* Sober secondary colours, one per kind of activity — never shown as a level, never a score */
+  --u-comprendre: oklch(0.45 0.08 190);
+  --u-comprendre-soft: oklch(0.94 0.028 190);
+  --u-retrouver: oklch(0.52 0.09 75);
+  --u-retrouver-soft: oklch(0.945 0.045 80);
+  --u-exprimer: oklch(0.44 0.08 320);
+  --u-exprimer-soft: oklch(0.945 0.022 320);
+  --u-reformuler: oklch(0.5 0.08 45);
+  --u-reformuler-soft: oklch(0.945 0.035 45);
+  --u-temps: oklch(0.46 0.07 250);
+  --u-temps-soft: oklch(0.945 0.025 250);
   --chart-1: oklch(0.45 0.07 175);
   --chart-2: oklch(0.72 0.1 75);
   --chart-3: oklch(0.6 0.05 250);
