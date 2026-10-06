@@ -23,3 +23,5 @@
 - [x] La voix dit un encouragement à voix haute après chaque réponse (bonne ou mauvaise)
 - [x] Accueil : date en en-tête (remplace le symbole), « by Nutrileading » et logo agrandis, « Connexions » plus dupliqué
 - [x] Nom de la personne connectée dans l’en-tête (pastille avec initiale)
+
+- [ ] Accueil : rapprocher visuellement de l image d inspiration (vert forêt principal, rouge en petit accent, hero éditorial, constellation organique des thèmes, carte Aujourd hui, pastilles de centres d intérêt)
