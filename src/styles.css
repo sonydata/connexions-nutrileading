@@ -46,13 +46,15 @@
 
 :root {
   --radius: 1rem;
-  --background: oklch(0.973 0.008 50);
+  --background: oklch(0.975 0.012 85);
+  --sage: oklch(0.68 0.05 150);
+  --sage-soft: oklch(0.93 0.025 140);
   --foreground: oklch(0.27 0 0);
   --card: oklch(0.99 0.006 85);
   --card-foreground: oklch(0.25 0.02 250);
   --popover: oklch(0.99 0.006 85);
   --popover-foreground: oklch(0.25 0.02 250);
-  --primary: oklch(0.38 0.06 175);
+  --primary: oklch(0.42 0.07 158);
   --primary-foreground: oklch(0.98 0.01 85);
   --secondary: oklch(0.93 0.02 80);
   --secondary-foreground: oklch(0.3 0.02 250);

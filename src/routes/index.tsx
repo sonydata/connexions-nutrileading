@@ -9,7 +9,7 @@ import { imageSrc } from "@/lib/library";
 import litteratureImg from "@/assets/home/litterature.jpg";
 import artImg from "@/assets/home/art.jpg";
 import santeImg from "@/assets/home/sante.jpg";
-import { Apple, BookOpen, ChefHat, Cpu, Landmark, Leaf, Map as MapIcon, Microscope, Newspaper, Palette, Sparkles, Stethoscope, Trophy } from "lucide-react";
+import { Apple, ArrowRight, BookOpen, ChefHat, Cpu, Ear, Landmark, Leaf, Map as MapIcon, MessageCircle, Microscope, Newspaper, Palette, Pencil, Search, Stethoscope, Trophy } from "lucide-react";
 import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, PREFIX, hasInterests, interestsOf, otherInterest } from "@/lib/interests";
 
 export const Route = createFileRoute("/")({
@@ -33,6 +33,7 @@ function Index() {
   const [topics, setTopics] = useState<string[]>([]);
   const [configured, setConfigured] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -100,7 +101,7 @@ function Index() {
             { to: "/interets" as const, label: "Mes centres d'intérêt", search: { next: undefined } },
             { to: (state === "in" ? "/aidant" : "/auth") as "/aidant" | "/auth", label: state === "in" ? "Vos progrès" : "Mon espace", search: undefined },
           ].map((l) => (
-            <Link key={l.label} to={l.to} search={l.search as never} className="rounded-full px-4 py-2 text-muted-foreground transition hover:bg-brand-soft hover:text-brand">
+            <Link key={l.label} to={l.to} search={l.search as never} className="rounded-full px-4 py-2 text-muted-foreground transition hover:bg-muted hover:text-primary">
               {l.label}
             </Link>
           ))}
@@ -108,150 +109,140 @@ function Index() {
       </header>
 
       {/* HERO */}
-      <section className="paper-grain">
-        <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-6 pb-20 pt-10 md:grid-cols-[1fr_1.1fr] md:px-8 md:pt-16">
+      <section className="relative overflow-hidden">
+        <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-6 pb-14 pt-6 md:grid-cols-[1fr_1.15fr] md:px-8 md:pt-10">
           <div className="animate-rise">
-            <img src={symbol.url} alt="" className="h-24 w-auto md:h-28" />
-            <h1 className="mt-4 text-7xl leading-[0.9] tracking-tight md:text-8xl">Connexions</h1>
-            <p className="mt-4 flex flex-wrap items-center gap-3 text-2xl text-muted-foreground md:text-3xl">
-              by <img src={logo.url} alt="" className="h-11 w-11 md:h-12 md:w-12" /> <span className="font-bold text-foreground">Nutrileading</span>
+            <div className="flex items-center gap-4">
+              <img src={symbol.url} alt="" className="h-16 w-auto md:h-20" />
+              <div>
+                <h1 className="font-serif text-5xl leading-none tracking-tight md:text-6xl">Connexions</h1>
+                <p className="mt-2 flex items-center gap-2 text-lg text-muted-foreground">
+                  by <img src={logo.url} alt="" className="h-8 w-8" /> <span className="font-semibold text-foreground">Nutrileading</span>
+                </p>
+              </div>
+            </div>
+            <p className="mt-12 font-serif text-6xl leading-[0.95] tracking-tight md:text-7xl">
+              Comprendre.<br />Retrouver.<br />S'exprimer.
             </p>
-            <p className="mt-10 text-3xl font-semibold leading-tight tracking-tight md:text-4xl">
-              Comprendre. <span className="text-brand">Retrouver.</span> S'exprimer.
-            </p>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
+            <p className="mt-8 max-w-md text-lg leading-relaxed text-muted-foreground">
               Des séances quotidiennes pour mobiliser ses connaissances, exercer son langage et nourrir sa curiosité à partir de sujets qui vous intéressent.
             </p>
-
-
-            {state === "in" && week?.away && <p className="mt-8 font-serif text-2xl italic text-foreground">Heureux de vous retrouver.</p>}
-
-            {/* Aujourd'hui */}
-            <div className="mt-10 max-w-xl rounded-3xl border-l-4 border-brand bg-card p-6 shadow-lg">
-              <div className="flex flex-wrap items-center justify-between gap-5">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand">Aujourd'hui · 10 minutes</p>
-                  <p className="mt-2 text-base text-muted-foreground">Votre séance explorera</p>
-                  <p className="mt-1 text-xl font-semibold">{myIds.slice(0, 3).map(short).join(" · ")}</p>
-                </div>
-                <Link {...startLink} className="inline-flex items-center rounded-full bg-primary px-10 py-5 text-xl font-semibold text-primary-foreground shadow-md transition hover:-translate-y-0.5 hover:opacity-95">
-                  Commencer
-                </Link>
-              </div>
-              {state === "out" && <p className="mt-4 text-sm text-muted-foreground">Connectez-vous à votre espace, afin d'enregistrer vos progrès.</p>}
-            </div>
-            <p className="mt-5 flex items-center gap-2 text-base font-medium text-muted-foreground">
-              <Sparkles className="h-4 w-4 text-brand" /> {quote}
-            </p>
+            {state === "in" && week?.away && <p className="mt-6 font-serif text-2xl italic">Heureux de vous retrouver.</p>}
+            <Link {...startLink} className="mt-9 inline-flex items-center gap-4 rounded-full bg-primary px-12 py-5 text-xl font-semibold text-primary-foreground shadow-lg transition hover:-translate-y-0.5 hover:opacity-95">
+              Commencer <ArrowRight className="h-5 w-5" />
+            </Link>
+            {state === "out" && <p className="mt-4 text-sm text-muted-foreground">Connectez-vous à votre espace, afin d'enregistrer vos progrès.</p>}
           </div>
 
-          {/* Constellation de sujets reliés par des lignes fines, comme le symbole Connexions */}
-          <div className="relative hidden aspect-[10/9] md:block" aria-hidden>
-            <svg viewBox="0 0 100 90" preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible">
-              <g fill="none" stroke="var(--brand)" strokeWidth="1.1" strokeLinecap="round" opacity="0.6">
-                {[
-                  "M52 47 C 44 40, 36 34, 30 24",
-                  "M52 47 C 62 38, 70 30, 78 20",
-                  "M52 47 C 42 54, 30 58, 22 65",
-                  "M52 47 C 54 52, 55 55, 56 56",
-                  "M52 47 C 64 52, 74 58, 82 67",
-                  "M30 24 C 50 6, 64 8, 78 20",
-                  "M22 65 C 40 88, 66 90, 82 67",
-                ].map((d, i) => (
-                  <path key={i} d={d} vectorEffect="non-scaling-stroke" strokeDasharray={i > 4 ? "2 3" : undefined} />
-                ))}
+          {/* Univers de connaissances reliés : anneau fin, nœuds, feuillages discrets */}
+          <div className="relative hidden aspect-square md:block" aria-hidden>
+            <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full overflow-visible">
+              <circle cx="50" cy="52" r="40" fill="var(--sage-soft)" opacity="0.55" />
+              <g fill="none" stroke="var(--primary)" strokeWidth="0.35" opacity="0.55">
+                <circle cx="50" cy="52" r="44" />
+                <path d="M18 32 C 34 40, 44 34, 58 44 S 80 50, 92 60" />
+                <path d="M30 80 C 40 64, 56 66, 66 56 S 74 30, 84 22" />
+              </g>
+              {[[18, 32, 2.2, "var(--primary)"], [58, 44, 1.8, "var(--sage)"], [70, 58, 1.6, "var(--brand)"], [30, 80, 1.6, "var(--sage)"], [92, 60, 2, "var(--primary)"], [84, 22, 1.4, "var(--sage)"]].map(([x, y, r, f], i) => (
+                <circle key={i} cx={x as number} cy={y as number} r={r as number} fill={f as string} />
+              ))}
+              <g fill="var(--sage)" opacity="0.8">
+                <path d="M86 4 C 80 10, 80 18, 84 24 C 90 18, 90 10, 86 4 Z" />
+                <path d="M94 10 C 87 13, 85 19, 86 24 C 92 21, 95 16, 94 10 Z" />
+                <path d="M4 50 C 10 44, 18 44, 22 48 C 16 54, 9 54, 4 50 Z" />
+                <path d="M6 60 C 12 57, 18 58, 20 62 C 14 66, 9 65, 6 60 Z" />
               </g>
             </svg>
             {[
-              { x: 52, y: 52, s: 14 },
-              { x: 41, y: 37, s: 6 }, { x: 66, y: 34, s: 6 }, { x: 36, y: 64, s: 6 },
-              { x: 69, y: 64, s: 6 }, { x: 54, y: 9, s: 5 }, { x: 52, y: 96, s: 5 },
-            ].map((n, i) => (
-              <span
-                key={i}
-                className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${i === 0 ? "border border-brand/50 bg-background" : "bg-brand/70"}`}
-                style={{ left: `${n.x}%`, top: `${n.y}%`, width: n.s, height: n.s }}
-              >
-                {i === 0 && <span className="absolute inset-[3px] rounded-full bg-brand" />}
-              </span>
-            ))}
-            {[
-              { src: artImg, label: "Art", pos: "object-[60%_40%]", x: 7, y: 6, w: 44, a: "aspect-[4/3]" },
-              { src: img("astronomy"), label: "Sciences", pos: "object-center", x: 66, y: 0, w: 28, a: "aspect-[3/4]" },
-              { src: img("rome"), label: "Histoire", pos: "object-center", x: 4, y: 60, w: 32, a: "aspect-[4/3]" },
-              { src: litteratureImg, label: "Littérature", pos: "object-[50%_70%]", x: 45, y: 58, w: 21, a: "aspect-[4/5]" },
-              { src: santeImg, label: "Santé", pos: "object-center", x: 70, y: 64, w: 28, a: "aspect-[4/3]" },
+              { src: artImg, label: "Art & culture", pos: "object-[60%_40%]", x: 22, y: 6, w: 46, a: "aspect-[3/2]", r: "-1deg" },
+              { src: img("astronomy"), label: "Sciences", pos: "object-center", x: 72, y: 18, w: 26, a: "aspect-[3/4]", r: "1.5deg" },
+              { src: img("rome"), label: "Histoire", pos: "object-center", x: 6, y: 42, w: 34, a: "aspect-[4/3]", r: "0.5deg" },
+              { src: litteratureImg, label: "Littérature", pos: "object-[50%_70%]", x: 36, y: 62, w: 26, a: "aspect-[4/5]", r: "-1.5deg" },
+              { src: santeImg, label: "Santé & nutrition", pos: "object-center", x: 64, y: 58, w: 32, a: "aspect-[4/3]", r: "1deg" },
             ].map((c) => (
-              <figure key={c.label} className="absolute transition duration-500 hover:-translate-y-1" style={{ left: `${c.x}%`, top: `${c.y}%`, width: `${c.w}%` }}>
-                <div className={`overflow-hidden rounded-2xl bg-card p-1.5 shadow-xl ${c.a}`}>
-                  <img src={c.src} alt="" className={`h-full w-full rounded-xl object-cover ${c.pos}`} />
+              <figure key={c.label} className="absolute" style={{ left: `${c.x}%`, top: `${c.y}%`, width: `${c.w}%`, rotate: c.r }}>
+                <div className={`relative overflow-hidden rounded-2xl shadow-xl ${c.a}`}>
+                  <img src={c.src} alt="" className={`h-full w-full object-cover ${c.pos}`} />
+                  <figcaption className="absolute bottom-3 left-3 rounded-full bg-card/95 px-4 py-1.5 text-sm font-semibold text-foreground shadow-sm">{c.label}</figcaption>
                 </div>
-                <figcaption className="mt-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand">
-                  <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-                  {c.label}
-                </figcaption>
               </figure>
             ))}
+            <p className="absolute -right-4 bottom-[40%] w-32 rotate-[-8deg] font-serif text-lg italic leading-snug text-muted-foreground">
+              {quote}
+              <span className="mt-1 block h-px w-20 bg-brand/60" />
+            </p>
           </div>
         </div>
       </section>
 
-      {/* CENTRES D'INTÉRÊT — sélection rapide directement sous le hero */}
-      <section className="paper-grain border-t border-border">
-        <div className="mx-auto w-full max-w-6xl px-6 py-12 md:px-8">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="font-sans text-xl font-semibold tracking-tight">Vos centres d'intérêt</h2>
-              <p className="mt-1 text-base text-muted-foreground">Touchez un sujet pour l'ajouter ou le retirer.</p>
-            </div>
-            <Link to="/interets" search={{ next: undefined }} className="shrink-0 self-start text-base font-semibold text-brand underline underline-offset-4 hover:opacity-80 md:self-center">
-              Tous les sujets
+      {/* AUJOURD'HUI + trois piliers de poids égal */}
+      <section className="mx-auto w-full max-w-6xl px-6 md:px-8">
+        <div className="grid items-center gap-8 rounded-3xl border bg-card p-6 shadow-md md:grid-cols-[auto_1.3fr_1px_1fr] md:p-8">
+          <div className="grid h-32 w-32 place-items-center rounded-2xl bg-sage-soft">
+            <img src={symbol.url} alt="" className="h-20 w-auto" />
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-primary">Aujourd'hui · 10 minutes</p>
+            <p className="mt-2 text-base text-muted-foreground">Votre séance explore</p>
+            <p className="mt-1 font-serif text-3xl md:text-4xl">{myIds.slice(0, 3).map(short).join(" · ")}</p>
+            <Link {...startLink} className="mt-5 inline-flex items-center gap-3 rounded-full bg-primary px-9 py-4 text-lg font-semibold text-primary-foreground transition hover:opacity-95">
+              Commencer la séance <ArrowRight className="h-5 w-5" />
             </Link>
           </div>
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            {INTERESTS.filter((t) => !t.soon).map((t) => {
-              const on = myIds.includes(t.id);
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => toggleInterest(t.id)}
-                  aria-pressed={on}
-                  className={`rounded-full border px-5 py-2.5 text-lg transition ${on ? "border-brand bg-brand-soft font-semibold text-brand" : "border-border bg-card text-foreground hover:border-brand"}`}
-                >
-                  {t.label}
-                </button>
-              );
-            })}
-            {other && <span className="rounded-full border border-border bg-card px-5 py-2.5 text-lg text-muted-foreground">{other}</span>}
-          </div>
+          <span className="hidden h-full w-px bg-border md:block" />
+          <ul className="space-y-5">
+            {[
+              { I: Ear, t: "Comprendre", d: "Saisir une idée, une information ou une situation." },
+              { I: Search, t: "Retrouver", d: "Mobiliser ses mots, ses connaissances et son expérience." },
+              { I: MessageCircle, t: "S'exprimer", d: "Donner son avis, expliquer et reformuler." },
+            ].map(({ I, t, d }) => (
+              <li key={t} className="flex items-start gap-4">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sage-soft text-primary"><I className="h-5 w-5" /></span>
+                <span>
+                  <span className="block text-base font-semibold">{t}</span>
+                  <span className="block text-sm text-muted-foreground">{d}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
-      {/* COMPRENDRE / RETROUVER / S'EXPRIMER — trois piliers de poids égal */}
-      <section className="bg-card">
-        <div className="mx-auto w-full max-w-6xl px-6 py-24 md:px-8">
-          <p className="text-xs font-bold uppercase tracking-[0.25em] text-brand">Comment ça marche</p>
-          <h2 className="mt-3 font-sans text-4xl font-semibold tracking-tight md:text-5xl">Une séance, trois temps</h2>
-          <p className="mt-3 max-w-2xl text-lg text-muted-foreground">Chaque sujet se déroule comme une courte conversation : on écoute, on retrouve, puis on s'exprime.</p>
-          <div className="mt-10 grid items-stretch gap-6 md:grid-cols-[1fr_auto_1fr_auto_1fr]">
-            {[
-              { n: "01", t: "Écouter", d: "Une idée, une histoire, une situation.", ph: "newspaper" },
-              { n: "02", t: "Retrouver", d: "Un mot, une connaissance, un lien.", ph: "glasses" },
-              { n: "03", t: "S'exprimer", d: "Un avis, une explication, une formulation.", ph: "consultation" },
-            ].flatMap((p, k) => [
-              ...(k > 0 ? [<span key={`a${k}`} className="hidden items-center text-3xl text-brand md:flex">→</span>] : []),
-              <article key={p.n} className="group flex flex-col rounded-3xl border bg-background p-7 transition hover:-translate-y-1 hover:border-brand hover:bg-brand-soft">
-                <div className="flex items-center gap-3">
-                  <p className="text-sm font-bold text-brand">{p.n}</p>
-                  <span className="h-px flex-1 bg-border transition group-hover:bg-brand/40" />
-                </div>
-                <h3 className="mt-5 font-sans text-3xl font-semibold tracking-tight md:text-4xl">{p.t}</h3>
-                <p className="mt-3 text-base text-muted-foreground">{p.d}</p>
-                <img src={img(p.ph)} alt="" className="mt-auto aspect-[16/9] w-full rounded-2xl object-cover pt-7" />
-              </article>,
-            ])}
-          </div>
+      {/* CENTRES D'INTÉRÊT — rappel sobre ; « Modifier » ouvre la sélection */}
+      <section className="mx-auto w-full max-w-6xl px-6 py-14 md:px-8">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="font-serif text-3xl">Vos centres d'intérêt</h2>
+          <button onClick={() => setEditing((e) => !e)} className="inline-flex items-center gap-2 text-base font-medium text-foreground hover:text-primary">
+            {editing ? "Terminé" : "Modifier"} <Pencil className="h-4 w-4" />
+          </button>
         </div>
+        {!editing ? (
+          <div className="mt-5 flex flex-wrap gap-3">
+            {myIds.map((id) => {
+              const I = ICON[id] ?? Leaf;
+              return (
+                <span key={id} className="inline-flex items-center gap-2 rounded-full bg-muted px-5 py-2.5 text-base text-foreground">
+                  <I className="h-4 w-4 text-primary" /> {label(id)}
+                </span>
+              );
+            })}
+            {other && <span className="rounded-full bg-muted px-5 py-2.5 text-base text-muted-foreground">{other}</span>}
+          </div>
+        ) : (
+          <div className="mt-5">
+            <p className="text-base text-muted-foreground">Touchez un sujet pour l'ajouter ou le retirer. <Link to="/interets" search={{ next: undefined }} className="font-semibold text-primary underline underline-offset-4">Tous les sujets</Link></p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {INTERESTS.filter((t) => !t.soon).map((t) => {
+                const on = myIds.includes(t.id);
+                return (
+                  <button key={t.id} onClick={() => toggleInterest(t.id)} aria-pressed={on} className={`rounded-full border px-5 py-2.5 text-base transition ${on ? "border-primary bg-sage-soft font-semibold text-primary" : "border-border bg-card hover:border-primary"}`}>
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* CETTE SEMAINE — chaleureux */}
@@ -261,12 +252,12 @@ function Index() {
             <div className="relative h-24 w-24">
               <svg viewBox="0 0 36 36" className="h-24 w-24 -rotate-90">
                 <circle cx="18" cy="18" r="15.5" fill="none" className="stroke-muted" strokeWidth="3" />
-                <circle cx="18" cy="18" r="15.5" fill="none" className="stroke-brand" strokeWidth="3" strokeLinecap="round" strokeDasharray={`${Math.min(100, (week.days / 7) * 100)} 100`} pathLength={100} />
+                <circle cx="18" cy="18" r="15.5" fill="none" className="stroke-primary" strokeWidth="3" strokeLinecap="round" strokeDasharray={`${Math.min(100, (week.days / 7) * 100)} 100`} pathLength={100} />
               </svg>
               <span className="absolute inset-0 flex items-center justify-center text-2xl font-semibold">{week.days}/7</span>
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.25em] text-brand">Cette semaine</p>
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-primary">Cette semaine</p>
               <p className="mt-2 text-2xl font-semibold">
                 {week.sessions} séance{week.sessions > 1 ? "s" : ""} · {week.minutes} minutes · {week.days} jour{week.days > 1 ? "s" : ""} actif{week.days > 1 ? "s" : ""}
               </p>
@@ -282,7 +273,7 @@ function Index() {
       {/* COLLECTIONS */}
       <section className="bg-background">
         <div className="mx-auto w-full max-w-6xl px-6 py-16 md:px-8">
-          <p className="text-xs font-bold uppercase tracking-[0.25em] text-brand">Vos collections</p>
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-primary">Vos collections</p>
           <div className="mt-6 grid gap-x-12 gap-y-8 md:grid-cols-2">
             {COLLECTIONS.map((c) => {
               const n = c.ids.filter((id) => week?.explored.includes(id)).length;
@@ -291,12 +282,12 @@ function Index() {
                   <div className="flex items-baseline justify-between gap-4">
                     <p className="text-xl font-semibold">
                       {c.title}
-                      {isFresh(c) && <span className="ml-3 align-middle text-xs font-bold uppercase tracking-[0.2em] text-brand">Nouveau</span>}
+                      {isFresh(c) && <span className="ml-3 align-middle text-xs font-bold uppercase tracking-[0.2em] text-primary">Nouveau</span>}
                     </p>
                     <p className="shrink-0 text-base text-muted-foreground">{n} / {c.ids.length} sujets explorés</p>
                   </div>
                   <div className="mt-3 h-1 rounded-full bg-border">
-                    <div className="h-1 rounded-full bg-brand transition-all" style={{ width: `${(n / c.ids.length) * 100}%` }} />
+                    <div className="h-1 rounded-full bg-primary transition-all" style={{ width: `${(n / c.ids.length) * 100}%` }} />
                   </div>
                 </div>
               );
@@ -306,14 +297,13 @@ function Index() {
       </section>
 
       {/* MANIFESTE */}
-      <section className="bg-brand-soft">
+      <section className="bg-sage-soft">
         <div className="mx-auto w-full max-w-6xl px-6 py-24 text-center md:px-8">
           <img src={symbol.url} alt="" className="mx-auto h-16 w-auto" />
           <p className="mt-6 font-serif text-4xl leading-tight md:text-6xl">
-            Relier ce que l'on <span className="text-brand">entend</span>, ce que l'on sait et ce que l'on exprime.
+            <span className="italic text-primary">Relier</span> ce que l'on entend, ce que l'on sait et ce que l'on exprime.
           </p>
-          <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">{"\n"}</p>
-          <p className="mt-8 text-sm font-semibold uppercase tracking-[0.25em] text-brand">Connexions by Nutrileading</p>
+                    <p className="mt-8 text-sm font-semibold uppercase tracking-[0.25em] text-primary">Connexions by Nutrileading</p>
         </div>
       </section>
 
