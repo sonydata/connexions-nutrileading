@@ -3,13 +3,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Mic, Play, Square, Volume2 } from "lucide-react";
 import { completeSession, recordAttempt, speak, speakCached, startSession, type PlayItem } from "@/lib/session.functions";
-import { buildSession } from "@/lib/builder";
+import { buildPlan } from "@/lib/builder";
 import { supabase } from "@/integrations/supabase/client";
 import { imageSrc } from "@/lib/library";
 import { heardWord, useVoiceInput, wordCount } from "@/lib/voice-input";
 import { praise, praiseChoice } from "@/lib/praise";
-import { todayGoal, weekLine, weekSummary } from "@/lib/week";
-import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, PREFIX } from "@/lib/interests";
+import { todayGoal } from "@/lib/week";
+import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, PREFIX, interestsOf } from "@/lib/interests";
 
 export const Route = createFileRoute("/seance")({
   ssr: false,
@@ -27,7 +27,9 @@ export const Route = createFileRoute("/seance")({
 });
 
 type Outcome = "spontaneous" | "after_repeat" | "after_cue" | "revealed";
-type Done = { theme: string; skill: string; kind: string; outcome: Outcome; spoken: boolean };
+type Done = { theme: string; topic: string; skill: string; kind: string; outcome: Outcome; spoken: boolean; recall: boolean };
+const FOCUS_KEY = "connexions.focus";
+const WITH_SEQ = ["sante", "medecine", "sciences", "histoire", "art", "geographie", "nature", "litterature", "technologie", "cuisine", "sport"];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Browser/device French voice — no network, no cost. Used only if the server voice fails. */
@@ -77,7 +79,10 @@ function Seance() {
   const guest = useRef(false);
   const [isGuest, setIsGuest] = useState(false);
 
-  const [phase, setPhase] = useState<"loading" | "play" | "done" | "error">("loading");
+  const [phase, setPhase] = useState<"loading" | "choose" | "play" | "done" | "error">("loading");
+  const [teaser, setTeaser] = useState("");
+  const [focusOpts, setFocusOpts] = useState<string[]>([]);
+  const begin = useRef<(focus: string | null) => void>(() => {});
   const [sessionId, setSessionId] = useState("");
   const [items, setItems] = useState<PlayItem[]>([]);
   const [i, setI] = useState(0);
@@ -187,34 +192,53 @@ function Seance() {
   useEffect(() => {
     if (started.current) return;
     started.current = true;
-    supabase.auth
-      .getSession()
-      .then(({ data }) => {
-        if (data.session) return start();
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      let mine: string[] = DEFAULT_INTERESTS.map((x) => PREFIX + x);
+      if (data.session) {
+        const { data: st } = await supabase.from("caregiver_settings").select("topics").eq("user_id", data.session.user.id).maybeSingle();
+        if (st?.topics?.length) mine = st.topics;
+      } else {
         // Discovery mode: built locally, nothing saved.
         guest.current = true;
         setIsGuest(true);
-        let mine: string[] = DEFAULT_INTERESTS.map((x) => PREFIX + x);
         try {
           const saved = JSON.parse(localStorage.getItem(GUEST_KEY) ?? "null");
           if (Array.isArray(saved) && saved.length) mine = saved;
         } catch {}
-        return { sessionId: "", items: buildSession([], mine, 1) };
-      })
-      .then((r) => {
-        if (!r.items.length) throw new Error("empty");
-        setSessionId(r.sessionId);
-        setItems(r.items);
-        startedAt.current = Date.now();
-        const f = r.items[0]!;
-        Promise.allSettled([clip(f.audio), f.question ? clip(f.question) : null]).finally(() => setPhase("play"));
-      })
-      .catch(() => setPhase("error"));
+      }
+      begin.current = (focus) => {
+        setPhase("loading");
+        (data.session ? start({ data: { focus } }) : Promise.resolve({ sessionId: "", ...buildPlan([], mine, 1, focus) }))
+          .then((r) => {
+            if (!r.items.length) throw new Error("empty");
+            setSessionId(r.sessionId);
+            setItems(r.items);
+            setTeaser(r.teaser);
+            startedAt.current = Date.now();
+            const f = r.items[0]!;
+            Promise.allSettled([clip(f.audio), f.question ? clip(f.question) : null]).finally(() => setPhase("play"));
+          })
+          .catch(() => setPhase("error"));
+      };
+      // Occasional choice (Tuesday and Friday, once that day): he picks the main subject.
+      const day = new Date().toISOString().slice(0, 10);
+      const opts = interestsOf(mine).filter((x) => WITH_SEQ.includes(x)).slice(0, 3);
+      if ([2, 5].includes(new Date().getDay()) && opts.length >= 2 && localStorage.getItem(FOCUS_KEY) !== day) {
+        setFocusOpts(opts);
+        setPhase("choose");
+      } else begin.current(null);
+    })().catch(() => setPhase("error"));
   }, [start, clip]);
+
+  function pickFocus(f: string | null) {
+    localStorage.setItem(FOCUS_KEY, new Date().toISOString().slice(0, 10));
+    begin.current(f);
+  }
 
   const it = items[i] as PlayItem;
   /** Full prompt read aloud: sentence, question, then each answer. */
-  const intro = (x: PlayItem) => (x.stage === "comprendre" ? ["Écoutez cette information."] : []);
+  const intro = (x: PlayItem) => [...(x.recall ? [x.recall] : []), ...(x.stage === "comprendre" ? ["Écoutez cette information."] : [])];
   const isChoiceItem = (x: PlayItem) => x.kind === "mcq" || x.kind === "tf";
   const spoken = (x: PlayItem) => [...intro(x), x.audio, x.question, ...(isChoiceItem(x) ? ["Voici les réponses possibles.", ...x.options.flatMap((o, k) => [`Réponse ${k + 1}.`, o.label])] : [])];
   /** Read the prompt; highlight each answer while it is read; then say clearly when it is his turn to speak. */
@@ -258,13 +282,13 @@ function Seance() {
     if (!guest.current) record({
       data: { sessionId, itemId: it.id, kind, category: it.theme, skill: it.skill, prompt: it.audio, optionCount: it.kind === "oral" ? p.spoken : it.options.length, outcome: p.outcome, responseMs: p.responseMs, repeated },
     }).catch(() => {});
-    log.current.push({ theme: it.theme, skill: it.skill, kind, outcome: p.outcome, spoken: p.spoken > 0 });
+    log.current.push({ theme: it.theme, topic: it.topic, skill: it.skill, kind, outcome: p.outcome, spoken: p.spoken > 0, recall: !!it.recall });
     // A concept that needed the answer comes back once, later in the same session.
     let added = 0;
-    if (p.outcome === "revealed" && it.kind !== "oral" && !requeued.current.has(it.id) && items.length < 13) {
+    if (p.outcome === "revealed" && it.kind !== "oral" && !requeued.current.has(it.id) && items.length < 12) {
       requeued.current.add(it.id);
       added = 1;
-      setItems((xs) => [...xs, { ...it }]);
+      setItems((xs) => [...xs, { ...it, recall: null }]);
     }
     pending.current = null;
     voice.clear();
@@ -411,7 +435,22 @@ function Seance() {
         <Link to="/" className="mt-10 inline-block rounded-full bg-primary px-10 py-4 text-lg text-primary-foreground">Retour</Link>
       </Center>
     );
-  if (phase === "done") return <Summary guest={isGuest} log={log.current} minutes={Math.max(1, Math.round((Date.now() - startedAt.current) / 60000))} />;
+  if (phase === "choose")
+    return (
+      <Center>
+        <p className="text-sm font-bold uppercase tracking-[0.25em] text-primary">Séance du jour</p>
+        <h1 className="mt-4 font-serif text-5xl md:text-6xl">Aujourd'hui, vous préférez :</h1>
+        <div className="mt-12 flex flex-wrap justify-center gap-4">
+          {focusOpts.map((f) => (
+            <button key={f} onClick={() => pickFocus(f)} className="rounded-full border-2 border-border bg-card px-9 py-5 text-2xl font-semibold transition hover:border-brand hover:bg-brand-soft">
+              {TOPIC_TITLE[f] ?? f}
+            </button>
+          ))}
+        </div>
+        <button onClick={() => pickFocus(null)} className="mt-10 text-lg text-muted-foreground underline underline-offset-4">Comme d'habitude</button>
+      </Center>
+    );
+  if (phase === "done") return <Summary guest={isGuest} log={log.current} teaser={teaser} minutes={Math.max(1, Math.round((Date.now() - startedAt.current) / 60000))} />;
 
   const isChoice = it.kind === "mcq" || it.kind === "tf";
   const isRecall = it.kind === "evoke" || it.kind === "complete" || (it.kind === "oral" && it.mode === "nommer");
@@ -653,37 +692,40 @@ function Btn({ children, onClick, subtle }: { children: React.ReactNode; onClick
   );
 }
 
-function Summary({ log, minutes, guest }: { log: Done[]; minutes: number; guest?: boolean }) {
-  const [week, setWeek] = useState<string | null>(null);
-  useEffect(() => {
-    if (guest) return;
-    const t = setTimeout(() => weekSummary().then((w) => setWeek(weekLine(w))).catch(() => {}), 800);
-    return () => clearTimeout(t);
-  }, []);
-  const spont = log.filter((l) => l.outcome === "spontaneous").length;
+/** One single highlight, chosen by simple rules — never a list of statistics. */
+function highlight(log: Done[]): string {
+  const found = log.filter((l) => (l.kind === "evoke" || l.kind === "complete") && l.outcome === "spontaneous").length;
+  const oral = log.filter((l) => l.spoken).length;
+  if (log.some((l) => l.recall && l.outcome !== "revealed")) return "Vous avez repris un sujet déjà abordé, et retrouvé l'essentiel.";
+  if (found >= 2) return `Vous avez retrouvé ${found} mots sans aide.`;
+  if (oral >= 2) return "Vous avez formulé plusieurs réponses à voix haute.";
+  const by = new Map<string, number>();
+  for (const l of log) if (l.outcome === "spontaneous" && l.topic !== "general") by.set(l.topic, (by.get(l.topic) ?? 0) + 1);
+  const best = [...by].sort((a, b) => b[1] - a[1])[0];
+  if (best && best[1] >= 2) return `Très belle compréhension sur le thème ${TOPIC_TITLE[best[0]] ?? best[0]}.`;
+  return "Vous avez bien mobilisé vos connaissances et votre expression.";
+}
+
+function Summary({ log, minutes, teaser }: { log: Done[]; minutes: number; guest?: boolean; teaser: string }) {
   const oral = log.filter((l) => l.spoken).length;
   const cases = log.filter((l) => l.skill === "conseil").length;
-  const themes = ["nutrition", "avis", "sciences", "temps"].map((t) => ({ t, n: log.filter((l) => l.theme === t && l.outcome === "spontaneous").length })).sort((a, b) => b.n - a.n);
-  const best = themes[0] && themes[0].n >= 2 ? themes[0].t : null;
   const goal = todayGoal();
   const reached = goal.id === "oral" ? oral >= goal.target : goal.id === "cases" ? cases >= goal.target : minutes >= goal.target;
-  const lines = [
-    spont > 0 && `${spont} réponse${spont > 1 ? "s" : ""} retrouvée${spont > 1 ? "s" : ""} spontanément.`,
-    oral > 0 && `${oral} réponse${oral > 1 ? "s" : ""} formulée${oral > 1 ? "s" : ""} à l'oral.`,
-  ].filter(Boolean) as string[];
   return (
     <Center>
       <p className="text-sm uppercase tracking-[0.25em] text-muted-foreground">Séance terminée</p>
-      <h1 className="mt-3 text-6xl text-primary animate-pop">Excellente séance aujourd'hui.</h1>
-      <ul className="mx-auto mt-8 max-w-2xl space-y-2 font-serif text-2xl text-muted-foreground">
-        {lines.map((l) => <li key={l}>{l}</li>)}
-      </ul>
+      <h1 className="mt-3 text-6xl text-primary animate-pop">Très belle séance aujourd'hui.</h1>
+      <div className="mx-auto mt-10 max-w-2xl rounded-3xl border bg-card px-8 py-7 shadow-sm animate-rise [animation-delay:300ms]">
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-brand">Moment fort aujourd'hui</p>
+        <p className="mt-3 font-serif text-3xl leading-snug">{highlight(log)}</p>
+      </div>
       {reached && (
-        <p className="mt-8 inline-flex items-center gap-3 rounded-full bg-card px-6 py-3 text-lg shadow-sm animate-rise [animation-delay:400ms]">
-          Objectif atteint <Check className="h-5 w-5 text-calm" /> Votre progression se confirme.
+        <p className="mt-6 inline-flex items-center gap-2 text-lg text-muted-foreground animate-rise [animation-delay:500ms]">
+          Objectif atteint <Check className="h-5 w-5 text-calm" />
         </p>
       )}
-      <p className="mt-8 font-serif text-3xl italic text-muted-foreground">À demain.</p>
+      {teaser && <p className="mt-10 text-xl text-muted-foreground animate-rise [animation-delay:700ms]">{teaser}</p>}
+      <p className="mt-6 font-serif text-3xl italic text-muted-foreground">À demain.</p>
       <Link to="/" className="mt-10 inline-block rounded-full border bg-card px-10 py-4 text-lg">Accueil</Link>
     </Center>
   );

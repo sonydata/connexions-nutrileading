@@ -1,14 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { buildSession } from "./builder";
+import { buildPlan } from "./builder";
 import { voiceFileName } from "./voice-key";
 
 export type { PlayItem } from "./builder";
 
 export const startSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: { focus?: string | null } | undefined) => z.object({ focus: z.string().max(40).nullable().optional() }).optional().parse(d))
+  .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: settings } = await supabase.from("caregiver_settings").select("topics, difficulty").eq("user_id", userId).maybeSingle();
     const { data: past } = await supabase
@@ -17,10 +18,10 @@ export const startSession = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(300);
-    const items = buildSession(past ?? [], settings?.topics ?? [], settings?.difficulty ?? 1);
+    const { items, teaser } = buildPlan(past ?? [], settings?.topics ?? [], settings?.difficulty ?? 1, data?.focus ?? null);
     const { data: session, error } = await supabase.from("practice_sessions").insert({ user_id: userId }).select("id").single();
     if (error) throw new Error(error.message);
-    return { sessionId: session.id, items };
+    return { sessionId: session.id, items, teaser };
   });
 
 export const recordAttempt = createServerFn({ method: "POST" })

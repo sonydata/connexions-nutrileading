@@ -4,7 +4,7 @@
 import type { EvokeItem, McqItem, OralItem, Topic } from "./content";
 
 export type Stage = "comprendre" | "retrouver" | "exprimer" | "reformuler";
-export type Sequence = { id: string; topic: Topic; title: string; items: [McqItem, EvokeItem, OralItem, OralItem] };
+export type Sequence = { id: string; topic: Topic; title: string; added?: string | undefined; items: [McqItem, EvokeItem, OralItem, OralItem] };
 
 type S = {
   info: string; q: string; a: string; d: [string, string, string];
@@ -16,9 +16,9 @@ type S = {
 const opt = (label: string) => ({ label });
 const keyOf = (s: string) => s.replace(/[?.,']/g, " ").split(/\s+/).filter((w) => w.length > 5).slice(-1)[0] ?? "";
 
-function seq(id: string, topic: Topic, title: string, s: S): Sequence {
+function seq(id: string, topic: Topic, title: string, s: S, added?: string): Sequence {
   return {
-    id, topic, title,
+    id, topic, title, added,
     items: [
       { id: `${id}-c`, topic, theme: "sciences", skill: "information", kind: "mcq", audio: s.info, question: s.q, keyword: keyOf(s.info), answer: opt(s.a), distractors: s.d.map(opt) },
       { id: `${id}-r`, topic, theme: "sciences", skill: "evocation", kind: "evoke", audio: s.find, answer: s.word, hint: s.hint, syllable: s.syl, model: s.wordModel },
@@ -27,6 +27,8 @@ function seq(id: string, topic: Topic, title: string, s: S): Sequence {
     ],
   };
 }
+
+const NEW = "2026-10-06";
 
 export const SEQUENCES: Sequence[] = [
   // ——— Art ———
@@ -159,8 +161,87 @@ export const SEQUENCES: Sequence[] = [
     ask: "Pourquoi, selon vous, le sport est-il bon pour l'esprit autant que pour le corps ?", askModel: "Il réduit le stress, améliore le sommeil et donne confiance en soi.",
     say: "L'endurance se construit progressivement.", sayModel: "On gagne en endurance petit à petit.",
   }),
+  // ——— Ajouts : séries « Grandes découvertes », « Voyage en Italie », « Courants artistiques » ———
+  seq("sq-penicilline", "medecine", "La pénicilline", {
+    info: "En 1928, Alexander Fleming remarque qu'une moisissure empêche des bactéries de se développer dans une boîte de culture.",
+    q: "Qu'a-t-il observé ?", a: "une moisissure qui arrête les bactéries", d: ["un virus qui se multiplie", "un vaccin efficace", "une bactérie qui guérit"],
+    find: "Quel premier antibiotique est né de cette découverte ?", word: "pénicilline", hint: "Son nom vient de la moisissure Penicillium.", syl: "pé…", wordModel: "C'est la pénicilline, le premier antibiotique.",
+    ask: "À votre avis, pourquoi faut-il utiliser les antibiotiques avec prudence ?", askModel: "Un usage excessif rend les bactéries résistantes, et les antibiotiques deviennent moins efficaces.",
+    say: "Le hasard a joué un rôle dans cette découverte.", sayModel: "Cette découverte doit beaucoup à une observation inattendue.",
+  }, NEW),
+  seq("sq-adn", "sciences", "L'ADN", {
+    info: "En 1953, James Watson et Francis Crick décrivent la structure de l'ADN, avec l'aide des images de Rosalind Franklin.",
+    q: "Qu'ont-ils décrit ?", a: "la structure de l'ADN", d: ["le premier vaccin", "la circulation du sang", "la structure de l'atome"],
+    find: "Comment appelle-t-on la forme en spirale de l'ADN ?", word: "double hélice", hint: "Deux brins enroulés l'un autour de l'autre.", syl: "dou…", wordModel: "L'ADN a la forme d'une double hélice.",
+    ask: "Selon vous, que peut apporter la génétique à la médecine de demain ?", askModel: "Elle peut aider à mieux prévenir certaines maladies et à adapter les traitements à chacun.",
+    say: "L'ADN porte l'information héréditaire.", sayModel: "C'est par l'ADN que se transmet l'hérédité.",
+  }, NEW),
+  seq("sq-imagerie", "medecine", "L'imagerie médicale", {
+    info: "En 1895, Wilhelm Röntgen découvre les rayons X. Pour la première fois, on peut voir l'intérieur du corps sans opérer.",
+    q: "Qu'ont permis les rayons X ?", a: "voir l'intérieur du corps sans opérer", d: ["soigner les infections", "mesurer la tension", "analyser le sang"],
+    find: "Quel examen utilise un puissant aimant pour voir les organes ?", word: "IRM", hint: "Imagerie par résonance magnétique.", syl: "I…", wordModel: "C'est l'IRM, l'imagerie par résonance magnétique.",
+    ask: "À votre avis, l'imagerie a-t-elle changé la relation entre le médecin et le patient ?", askModel: "Elle aide à expliquer le diagnostic, mais l'examen clinique et l'écoute restent essentiels.",
+    say: "Une radiographie montre surtout les os.", sayModel: "Les os apparaissent très bien sur une radiographie.",
+  }, NEW),
+  seq("sq-langage", "sciences", "Le langage et le cerveau", {
+    info: "En 1861, le médecin Paul Broca identifie une zone du cerveau liée à la production du langage.",
+    q: "À quoi cette zone est-elle liée ?", a: "la production du langage", d: ["la vision", "l'équilibre", "la digestion"],
+    find: "Comment appelle-t-on la capacité du cerveau à créer de nouvelles connexions ?", word: "plasticité", hint: "Le même mot désigne la souplesse d'une matière qu'on peut modeler.", syl: "plas…", wordModel: "On parle de plasticité cérébrale.",
+    ask: "Selon vous, qu'est-ce qui garde l'esprit en éveil au fil des années ?", askModel: "La curiosité, les échanges avec les autres, la lecture et l'activité physique.",
+    say: "Apprendre crée de nouvelles connexions.", sayModel: "Chaque apprentissage tisse de nouveaux liens.",
+  }, NEW),
+  seq("sq-florence", "art", "Florence", {
+    info: "Florence est le berceau de la Renaissance. La famille Médicis y a soutenu de nombreux artistes.",
+    q: "Qui a soutenu les artistes à Florence ?", a: "la famille Médicis", d: ["les empereurs romains", "les rois de France", "les doges de Venise"],
+    find: "Quelle célèbre statue de Michel-Ange se trouve à Florence ?", word: "David", hint: "Le personnage biblique qui a vaincu Goliath.", syl: "Da…", wordModel: "C'est le David de Michel-Ange.",
+    ask: "À votre avis, pourquoi les mécènes ont-ils été si importants pour l'art ?", askModel: "Ils donnaient aux artistes les moyens de travailler et de créer de grandes œuvres.",
+    say: "Florence est traversée par l'Arno.", sayModel: "Le fleuve de Florence s'appelle l'Arno.",
+  }, NEW),
+  seq("sq-venise", "geographie", "Venise", {
+    info: "Venise est bâtie sur une lagune. On s'y déplace à pied ou en bateau, le long des canaux.",
+    q: "Comment se déplace-t-on à Venise ?", a: "à pied ou en bateau", d: ["en tramway", "en voiture", "en métro"],
+    find: "Comment s'appelle le bateau noir typique de Venise ?", word: "gondole", hint: "Un batelier la mène debout, avec une seule rame.", syl: "gon…", wordModel: "C'est la gondole.",
+    ask: "Selon vous, comment protéger une ville aussi fragile que Venise ?", askModel: "Il faut la protéger des grandes marées et mieux répartir l'afflux de visiteurs.",
+    say: "Le Grand Canal traverse toute la ville.", sayModel: "La ville est traversée par le Grand Canal.",
+  }, NEW),
+  seq("sq-pompei", "histoire", "Naples et Pompéi", {
+    info: "En l'an 79, l'éruption du Vésuve a enseveli la ville de Pompéi, près de Naples.",
+    q: "Qu'est-il arrivé à Pompéi ?", a: "elle a été ensevelie par une éruption", d: ["elle a été inondée", "elle a brûlé dans un incendie", "elle a été abandonnée"],
+    find: "Comment s'appelle le volcan qui domine Naples ?", word: "Vésuve", hint: "Il est toujours actif aujourd'hui.", syl: "Vé…", wordModel: "Le volcan de Naples est le Vésuve.",
+    ask: "À votre avis, que nous apprennent les ruines de Pompéi ?", askModel: "Elles montrent la vie quotidienne des Romains, figée en un instant.",
+    say: "Naples est la ville natale de la pizza.", sayModel: "La pizza est née à Naples.",
+  }, NEW),
+  seq("sq-cubisme", "art", "Le cubisme", {
+    info: "Au début du vingtième siècle, Picasso et Braque montrent un même objet sous plusieurs angles à la fois.",
+    q: "Que cherchaient-ils à montrer ?", a: "un objet sous plusieurs angles", d: ["un paysage au coucher du soleil", "un portrait très réaliste", "une scène de bataille"],
+    find: "Comment s'appelle ce mouvement ?", word: "cubisme", hint: "Son nom évoque une forme géométrique.", syl: "cu…", wordModel: "Ce mouvement s'appelle le cubisme.",
+    ask: "Selon vous, un tableau doit-il ressembler à la réalité ?", askModel: "Pas forcément : il peut aussi exprimer une idée ou une manière de voir.",
+    say: "Picasso a peint Guernica contre la guerre.", sayModel: "Guernica est un tableau de Picasso contre la guerre.",
+  }, NEW),
+  seq("sq-surrealisme", "art", "Le surréalisme", {
+    info: "Les surréalistes s'inspiraient des rêves. Salvador Dalí a peint des montres molles qui semblent fondre.",
+    q: "De quoi s'inspiraient les surréalistes ?", a: "des rêves", d: ["des batailles", "des natures mortes", "de l'architecture"],
+    find: "Quel peintre belge a écrit « Ceci n'est pas une pipe » sous un tableau ?", word: "Magritte", hint: "Il peignait souvent des hommes en chapeau melon.", syl: "Ma…", wordModel: "C'est René Magritte.",
+    ask: "À votre avis, pourquoi les rêves intéressent-ils autant les artistes ?", askModel: "Ils libèrent l'imagination et montrent ce qu'on ne voit pas d'habitude.",
+    say: "Le surréalisme est aussi un mouvement littéraire.", sayModel: "Le surréalisme touche autant la poésie que la peinture.",
+  }, NEW),
 ];
 
 export const SEQ_ITEMS = SEQUENCES.flatMap((s) => s.items);
 export const STAGE_OF = new Map<string, Stage>(SEQUENCES.flatMap((s) => (["comprendre", "retrouver", "exprimer", "reformuler"] as Stage[]).map((st, k) => [s.items[k]!.id, st] as [string, Stage])));
 export const SEQ_TITLE = new Map<string, string>(SEQUENCES.flatMap((s) => s.items.map((i) => [i.id, s.title] as [string, string])));
+
+export const SEQ_BY_ID = new Map(SEQUENCES.map((s) => [s.id, s]));
+
+/** Intellectual collections — ordered, so they also act as multi-day series. */
+export type Collection = { id: string; title: string; ids: string[] };
+export const COLLECTIONS: Collection[] = [
+  { id: "decouvertes", title: "Les grandes découvertes scientifiques", ids: ["sq-pasteur", "sq-penicilline", "sq-adn", "sq-imagerie", "sq-langage"] },
+  { id: "italie", title: "Voyage en Italie", ids: ["sq-rome", "sq-florence", "sq-renaissance", "sq-venise", "sq-pompei"] },
+  { id: "courants", title: "Les grands courants artistiques", ids: ["sq-renaissance", "sq-monet", "sq-cubisme", "sq-surrealisme"] },
+  { id: "nutrition", title: "Nutrition et vieillissement", ids: ["sq-mediterranee", "sq-microbiote", "sq-sarcopenie", "sq-diabete", "sq-tension", "sq-epices"] },
+];
+/** A collection is "new" for three weeks after one of its paths was added. */
+export const isFresh = (c: Collection, now = Date.now()) => c.ids.some((id) => { const a = SEQ_BY_ID.get(id)?.added; return !!a && now - new Date(a).getTime() < 21 * 864e5; });
+/** Explored = the opening step of the path has been answered at least once. */
+export const exploredSeqs = (itemIds: Iterable<string | null>) => { const out = new Set<string>(); for (const i of itemIds) if (i?.endsWith("-c")) out.add(i.slice(0, -2)); return out; };

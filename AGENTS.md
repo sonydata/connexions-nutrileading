@@ -22,3 +22,5 @@
 - Every bank item has a subject (`topic`, explicit or derived by topicOf) separate from its skill; buildSession fills ~80 % of slots from the chosen interests (rotating subjects) and ~20 % from transversal "general" items — personalisation stays rule-based.
 - First launch goes through /interets; signed-in choices are saved in caregiver_settings.topics ("i:" prefix), guest choices in localStorage.
 - Sessions are built from thematic mini-sequences in `src/lib/sequences.ts` (Comprendre → Retrouver → S'exprimer → Reformuler on one subject), 3 per session + 1 time item — keeps choice questions ≈ a quarter and gives continuity; the old slot plan is only a fallback.
+- Sessions are built by buildPlan in builder.ts: one familiar path (a series already begun, or a liked subject), one new path, a time item and one earlier word brought back with spacing (2 days if it gave trouble, else 7). Tastes come from attempt outcomes. Rules only, so retention costs nothing and stays predictable.
+- Collections in sequences.ts are ordered and double as multi-day series. "Explored" means the path's "-c" step was answered, so no schema change is needed.

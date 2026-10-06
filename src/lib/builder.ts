@@ -1,6 +1,6 @@
 import { BANK, BY_ID, FOLLOW_IDS, SCENE, topicOf, type Item, type Opt, type Skill, type Theme, type Topic } from "./content";
 import { interestsOf } from "./interests";
-import { SEQUENCES, SEQ_TITLE, STAGE_OF, type Stage } from "./sequences";
+import { COLLECTIONS, SEQUENCES, SEQ_BY_ID, SEQ_TITLE, STAGE_OF, exploredSeqs, type Sequence, type Stage } from "./sequences";
 
 export type PastAttempt = { item_id: string | null; skill: string; outcome: string; created_at: string; response_ms: number | null };
 
@@ -24,6 +24,7 @@ export type PlayItem = {
   level: number;
   stage: Stage | null; // step inside a thematic mini-sequence
   seqTitle: string | null;
+  recall: string | null; // "we talked about this before" line read before a reactivated item
 };
 
 const shuffle = <T,>(a: T[]) => {
@@ -65,7 +66,7 @@ export function skillLevels(past: PastAttempt[], base: number): Record<string, n
 }
 
 function toPlay(item: Item, level: number): PlayItem {
-  const base = { id: item.id, kind: item.kind, theme: item.theme, topic: topicOf(item), skill: item.skill, level, question: null, keyword: null, hint: null, answerText: null, image: null, model: null, syllable: null, options: [] as Opt[], correctIndex: -1, stage: STAGE_OF.get(item.id) ?? null, seqTitle: SEQ_TITLE.get(item.id) ?? null };
+  const base = { id: item.id, kind: item.kind, theme: item.theme, topic: topicOf(item), skill: item.skill, level, question: null, keyword: null, hint: null, answerText: null, image: null, model: null, syllable: null, options: [] as Opt[], correctIndex: -1, stage: STAGE_OF.get(item.id) ?? null, seqTitle: SEQ_TITLE.get(item.id) ?? null, recall: null as string | null };
   if (item.kind === "mcq") {
     let opts = shuffle([item.answer, ...item.distractors.slice(0, level)]);
     // Photos only when every option has one, and never for advice/actions
@@ -185,38 +186,107 @@ function buildSlotSession(past: PastAttempt[], topics: string[], base: number): 
   return picks.map((i) => toPlay(i, levels[i.skill] ?? base));
 }
 
+const TEASE: Partial<Record<Topic, string>> = {
+  art: "une œuvre célèbre", sciences: "une découverte scientifique", medecine: "une question de médecine", sante: "un sujet de nutrition",
+  histoire: "une page d'histoire", geographie: "un voyage", litterature: "un grand écrivain", nature: "un regard sur la nature",
+  technologie: "une invention", cuisine: "une saveur du monde", sport: "un moment de sport",
+};
+const ITEM_TOPIC = new Map<string, Topic>([...BANK.map((i) => [i.id, topicOf(i)] as [string, Topic]), ...SEQUENCES.flatMap((s) => s.items.map((i) => [i.id, s.topic] as [string, Topic]))]);
+export const topicOfId = (id: string | null) => (id ? ITEM_TOPIC.get(id.replace(/#rep$/, "")) ?? null : null);
+
+/** Learned, rule-based taste per subject: ease + willingness to answer aloud. Never shown. */
+export function topicAffinity(past: PastAttempt[]) {
+  const acc = new Map<Topic, { n: number; s: number }>();
+  for (const p of past.slice(0, 200)) {
+    const t = topicOfId(p.item_id);
+    if (!t) continue;
+    const a = acc.get(t) ?? { n: 0, s: 0 };
+    a.n++;
+    a.s += p.outcome === "spontaneous" ? 1 : p.outcome === "revealed" ? 0 : 0.5;
+    acc.set(t, a);
+  }
+  const out = new Map<Topic, number>();
+  for (const [t, a] of acc) out.set(t, a.n >= 3 ? (a.s / a.n) * Math.min(1, a.n / 12) : 0);
+  return out;
+}
+
+export type Plan = { items: PlayItem[]; teaser: string };
+
 /**
- * Session = 3 thematic mini-sequences (Comprendre → Retrouver → S'exprimer → Reformuler),
- * each on one chosen subject, plus one transversal time/organisation item.
- * Choice questions stay ≈ a quarter of the session. Falls back to the slot plan if needed.
+ * Session (~10 steps, 8–12 min) = one familiar path (series continuation or a liked subject),
+ * one time item, one earlier word brought back (spaced: 2 days if it gave trouble, else 7),
+ * and one new path. Roughly 70 % familiar / 30 % new; rules only, never AI.
  */
-export function buildSession(past: PastAttempt[], topics: string[], base: number): PlayItem[] {
+export function buildPlan(past: PastAttempt[], topics: string[], base: number, focus?: string | null): Plan {
   const levels = skillLevels(past, base);
   let chosen = interestsOf(topics).filter((x): x is Topic => WITH_CONTENT.has(x as Topic));
   if (!chosen.length) chosen = ["sante", "medecine", "sciences", "art"];
+  const now = Date.now();
   const lastSeen = new Map<string, number>();
-  for (const p of past) if (p.item_id && !lastSeen.has(p.item_id)) lastSeen.set(p.item_id, new Date(p.created_at).getTime());
-  const seqScore = (id: string) => {
-    const t = lastSeen.get(`${id}-c`);
-    return Math.random() + (t ? Math.min(3, (Date.now() - t) / (3 * 864e5)) : 4);
-  };
-  const avail = SEQUENCES.filter((s) => chosen.includes(s.topic)).sort((a, b) => seqScore(b.id) - seqScore(a.id));
-  const picked: typeof SEQUENCES = [];
-  const usedTopics = new Set<string>();
-  for (const s of avail) if (picked.length < 3 && !usedTopics.has(s.topic)) { picked.push(s); usedTopics.add(s.topic); }
-  for (const s of avail) if (picked.length < 3 && !picked.includes(s)) picked.push(s);
-  for (const s of SEQUENCES.slice().sort((a, b) => seqScore(b.id) - seqScore(a.id))) if (picked.length < 3 && !picked.includes(s)) picked.push(s);
-  if (!picked.length) return buildSlotSession(past, topics, base);
+  const struggled = new Set<string>();
+  for (const p of past) {
+    if (!p.item_id) continue;
+    if (!lastSeen.has(p.item_id)) lastSeen.set(p.item_id, new Date(p.created_at).getTime());
+    if (p.outcome === "revealed" || p.outcome === "after_cue") struggled.add(p.item_id);
+  }
+  const explored = exploredSeqs(lastSeen.keys());
+  const aff = topicAffinity(past);
+  const age = (id: string) => { const t = lastSeen.get(`${id}-c`); return t ? (now - t) / 864e5 : 99; };
+  const fresh = (s: Sequence) => age(s.id) > 3;
+
+  // Familiar: next step of a series already begun, else a liked chosen subject.
+  const seriesNext = COLLECTIONS.map((c) => {
+    const done = c.ids.filter((id) => explored.has(id)).length;
+    const next = c.ids.find((id) => !explored.has(id));
+    return done > 0 && next ? SEQ_BY_ID.get(next) : undefined;
+  }).filter((s): s is Sequence => !!s && chosen.includes(s.topic));
+  const inFocus = (s: Sequence) => !focus || s.topic === focus;
+  const famScore = (s: Sequence) => Math.random() * 0.6 + (aff.get(s.topic) ?? 0.3) + Math.min(2, age(s.id) / 7) + (explored.has(s.id) ? 0 : 0.8);
+  const familiar =
+    seriesNext.filter(inFocus)[0] ??
+    SEQUENCES.filter((s) => chosen.includes(s.topic) && inFocus(s) && fresh(s)).sort((a, b) => famScore(b) - famScore(a))[0] ??
+    SEQUENCES.filter((s) => chosen.includes(s.topic)).sort((a, b) => famScore(b) - famScore(a))[0];
+  if (!familiar) return { items: buildSlotSession(past, topics, base), teaser: "" };
+
+  // New: a path never seen, on another subject — chosen subjects first, else beyond them.
+  const unseen = SEQUENCES.filter((s) => s !== familiar && !explored.has(s.id) && s.topic !== familiar.topic);
+  const novel =
+    shuffle(unseen.filter((s) => chosen.includes(s.topic)))[0] ??
+    shuffle(unseen)[0] ??
+    SEQUENCES.filter((s) => s !== familiar && s.topic !== familiar.topic).sort((a, b) => age(b.id) - age(a.id))[0];
+
+  // Reactivation: a word from an earlier path, back after 2 days (if it was hard) or a week.
+  const due = SEQUENCES.filter((s) => s !== familiar && s !== novel && explored.has(s.id)).map((s) => {
+    const r = `${s.id}-r`;
+    const t = lastSeen.get(r) ?? lastSeen.get(`${s.id}-c`)!;
+    const d = (now - t) / 864e5;
+    const prio = struggled.has(r) && d >= 2 ? 2 + d / 7 : d >= 7 ? 1 + d / 30 : 0;
+    return { s, d, prio };
+  }).filter((x) => x.prio > 0).sort((a, b) => b.prio - a.prio)[0];
 
   const recent = new Set(past.slice(0, 40).map((p) => p.item_id));
   const general = BANK.filter((i) => !FOLLOW_IDS.has(i.id) && topicOf(i) === "general" && i.skill === "temps" && !recent.has(i.id));
-  const pool = general.length ? general : BANK.filter((i) => topicOf(i) === "general" && i.skill === "temps");
-  const extra = shuffle(pool)[0];
+  const extra = shuffle(general.length ? general : BANK.filter((i) => topicOf(i) === "general" && i.skill === "temps"))[0];
 
-  const out: Item[] = [];
-  picked.forEach((s, k) => {
-    out.push(...s.items);
-    if (k === 0 && extra) out.push(extra);
-  });
-  return out.map((i) => toPlay(i, levels[i.skill] ?? base));
+  const items: PlayItem[] = familiar.items.map((i) => toPlay(i, levels[i.skill] ?? base));
+  if (extra) items.push(toPlay(extra, levels[extra.skill] ?? base));
+  if (due) {
+    const r = toPlay(due.s.items[1], levels["evocation"] ?? base);
+    r.recall = `${due.d >= 7 ? "La semaine dernière" : "Il y a quelques jours"}, nous avions parlé de ce sujet : ${due.s.title}.`;
+    items.push(r);
+  }
+  if (novel) items.push(...novel.items.map((i) => toPlay(i, levels[i.skill] ?? base)));
+
+  // Teaser: tomorrow's subjects, hinted without revealing them.
+  const today = new Set([familiar.topic, novel?.topic]);
+  const after = new Set([...explored, familiar.id, novel?.id]);
+  const nextSeries = COLLECTIONS.find((c) => c.ids.some((id) => after.has(id)) && c.ids.some((id) => !after.has(id) && chosen.includes(SEQ_BY_ID.get(id)!.topic)));
+  const order = [...chosen.filter((t) => !today.has(t)), ...chosen.filter((t) => today.has(t))];
+  const hints = order.map((t) => TEASE[t]).filter(Boolean).slice(0, 3) as string[];
+  const teaser = nextSeries && Math.random() < 0.5 ? `À suivre : la suite de « ${nextSeries.title} ».` : hints.length ? `Demain : ${hints.join(", ")}.` : "";
+  return { items, teaser };
+}
+
+export function buildSession(past: PastAttempt[], topics: string[], base: number): PlayItem[] {
+  return buildPlan(past, topics, base).items;
 }
