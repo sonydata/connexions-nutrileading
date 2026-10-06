@@ -6,6 +6,7 @@ import { completeSession, recordAttempt, speak, speakCached, startSession, type 
 import { buildPlan } from "@/lib/builder";
 import { supabase } from "@/integrations/supabase/client";
 import { imageSrc } from "@/lib/library";
+import { accentOf } from "@/lib/accents";
 import { heardWord, useVoiceInput, wordCount } from "@/lib/voice-input";
 import { praise, praiseChoice } from "@/lib/praise";
 import { todayGoal } from "@/lib/week";
@@ -240,14 +241,20 @@ function Seance() {
   /** Full prompt read aloud: sentence, question, then each answer. */
   const intro = (x: PlayItem) => [...(x.recall ? [x.recall] : []), ...(x.stage === "comprendre" ? ["Écoutez cette information."] : [])];
   const isChoiceItem = (x: PlayItem) => x.kind === "mcq" || x.kind === "tf";
-  const spoken = (x: PlayItem) => [...intro(x), x.audio, x.question, ...(isChoiceItem(x) ? ["Voici les réponses possibles.", ...x.options.flatMap((o, k) => [`Réponse ${k + 1}.`, o.label])] : [])];
+  const ANNOUNCE = "Voici les réponses possibles.";
+  const spoken = (x: PlayItem) => [...intro(x), x.audio, x.question, ...(isChoiceItem(x) ? [ANNOUNCE, ...x.options.flatMap((o, k) => [`Réponse ${k + 1}.`, o.label])] : [])];
+  /** Questions whose answers have already been announced out loud — never announced twice. */
+  const announced = useRef(new Set<string>());
   /** Read the prompt; highlight each answer while it is read; then say clearly when it is his turn to speak. */
   const readItem = async (x: PlayItem, slow = false, questionOnly = false, announce = true) => {
     setCue(null);
     const full = spoken(x);
-    const texts = questionOnly ? [x.audio, x.question] : announce ? full : full.filter((t) => t !== "Voici les réponses possibles.");
-    const h = questionOnly ? 2 : intro(x).length + (x.question ? 2 : 1) + (isChoiceItem(x) ? 1 : 0);
-    const done = await play(texts, slow, (k) => setReading(k >= h ? Math.floor((k - h) / 2) : -1));
+    const texts = questionOnly ? [x.audio, x.question] : announce && !announced.current.has(x.id) ? full : full.filter((t) => t !== ANNOUNCE);
+    const h = texts.findIndex((t) => t === "Réponse 1.");
+    const done = await play(texts, slow, (k) => {
+      if (texts[k] === ANNOUNCE) announced.current.add(x.id);
+      setReading(h >= 0 && k >= h ? Math.floor((k - h) / 2) : -1);
+    });
     const open = x.kind === "oral" || x.kind === "evoke" || x.kind === "complete";
     if (done && open && !questionOnly) {
       const c = turnCue(x, i);
@@ -458,6 +465,8 @@ function Seance() {
   const isLire = it.kind === "oral" && it.mode === "lire";
   const STAGE_LABEL = { comprendre: "Comprendre", retrouver: "Retrouver", exprimer: "S'exprimer", reformuler: "Reformuler" } as const;
   const title = it.stage ? `${STAGE_LABEL[it.stage]} · ${it.seqTitle}` : it.kind === "oral" ? MODE_TITLE[it.mode ?? ""] : it.kind === "complete" ? "Notion à compléter" : it.kind === "evoke" ? "Le terme juste" : it.kind === "tf" ? "Affirmation" : (TOPIC_TITLE[it.topic] ?? THEME_TITLE[it.theme]);
+  /** Colour of this step's activity — identity only, never a level or a score. */
+  const accent = accentOf(it);
 
   return (
     <main className="paper-grain flex min-h-screen flex-col px-6 py-6 md:px-12">
@@ -466,7 +475,7 @@ function Seance() {
         <div className="flex items-center gap-4" aria-label={`${i + 1} sur ${items.length}`}>
           <div className="hidden gap-1.5 sm:flex" aria-hidden>
             {items.map((_, k) => (
-              <span key={k} className={`h-2 w-2 rounded-full transition ${k < i ? "bg-calm" : k === i ? "bg-primary ring-4 ring-calm-soft" : "bg-border"}`} />
+              <span key={k} className={`h-2.5 w-2.5 rounded-full transition ${k < i ? accent.solid : k === i ? `bg-primary ring-4 ${accent.ring}` : "bg-border"}`} />
             ))}
           </div>
           <span className="font-serif text-xl text-muted-foreground">{i + 1} / {items.length}</span>
@@ -474,7 +483,10 @@ function Seance() {
       </header>
 
       <section key={i} className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center animate-rise">
-        <p className="mb-6 text-sm uppercase tracking-[0.25em] text-muted-foreground">{title}</p>
+        <p className="mb-6 flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.25em]">
+          <span className={`h-2 w-2 rounded-full ${accent.solid}`} aria-hidden />
+          <span className={accent.text}>{title}</span>
+        </p>
         <button
           onClick={() => (step === "model" && it.model ? play([it.model]) : readItem(it, stage > 0))}
           disabled={speaking || voice.listening}
@@ -490,7 +502,7 @@ function Seance() {
         )}
         {cue && step === "ask" && <TurnCue text={cue} listening={voice.listening} />}
 
-        {isChoice && <ChoiceBody it={it} reading={reading} stage={stage} wrong={wrong} chosen={chosen} message={message} success={success} onChoose={choose} onNext={goNext} />}
+        {isChoice && <ChoiceBody it={it} accent={accent} reading={reading} stage={stage} wrong={wrong} chosen={chosen} message={message} success={success} onChoose={choose} onNext={goNext} />}
 
         {isRecall && (
           <div className="mt-4 w-full text-center">
@@ -543,7 +555,7 @@ function Seance() {
                 <Feedback message={message} success={success} />
                 {heard && <p className="mx-auto mt-1 max-w-2xl text-base text-muted-foreground">Ce que j'ai entendu : « {heard} »</p>}
                 <p className="mt-6 text-sm uppercase tracking-[0.2em] text-muted-foreground">Une formulation possible</p>
-                <p className="mx-auto mt-2 max-w-3xl font-serif text-3xl leading-snug text-calm">{it.model}</p>
+                <p className={`mx-auto mt-2 max-w-3xl font-serif text-3xl leading-snug ${accent.text}`}>{it.model}</p>
                 <Actions>
                   <RepeatActions voice={voice} repeated={repeated} onListen={() => play([it.model])} onRepeat={repeatModel} onNext={goNext} />
                 </Actions>
@@ -585,7 +597,7 @@ function RepeatActions({ voice, repeated, onListen, onRepeat, onNext }: { voice:
   );
 }
 
-function ChoiceBody({ it, reading, stage, wrong, chosen, message, success, onChoose, onNext }: { it: PlayItem; reading: number; stage: number; wrong: number[]; chosen: number | null; message: string | null; success: boolean; onChoose: (k: number) => void; onNext: () => void }) {
+function ChoiceBody({ it, accent, reading, stage, wrong, chosen, message, success, onChoose, onNext }: { it: PlayItem; accent: ReturnType<typeof accentOf>; reading: number; stage: number; wrong: number[]; chosen: number | null; message: string | null; success: boolean; onChoose: (k: number) => void; onNext: () => void }) {
   const hasImages = it.options.length > 0 && it.options.every((o) => o.image);
   const n = it.options.length;
   const cols = n === 4 ? "grid-cols-2 lg:grid-cols-4" : n === 3 ? "grid-cols-3" : "grid-cols-2";
@@ -595,8 +607,8 @@ function ChoiceBody({ it, reading, stage, wrong, chosen, message, success, onCho
         {it.image && (
           <img src={imageSrc(it.image) ?? ""} alt="" className="mx-auto mb-5 max-h-64 w-auto max-w-full rounded-3xl shadow-md" />
         )}
-        <p className="mx-auto max-w-3xl font-serif text-3xl leading-snug">{it.audio}</p>
-        {it.question && <p className="mt-2 font-serif text-2xl italic text-muted-foreground">{it.question}</p>}
+        <p className="mx-auto max-w-3xl font-serif text-4xl leading-snug md:text-5xl">{it.audio}</p>
+        {it.question && <p className={`mt-3 font-serif text-2xl italic md:text-3xl ${accent.text}`}>{it.question}</p>}
         {stage >= 2 && it.keyword && <span className="mt-3 inline-block rounded-full bg-gold/25 px-5 py-1.5 text-xl">{it.keyword}</span>}
         <Feedback message={message} success={success} />
       </div>
@@ -609,7 +621,7 @@ function ChoiceBody({ it, reading, stage, wrong, chosen, message, success, onCho
             <button
               key={k}
               onClick={() => onChoose(k)}
-              className={`relative overflow-hidden rounded-3xl border-2 bg-card shadow-sm transition ${right ? "border-calm ring-4 ring-calm-soft animate-glow" : reading === k ? "border-calm/70 ring-4 ring-calm-soft scale-[1.02]" : "border-transparent hover:-translate-y-1 hover:shadow-lg"} ${dim ? "opacity-35" : ""}`}
+              className={`relative overflow-hidden rounded-3xl border-2 ${accent.soft} shadow-sm transition ${right ? "border-calm ring-4 ring-calm-soft animate-glow" : reading === k ? `ring-4 ${accent.ring} scale-[1.02]` : "hover:-translate-y-1 hover:shadow-lg"} ${dim ? "opacity-35" : ""}`}
             >
               <span className="absolute left-4 top-3 text-sm text-muted-foreground">Réponse {k + 1}</span>
               {hasImages && <div className="aspect-square w-full bg-muted">{src && <img src={src} alt={o.label} className="h-full w-full object-cover" />}</div>}
