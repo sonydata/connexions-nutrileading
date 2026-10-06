@@ -477,7 +477,7 @@ function Seance() {
         <div className="flex items-center gap-4" aria-label={`${i + 1} sur ${items.length}`}>
           <div className="hidden gap-1.5 sm:flex" aria-hidden>
             {items.map((_, k) => (
-              <span key={k} className={`h-2.5 w-2.5 rounded-full transition ${k < i ? accent.solid : k === i ? `bg-primary ring-4 ${accent.ring}` : "bg-foreground/25"}`} />
+              <span key={k} className={`h-2.5 w-2.5 rounded-full transition ${k < i ? accent.solid : k === i ? `bg-primary ring-4 ${accent.ring}` : "bg-foreground/40"}`} />
             ))}
           </div>
           <span className="font-serif text-xl text-muted-foreground">{i + 1} / {items.length}</span>
@@ -623,7 +623,7 @@ function ChoiceBody({ it, accent, reading, stage, wrong, chosen, message, succes
             <button
               key={k}
               onClick={() => onChoose(k)}
-              className={`relative overflow-hidden rounded-3xl border-2 ${accent.soft} ${accent.edge} shadow-sm transition ${right ? "border-calm ring-4 ring-calm-soft animate-glow" : reading === k ? `ring-4 ${accent.ring} scale-[1.02]` : "hover:-translate-y-1 hover:shadow-lg"} ${dim ? "opacity-35" : ""}`}
+              className={`relative overflow-hidden rounded-3xl border-2 ${accent.soft} ${accent.edge} shadow-sm transition ${right ? "border-calm ring-4 ring-calm-soft animate-glow" : reading === k ? `ring-4 ${accent.ring} scale-[1.02]` : "hover:-translate-y-1 hover:shadow-lg"} ${dim ? "opacity-60" : ""}`}
             >
               <span className="absolute left-4 top-3 text-sm font-semibold text-foreground/70">Réponse {k + 1}</span>
               {hasImages && <div className="aspect-square w-full bg-muted">{src && <img src={src} alt={o.label} className="h-full w-full object-cover" />}</div>}
