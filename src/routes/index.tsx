@@ -271,7 +271,7 @@ function Index() {
                 {week.sessions} séance{week.sessions > 1 ? "s" : ""} · {week.minutes} minutes · {week.days} jour{week.days > 1 ? "s" : ""} actif{week.days > 1 ? "s" : ""}
               </p>
               <p className="mt-1 text-lg text-muted-foreground">
-                {[week.oral && `${week.oral} réponse${week.oral > 1 ? "s" : ""} à voix haute`, week.found && `${week.found} mot${week.found > 1 ? "s" : ""} retrouvé${week.found > 1 ? "s" : ""}`, week.topics && `${week.topics} sujet${week.topics > 1 ? "s" : ""} explorés`.replace(/s explorés$/, week.topics > 1 ? "s explorés" : " exploré")].filter(Boolean).join(" · ")}
+                {[week.oral && `${week.oral} réponse${week.oral > 1 ? "s" : ""} à voix haute`, week.found && `${week.found} mot${week.found > 1 ? "s" : ""} retrouvé${week.found > 1 ? "s" : ""}`, week.topics && (week.topics > 1 ? `${week.topics} sujets explorés` : "1 sujet exploré")].filter(Boolean).join(" · ")}
               </p>
               <p className="mt-2 font-serif text-xl italic">{weekPhrase(week)}</p>
             </div>
