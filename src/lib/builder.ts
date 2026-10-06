@@ -271,7 +271,7 @@ export function buildPlan(past: PastAttempt[], topics: string[], base: number, f
   const items: PlayItem[] = familiar.items.map((i) => toPlay(i, levels[i.skill] ?? base));
   if (extra) items.push(toPlay(extra, levels[extra.skill] ?? base));
   if (due) {
-    const r = toPlay(due.s.items[1], levels.evocation ?? base);
+    const r = toPlay(due.s.items[1], levels["evocation"] ?? base);
     r.recall = `${due.d >= 7 ? "La semaine dernière" : "Il y a quelques jours"}, nous avions parlé de ce sujet : ${due.s.title}.`;
     items.push(r);
   }

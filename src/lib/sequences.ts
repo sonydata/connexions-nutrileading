@@ -4,7 +4,7 @@
 import type { EvokeItem, McqItem, OralItem, Topic } from "./content";
 
 export type Stage = "comprendre" | "retrouver" | "exprimer" | "reformuler";
-export type Sequence = { id: string; topic: Topic; title: string; added?: string; items: [McqItem, EvokeItem, OralItem, OralItem] };
+export type Sequence = { id: string; topic: Topic; title: string; added?: string | undefined; items: [McqItem, EvokeItem, OralItem, OralItem] };
 
 type S = {
   info: string; q: string; a: string; d: [string, string, string];
