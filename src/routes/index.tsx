@@ -147,8 +147,8 @@ function Index() {
                 <circle key={i} cx={x as number} cy={y as number} r={r as number} fill={f as string} />
               ))}
               <g fill="var(--sage)" opacity="0.8">
-                <path d="M86 4 C 80 10, 80 18, 84 24 C 90 18, 90 10, 86 4 Z" />
-                <path d="M94 10 C 87 13, 85 19, 86 24 C 92 21, 95 16, 94 10 Z" />
+                <path d="M70 2 C 66 6, 66 11, 69 14 C 73 10, 73 6, 70 2 Z" />
+                <path d="M76 5 C 72 7, 70 11, 71 14 C 75 12, 77 9, 76 5 Z" />
                 <path d="M4 50 C 10 44, 18 44, 22 48 C 16 54, 9 54, 4 50 Z" />
                 <path d="M6 60 C 12 57, 18 58, 20 62 C 14 66, 9 65, 6 60 Z" />
               </g>
@@ -167,7 +167,7 @@ function Index() {
                 </div>
               </figure>
             ))}
-            <p className="absolute -right-4 bottom-[40%] w-32 rotate-[-8deg] font-serif text-lg italic leading-snug text-muted-foreground">
+            <p className="absolute -bottom-6 left-0 w-56 rotate-[-4deg] font-serif text-lg italic leading-snug text-muted-foreground">
               {quote}
               <span className="mt-1 block h-px w-20 bg-brand/60" />
             </p>

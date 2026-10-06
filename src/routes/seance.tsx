@@ -438,7 +438,7 @@ function Seance() {
   if (phase === "choose")
     return (
       <Center>
-        <p className="text-sm font-bold uppercase tracking-[0.25em] text-brand">Séance du jour</p>
+        <p className="text-sm font-bold uppercase tracking-[0.25em] text-primary">Séance du jour</p>
         <h1 className="mt-4 font-serif text-5xl md:text-6xl">Aujourd'hui, vous préférez :</h1>
         <div className="mt-12 flex flex-wrap justify-center gap-4">
           {focusOpts.map((f) => (
