@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import { DEFAULT_INTERESTS, INTERESTS, PREFIX, interestsOf, otherInterest } from "@/lib/interests";
 import { supabase } from "@/integrations/supabase/client";
+import { topicOfId } from "@/lib/builder";
 
 export const Route = createFileRoute("/_authenticated/aidant")({
   head: () => ({
