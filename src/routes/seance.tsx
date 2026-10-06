@@ -477,7 +477,7 @@ function Seance() {
         <div className="flex items-center gap-4" aria-label={`${i + 1} sur ${items.length}`}>
           <div className="hidden gap-1.5 sm:flex" aria-hidden>
             {items.map((_, k) => (
-              <span key={k} className={`h-2.5 w-2.5 rounded-full transition ${k < i ? accent.solid : k === i ? `bg-primary ring-4 ${accent.ring}` : "bg-border"}`} />
+              <span key={k} className={`h-2.5 w-2.5 rounded-full transition ${k < i ? accent.solid : k === i ? `bg-primary ring-4 ${accent.ring}` : "bg-foreground/25"}`} />
             ))}
           </div>
           <span className="font-serif text-xl text-muted-foreground">{i + 1} / {items.length}</span>
@@ -627,7 +627,7 @@ function ChoiceBody({ it, accent, reading, stage, wrong, chosen, message, succes
             >
               <span className="absolute left-4 top-3 text-sm font-semibold text-foreground/70">Réponse {k + 1}</span>
               {hasImages && <div className="aspect-square w-full bg-muted">{src && <img src={src} alt={o.label} className="h-full w-full object-cover" />}</div>}
-              <div className={`px-4 text-center ${hasImages ? "py-4 text-2xl" : "py-9 font-serif text-3xl"}`}>{o.label}</div>
+              <div className={`px-4 text-center ${hasImages ? "py-4 text-2xl" : "pt-14 pb-10 font-serif text-3xl"}`}>{o.label}</div>
               {right && success && (
                 <span className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-calm text-primary-foreground animate-pop">
                   <Check className="h-6 w-6" />
