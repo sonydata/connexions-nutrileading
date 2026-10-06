@@ -13,14 +13,16 @@ export type Accent = {
   ring: string;
   /** thin rule or progress bar */
   bar: string;
+  /** firmer outline for cards and buttons */
+  edge: string;
 };
 
 export const ACCENTS = {
-  comprendre: { solid: "bg-u-comprendre", text: "text-u-comprendre", soft: "bg-u-comprendre-soft", ring: "ring-u-comprendre/45", bar: "bg-u-comprendre" },
-  retrouver: { solid: "bg-u-retrouver", text: "text-u-retrouver", soft: "bg-u-retrouver-soft", ring: "ring-u-retrouver/45", bar: "bg-u-retrouver" },
-  exprimer: { solid: "bg-u-exprimer", text: "text-u-exprimer", soft: "bg-u-exprimer-soft", ring: "ring-u-exprimer/45", bar: "bg-u-exprimer" },
-  reformuler: { solid: "bg-u-reformuler", text: "text-u-reformuler", soft: "bg-u-reformuler-soft", ring: "ring-u-reformuler/45", bar: "bg-u-reformuler" },
-  temps: { solid: "bg-u-temps", text: "text-u-temps", soft: "bg-u-temps-soft", ring: "ring-u-temps/45", bar: "bg-u-temps" },
+  comprendre: { solid: "bg-u-comprendre", text: "text-u-comprendre", soft: "bg-u-comprendre-soft", ring: "ring-u-comprendre/45", bar: "bg-u-comprendre", edge: "border-u-comprendre/40" },
+  retrouver: { solid: "bg-u-retrouver", text: "text-u-retrouver", soft: "bg-u-retrouver-soft", ring: "ring-u-retrouver/45", bar: "bg-u-retrouver", edge: "border-u-retrouver/40" },
+  exprimer: { solid: "bg-u-exprimer", text: "text-u-exprimer", soft: "bg-u-exprimer-soft", ring: "ring-u-exprimer/45", bar: "bg-u-exprimer", edge: "border-u-exprimer/40" },
+  reformuler: { solid: "bg-u-reformuler", text: "text-u-reformuler", soft: "bg-u-reformuler-soft", ring: "ring-u-reformuler/45", bar: "bg-u-reformuler", edge: "border-u-reformuler/40" },
+  temps: { solid: "bg-u-temps", text: "text-u-temps", soft: "bg-u-temps-soft", ring: "ring-u-temps/45", bar: "bg-u-temps", edge: "border-u-temps/40" },
 } satisfies Record<string, Accent>;
 
 export type AccentKey = keyof typeof ACCENTS;

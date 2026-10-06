@@ -445,6 +445,7 @@ function Seance() {
   if (phase === "choose")
     return (
       <Center>
+        <div className="w-full max-w-3xl rounded-[2rem] border border-border bg-card px-8 py-14 shadow-sm md:px-14">
         <p className="text-sm font-bold uppercase tracking-[0.25em] text-primary">Séance du jour</p>
         <h1 className="mt-4 font-serif text-5xl md:text-6xl">Aujourd'hui, vous préférez :</h1>
         <div className="mt-12 flex flex-wrap justify-center gap-4">
@@ -454,7 +455,8 @@ function Seance() {
             </button>
           ))}
         </div>
-        <button onClick={() => pickFocus(null)} className="mt-10 text-lg text-muted-foreground underline underline-offset-4">Comme d'habitude</button>
+        <button onClick={() => pickFocus(null)} className="mt-10 text-lg font-medium text-primary underline underline-offset-4">Comme d'habitude</button>
+        </div>
       </Center>
     );
   if (phase === "done") return <Summary guest={isGuest} log={log.current} teaser={teaser} minutes={Math.max(1, Math.round((Date.now() - startedAt.current) / 60000))} />;
@@ -621,9 +623,9 @@ function ChoiceBody({ it, accent, reading, stage, wrong, chosen, message, succes
             <button
               key={k}
               onClick={() => onChoose(k)}
-              className={`relative overflow-hidden rounded-3xl border-2 ${accent.soft} shadow-sm transition ${right ? "border-calm ring-4 ring-calm-soft animate-glow" : reading === k ? `ring-4 ${accent.ring} scale-[1.02]` : "hover:-translate-y-1 hover:shadow-lg"} ${dim ? "opacity-35" : ""}`}
+              className={`relative overflow-hidden rounded-3xl border-2 ${accent.soft} ${accent.edge} shadow-sm transition ${right ? "border-calm ring-4 ring-calm-soft animate-glow" : reading === k ? `ring-4 ${accent.ring} scale-[1.02]` : "hover:-translate-y-1 hover:shadow-lg"} ${dim ? "opacity-35" : ""}`}
             >
-              <span className="absolute left-4 top-3 text-sm text-muted-foreground">Réponse {k + 1}</span>
+              <span className="absolute left-4 top-3 text-sm font-semibold text-foreground/70">Réponse {k + 1}</span>
               {hasImages && <div className="aspect-square w-full bg-muted">{src && <img src={src} alt={o.label} className="h-full w-full object-cover" />}</div>}
               <div className={`px-4 text-center ${hasImages ? "py-4 text-2xl" : "py-9 font-serif text-3xl"}`}>{o.label}</div>
               {right && success && (
