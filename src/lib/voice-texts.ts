@@ -1,7 +1,7 @@
 // Every sentence the session can read aloud — used once to pre-record the whole bank,
 // so the same natural voice is heard everywhere (guests included) with no live synthesis.
 import { BANK, type Item } from "./content";
-import { SEQ_ITEMS } from "./sequences";
+import { SEQ_ITEMS, SEQUENCES } from "./sequences";
 
 const FIXED = [
   "Écoutez cette information.",
@@ -45,5 +45,7 @@ function textsOf(i: Item): (string | undefined)[] {
 export function allVoiceTexts(): string[] {
   const out = new Set<string>(FIXED);
   for (const i of [...BANK, ...SEQ_ITEMS]) for (const t of textsOf(i)) if (t && t.trim()) out.add(t.trim());
+  // "We talked about this before" lines read before a reactivated word.
+  for (const q of SEQUENCES) for (const w of ["Il y a quelques jours", "La semaine dernière"]) out.add(`${w}, nous avions parlé de ce sujet : ${q.title}.`);
   return [...out];
 }
