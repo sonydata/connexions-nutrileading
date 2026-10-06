@@ -449,7 +449,7 @@ function Seance() {
         <h1 className="mt-4 font-serif text-5xl md:text-6xl">Aujourd'hui, vous préférez :</h1>
         <div className="mt-12 flex flex-wrap justify-center gap-4">
           {focusOpts.map((f) => (
-            <button key={f} onClick={() => pickFocus(f)} className="rounded-full border-2 border-border bg-card px-9 py-5 text-2xl font-semibold transition hover:border-brand hover:bg-brand-soft">
+            <button key={f} onClick={() => pickFocus(f)} className="rounded-full border-2 border-border bg-card px-9 py-5 text-2xl font-semibold shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:bg-sage-soft">
               {TOPIC_TITLE[f] ?? f}
             </button>
           ))}
