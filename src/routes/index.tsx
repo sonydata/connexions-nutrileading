@@ -7,9 +7,9 @@ import { weekPhrase, weekSummary, type Week } from "@/lib/week";
 import { COLLECTIONS, isFresh } from "@/lib/sequences";
 import { imageSrc } from "@/lib/library";
 import { ACCENTS, COLLECTION_CYCLE, PILLARS } from "@/lib/accents";
-import litteratureImg from "@/assets/home/litterature.jpg";
+import litteratureImg from "@/assets/library/reading.jpg";
 import artImg from "@/assets/home/art.jpg";
-import santeImg from "@/assets/home/sante.jpg";
+import santeImg from "@/assets/library/exchange.jpg";
 import { Apple, ArrowRight, BookOpen, ChefHat, Cpu, Ear, Landmark, Leaf, Map as MapIcon, MessageCircle, Microscope, Newspaper, Palette, Search, Stethoscope, Trophy } from "lucide-react";
 import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, PREFIX, hasInterests, interestsOf, otherInterest } from "@/lib/interests";
 
