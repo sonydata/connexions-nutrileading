@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/nutrileading-logo.png.asset.json";
 import symbol from "@/assets/connexions-symbol.png.asset.json";
-import { weekSummary } from "@/lib/week";
+import { weekPhrase, weekSummary, type Week } from "@/lib/week";
+import { COLLECTIONS, isFresh } from "@/lib/sequences";
 import { imageSrc } from "@/lib/library";
 import litteratureImg from "@/assets/home/litterature.jpg";
 import artImg from "@/assets/home/art.jpg";
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   const [state, setState] = useState<"loading" | "out" | "in">("loading");
   const [name, setName] = useState("Hafid");
-  const [week, setWeek] = useState<{ sessions: number; minutes: number; days: number } | null>(null);
+  const [week, setWeek] = useState<Week | null>(null);
   const [topics, setTopics] = useState<string[]>([]);
   const [configured, setConfigured] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
@@ -122,6 +123,8 @@ function Index() {
               Des séances quotidiennes pour mobiliser ses connaissances, exercer son langage et nourrir sa curiosité à partir de sujets qui vous intéressent.
             </p>
 
+
+            {state === "in" && week?.away && <p className="mt-8 font-serif text-2xl italic text-foreground">Heureux de vous retrouver.</p>}
 
             {/* Aujourd'hui */}
             <div className="mt-10 max-w-xl rounded-3xl border-l-4 border-brand bg-card p-6 shadow-lg">
@@ -267,11 +270,40 @@ function Index() {
               <p className="mt-2 text-2xl font-semibold">
                 {week.sessions} séance{week.sessions > 1 ? "s" : ""} · {week.minutes} minutes · {week.days} jour{week.days > 1 ? "s" : ""} actif{week.days > 1 ? "s" : ""}
               </p>
-              {week.sessions >= 3 && <p className="mt-1 text-lg text-muted-foreground">Belle régularité.</p>}
+              <p className="mt-1 text-lg text-muted-foreground">
+                {[week.oral && `${week.oral} réponse${week.oral > 1 ? "s" : ""} à voix haute`, week.found && `${week.found} mot${week.found > 1 ? "s" : ""} retrouvé${week.found > 1 ? "s" : ""}`, week.topics && `${week.topics} sujet${week.topics > 1 ? "s" : ""} explorés`.replace(/s explorés$/, week.topics > 1 ? "s explorés" : " exploré")].filter(Boolean).join(" · ")}
+              </p>
+              <p className="mt-2 font-serif text-xl italic">{weekPhrase(week)}</p>
             </div>
           </div>
         </section>
       )}
+
+      {/* COLLECTIONS */}
+      <section className="bg-background">
+        <div className="mx-auto w-full max-w-6xl px-6 py-16 md:px-8">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-brand">Vos collections</p>
+          <div className="mt-6 grid gap-x-12 gap-y-8 md:grid-cols-2">
+            {COLLECTIONS.map((c) => {
+              const n = c.ids.filter((id) => week?.explored.includes(id)).length;
+              return (
+                <div key={c.id}>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <p className="text-xl font-semibold">
+                      {c.title}
+                      {isFresh(c) && <span className="ml-3 align-middle text-xs font-bold uppercase tracking-[0.2em] text-brand">Nouveau</span>}
+                    </p>
+                    <p className="shrink-0 text-base text-muted-foreground">{n} / {c.ids.length} sujets explorés</p>
+                  </div>
+                  <div className="mt-3 h-1 rounded-full bg-border">
+                    <div className="h-1 rounded-full bg-brand transition-all" style={{ width: `${(n / c.ids.length) * 100}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
       {/* MANIFESTE */}
       <section className="bg-brand-soft">
