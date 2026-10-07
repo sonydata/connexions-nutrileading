@@ -5,7 +5,7 @@ import { TOPIC_BANK } from "./content-topics";
 export type Theme = "nutrition" | "avis" | "sciences" | "temps" | "expression";
 export type Skill = "lexique" | "conseil" | "information" | "temps" | "completion" | "expression" | "evocation" | "elocution";
 /** Subject used to carry the exercise — independent of the skill trained. "general" = transversal (time, language). */
-export type Topic = "sante" | "medecine" | "sciences" | "histoire" | "art" | "geographie" | "nature" | "litterature" | "technologie" | "cuisine" | "sport" | "general";
+export type Topic = "sante" | "medecine" | "sciences" | "histoire" | "art" | "geographie" | "nature" | "litterature" | "technologie" | "cuisine" | "sport" | "actualite" | "general";
 export type Opt = { label: string; image?: string | undefined };
 
 type Base = { id: string; theme: Theme; skill: Skill; topic?: Topic };
@@ -316,7 +316,30 @@ export function topicOf(i: Item): Topic {
   return "sante";
 }
 
-export const BANK: Item[] = [...CORE, ...TOPIC_BANK];
+// ——— Repères du moment (Actualité) : faits stables du présent, pas de « dernières nouvelles ».
+// Year / month / season are computed from today's date. To update when office holders change.
+const MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+function reperes(now = new Date()): Item[] {
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const seasons = [o("l'hiver", "winter"), o("le printemps", "spring"), o("l'été", "summer"), o("l'automne", "autumn")];
+  const si = m === 11 || m < 2 ? 0 : m < 5 ? 1 : m < 8 ? 2 : 3;
+  const R = { topic: "actualite" as Topic };
+  return [
+    mcq("rp-fr-pres", "avis", "information", "Un repère de la vie publique française.", "président", o("Emmanuel Macron"), [o("Jacques Chirac"), o("François Hollande"), o("Nicolas Sarkozy")], { ...R, question: "Qui est aujourd'hui le président de la République ?" }),
+    mcq("rp-us-pres", "avis", "information", "Aux États-Unis, l'élection présidentielle a eu lieu en novembre 2024.", "États-Unis", o("Donald Trump"), [o("Barack Obama"), o("Joe Biden"), o("Kamala Harris")], { ...R, question: "Qui est aujourd'hui le président des États-Unis ?" }),
+    mcq("rp-year", "temps", "temps", "Situons-nous dans le temps.", "année", o(String(y)), [o(String(y - 10)), o(String(y - 1)), o(String(y + 1))], { ...R, question: "En quelle année sommes-nous ?" }),
+    mcq("rp-month", "temps", "temps", "Regardons le calendrier.", "mois", o(MONTHS[m]!), [o(MONTHS[(m + 6) % 12]!), o(MONTHS[(m + 11) % 12]!), o(MONTHS[(m + 1) % 12]!)], { ...R, question: "Dans quel mois sommes-nous ?" }),
+    mcq("rp-season", "temps", "temps", "Pensez au temps qu'il fait et à la lumière du jour.", "saison", seasons[si]!, [seasons[(si + 2) % 4]!, seasons[(si + 1) % 4]!, seasons[(si + 3) % 4]!], { ...R, question: "En quelle saison sommes-nous ?" }),
+    mcq("rp-euro", "avis", "information", "Depuis 2002, les Français paient avec la même monnaie que beaucoup de pays voisins.", "monnaie", o("l'euro"), [o("le dollar"), o("la livre"), o("le franc")], { ...R, question: "Quelle est cette monnaie ?" }),
+    mcq("rp-jo", "avis", "information", "Paris a accueilli les Jeux olympiques d'été, cent ans après ceux de 1924.", "Jeux olympiques", o("en 2024"), [o("en 2012"), o("en 2016"), o("en 2020")], { ...R, question: "En quelle année ?" }),
+    oral("rp-ex-change", "expliquer", ["Selon vous, qu'est-ce qui a le plus changé dans la vie quotidienne ces dernières années ?"], { ...R, image: "phone", model: "Le téléphone portable et Internet ont transformé notre façon de communiquer." }),
+    oral("rp-ex-season", "expliquer", [`Nous sommes en ${MONTHS[m]}. Qu'aimez-vous dans cette période de l'année ?`], { ...R, image: seasons[si]!.image ?? "calendar", model: "J'aime la lumière, les fruits de saison et les promenades." }),
+  ];
+}
+export const REPERES = reperes();
+
+export const BANK: Item[] = [...CORE, ...TOPIC_BANK, ...REPERES];
 export const BY_ID = new Map(BANK.map((i) => [i.id, i]));
 export const FOLLOW_IDS = new Set(BANK.flatMap((i) => (i.kind === "oral" && i.follow ? [i.follow] : [])));
 
@@ -340,5 +363,6 @@ export const SCENE: Record<string, string> = {
   "t-season": "calendar", "t-2h": "plate", "t-dinner": "evening", "t-sequence": "consultation", "t-3x": "calendar", "t-kine": "calendar",
   "tf-olive": "olive_oil", "tf-salmon": "salmon", "tf-lentils": "lentils", "tf-vitc": "orange", "tf-water": "water", "tf-soda": "soda",
   "tf-insulin": "consultation", "tf-calcium": "yogurt", "tf-walnuts": "walnuts", "tf-transit": "vegetables", "tf-protage": "elderly_meal",
+  "rp-fr-pres": "elysee", "rp-us-pres": "white_house", "rp-year": "calendar", "rp-month": "calendar", "rp-euro": "market", "rp-jo": "paris",
   "tf-vitdsun": "summer", "tf-saltbp": "salt",
 };

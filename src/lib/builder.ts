@@ -1,4 +1,4 @@
-import { BANK, BY_ID, FOLLOW_IDS, SCENE, topicOf, type Item, type Opt, type Skill, type Theme, type Topic } from "./content";
+import { BANK, REPERES, BY_ID, FOLLOW_IDS, SCENE, topicOf, type Item, type Opt, type Skill, type Theme, type Topic } from "./content";
 import { interestsOf } from "./interests";
 import { COLLECTIONS, SEQUENCES, SEQ_BY_ID, SEQ_TITLE, STAGE_OF, exploredSeqs, type Sequence, type Stage } from "./sequences";
 
@@ -276,6 +276,18 @@ export function buildPlan(past: PastAttempt[], topics: string[], base: number, f
     items.push(r);
   }
   if (novel) items.push(...novel.items.map((i) => toPlay(i, levels[i.skill] ?? base)));
+
+  // Actualité: two "repères du moment" questions + one conversation, rotating.
+  if (interestsOf(topics).includes("actualite") && (!focus || focus === "actualite")) {
+    const fresh2 = (xs: Item[]) => { const f = xs.filter((i) => !recent.has(i.id)); return shuffle(f.length >= 2 ? f : xs); };
+    const qs = fresh2(REPERES.filter((i) => i.kind === "mcq")).slice(0, 2);
+    const talk = fresh2(REPERES.filter((i) => i.kind === "oral"))[0];
+    for (const i of [...qs, ...(talk ? [talk] : [])]) {
+      const p = toPlay(i, levels[i.skill] ?? base);
+      p.seqTitle = "Repères du moment";
+      items.push(p);
+    }
+  }
 
   // Teaser: tomorrow's subjects, hinted without revealing them.
   const today = new Set([familiar.topic, novel?.topic]);

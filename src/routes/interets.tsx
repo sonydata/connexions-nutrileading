@@ -100,7 +100,7 @@ function Interets() {
         </label>
         <button
           onClick={save}
-          disabled={busy || !picked.filter((p) => p !== "actualite").length}
+          disabled={busy || !picked.length}
           className="mt-12 rounded-full bg-primary px-14 py-5 text-2xl font-medium text-primary-foreground shadow-lg transition hover:opacity-90 disabled:opacity-50"
         >
           {next === "seance" ? "Commencer" : "Enregistrer"}

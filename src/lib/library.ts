@@ -68,6 +68,8 @@ export const LIBRARY: LibraryItem[] = [
   { id: "violin", label: "violon (musique)", group: "culture" },
   { id: "football", label: "ballon de football", group: "culture" },
   { id: "astronomy", label: "télescope, étoiles (astronomie)", group: "science" },
+  { id: "elysee", label: "palais de l'Élysée", group: "culture" },
+  { id: "white_house", label: "Maison-Blanche", group: "culture" },
   { id: "forest", label: "forêt (nature)", group: "science" },
 ];
 
