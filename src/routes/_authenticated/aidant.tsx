@@ -92,7 +92,7 @@ function Aidant() {
 
   const stats = useMemo(() => {
     
-    const valid = attempts.filter(a => !a.kind?.startsWith("discussion:"));
+    const valid = attempts.filter((a) => !a.kind?.startsWith("discussion:") && !a.kind?.startsWith("signal:"));
     const total = valid.length;
     const spont = valid.filter((a) => a.outcome === "spontaneous").length;
     const helped = valid.filter((a) => a.outcome === "after_repeat" || a.outcome === "after_cue").length;

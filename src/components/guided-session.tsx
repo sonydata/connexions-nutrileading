@@ -1,11 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Lightbulb, MessageCircle, Mic, Play, Square, Volume2 } from "lucide-react";
+import { ArrowRight, HelpCircle, Lightbulb, MessageCircle, Mic, Play, Square, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { buildPlan } from "@/lib/builder";
 import { discussionTurns, type DiscussionTurn, type SessionMode } from "@/lib/discussion";
-import { completeSession, recordAttempt, speakCached, startSession } from "@/lib/session.functions";
+import { completeSession, recordAttempt, speak, speakCached, startSession } from "@/lib/session.functions";
+import { deriveParams, segment, type SessionParams } from "@/lib/adaptive-profile";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, PREFIX } from "@/lib/interests";
 import { visualHintFor } from "@/lib/visual-hints";
@@ -16,6 +17,10 @@ import { accentOf } from "@/lib/accents";
 export function GuidedSession() {
   const start = useServerFn(startSession);
   const cached = useServerFn(speakCached);
+  const synth = useServerFn(speak);
+  const [params, setParams] = useState<SessionParams>(() => deriveParams({}));
+  const signedIn = useRef(false);
+  const confusion = useRef(0);
   const record = useServerFn(recordAttempt);
   const complete = useServerFn(completeSession);
   const voice = useVoiceInput();
@@ -54,11 +59,16 @@ export function GuidedSession() {
     setSpeaking(true);
     setAudioUnavailable(false);
     try {
-      for (const text of texts) {
+      // Signed-in: one idea at a time with a pause (segments synthesised once, then cached).
+      // Guests: whole sentences from the shared cache only.
+      const parts = signedIn.current ? texts.flatMap((t) => segment(t, params)) : texts;
+      for (const [n, text] of parts.entries()) {
         if (!text || id !== playId.current) continue;
+        if (n > 0 && params.pauseMs) await new Promise((res) => setTimeout(res, params.pauseMs));
+        if (id !== playId.current) return;
         let url = clips.current.get(text);
         if (!url) {
-          const result = await cached({ data: { text } });
+          const result = signedIn.current ? await synth({ data: { text } }) : await cached({ data: { text } });
           if (id !== playId.current) return;
           if (!result.audio) {
             setAudioUnavailable(true);
@@ -93,7 +103,7 @@ export function GuidedSession() {
   );
   useEffect(() => {
     if (state === "play" && turn)
-      read([turn.item.recall, turn.intro, turn.prompt, turn.instruction]);
+      read([turn.item.recall, turn.intro, turn.prompt, ...(params.repetition >= 2 ? [turn.prompt] : []), turn.instruction]);
     // Each new turn is read once; explicit controls handle rereading.
   }, [state, index]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -107,12 +117,16 @@ export function GuidedSession() {
         const saved = JSON.parse(localStorage.getItem(GUEST_KEY) ?? "null");
         if (Array.isArray(saved) && saved.every((t) => typeof t === "string")) topics = saved;
       } catch {}
+      signedIn.current = !!data.session;
       const result = data.session
         ? await start({ data: {} })
-        : { sessionId: "", ...buildPlan([], topics, 1) };
+        : { sessionId: "", ...buildPlan([], topics, 1), params: deriveParams({}) };
       sessionId.current = result.sessionId;
       setTeaser(result.teaser);
-      const next = discussionTurns(result.items, chosenMode);
+      setParams(result.params);
+      const next = discussionTurns(result.items, chosenMode)
+        .slice(0, result.params.maxTurns)
+        .map((t) => ({ ...t, options: t.options.slice(0, result.params.optionCount) }));
       if (!next.length) throw new Error("empty");
       setTurns(next);
       setState("play");
@@ -133,6 +147,23 @@ export function GuidedSession() {
         read([turn?.followUp ?? null, "Donnez votre avis à voix haute."]);
       }
     } else await voice.start();
+  }
+  function signal(kind: "repeat" | "notunderstood" | "abandon") {
+    if (!sessionId.current || !turn) return;
+    record({ data: { sessionId: sessionId.current, itemId: turn.item.id, kind: `signal:${kind}`, category: turn.item.theme, skill: turn.item.skill, prompt: turn.prompt, optionCount: 0, outcome: "after_repeat", responseMs: null } }).catch(() => {});
+  }
+  function notUnderstood() {
+    if (!turn) return;
+    signal("notunderstood");
+    supportUsed.current = true;
+    confusion.current++;
+    // Gentle, gradual: after two requests in this session, shorten what follows.
+    let p = params;
+    if (confusion.current === 2 && params.languageSupport < 3) {
+      p = { ...params, languageSupport: params.languageSupport + 1, ideasPerUtterance: 1, maxSentenceWords: Math.max(8, params.maxSentenceWords - 4), pauseMs: params.pauseMs + 300 };
+      setParams(p);
+    }
+    read([turn.prompt]);
   }
   function showModel() {
     voice.stop();
@@ -251,7 +282,7 @@ export function GuidedSession() {
   return (
     <main className="paper-grain flex min-h-screen flex-col px-6 py-6 md:px-12">
       <header className="flex items-center justify-between gap-4">
-        <Link to="/" className="font-serif text-2xl">
+        <Link to="/" onClick={() => signal("abandon")} className="font-serif text-2xl">
           Connexions
         </Link>
         <span
@@ -279,15 +310,16 @@ export function GuidedSession() {
           variant="default"
           size="icon"
           aria-label="Réécouter"
-          onClick={() =>
+          onClick={() => {
+            signal("repeat");
             read(
               view === "model"
                 ? [turn.model]
                 : view === "develop"
                   ? [turn.followUp, "Donnez votre avis à voix haute."]
                   : [turn.intro, turn.prompt, turn.instruction],
-            )
-          }
+            );
+          }}
           className="mb-6 size-16 rounded-full"
         >
           <Volume2 className="size-7" />
@@ -300,7 +332,7 @@ export function GuidedSession() {
         {view === "prompt" && turn.intro && (
           <p className="mb-5 max-w-2xl font-serif text-2xl leading-snug">{turn.intro}</p>
         )}
-        <h1 className="max-w-2xl font-serif text-2xl leading-snug md:text-3xl">
+        <h1 className={`max-w-2xl font-serif leading-snug ${params.largeText ? "text-3xl md:text-4xl" : "text-2xl md:text-3xl"}`}>
           {view === "model" ? turn.model : view === "develop" ? turn.followUp : turn.prompt}
         </h1>
         <p className="mt-4 text-xl text-primary">
@@ -319,8 +351,12 @@ export function GuidedSession() {
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           {view !== "model" && (
             <>
+              <Button variant="outline" onClick={notUnderstood} className="h-12 text-lg">
+                <HelpCircle />
+                Je n'ai pas compris
+              </Button>
               <Button
-                variant="outline"
+                variant={params.cueEarly ? "secondary" : "outline"}
                 onClick={() => { supportUsed.current = true; setHintVisible((v) => !v); }}
                 aria-expanded={hintVisible}
                 aria-controls="discussion-hint"
