@@ -91,29 +91,31 @@ function Aidant() {
   }
 
   const stats = useMemo(() => {
-    const total = attempts.length;
-    const spont = attempts.filter((a) => a.outcome === "spontaneous").length;
-    const helped = attempts.filter((a) => a.outcome === "after_repeat" || a.outcome === "after_cue").length;
-    const afterRepeat = attempts.filter((a) => a.outcome === "after_repeat").length;
-    const afterCue = attempts.filter((a) => a.outcome === "after_cue").length;
-    const times = attempts.filter((a) => a.outcome === "spontaneous" && a.response_ms).map((a) => a.response_ms!);
+    
+    const valid = attempts.filter(a => !a.kind?.startsWith("discussion:"));
+    const total = valid.length;
+    const spont = valid.filter((a) => a.outcome === "spontaneous").length;
+    const helped = valid.filter((a) => a.outcome === "after_repeat" || a.outcome === "after_cue").length;
+    const afterRepeat = valid.filter((a) => a.outcome === "after_repeat").length;
+    const afterCue = valid.filter((a) => a.outcome === "after_cue").length;
+    const times = valid.filter((a) => a.outcome === "spontaneous" && a.response_ms).map((a) => a.response_ms!);
     const avgTime = times.length ? Math.round(times.reduce((x, y) => x + y, 0) / times.length / 100) / 10 : null;
-    const understoodLens = attempts.filter((a) => a.outcome === "spontaneous").map((a) => a.word_count);
+    const understoodLens = valid.filter((a) => a.outcome === "spontaneous").map((a) => a.word_count);
     const avgLen = understoodLens.length ? Math.round((understoodLens.reduce((x, y) => x + y, 0) / understoodLens.length) * 10) / 10 : null;
 
     const bySkill = Object.keys(SKILL_LABELS).map((k) => {
-      const rows = attempts.filter((a) => a.skill === k);
+      const rows = valid.filter((a) => a.skill === k);
       return { key: k, n: rows.length, spont: pct(rows.filter((r) => r.outcome === "spontaneous").length, rows.length), help: pct(rows.filter((r) => r.outcome !== "revealed").length, rows.length) };
     });
     const byCat = Object.keys(CAT_LABELS)
       .map((k) => {
-        const rows = attempts.filter((a) => a.category === k);
+        const rows = valid.filter((a) => a.category === k);
         return { key: k, n: rows.length, spont: pct(rows.filter((r) => r.outcome === "spontaneous").length, rows.length) };
       })
       .filter((c) => c.n);
 
     const dayMap = new Map<string, Attempt[]>();
-    for (const a of attempts) {
+    for (const a of valid) {
       const d = a.created_at.slice(0, 10);
       dayMap.set(d, [...(dayMap.get(d) ?? []), a]);
     }
@@ -122,9 +124,9 @@ function Aidant() {
       spontanee: pct(rows.filter((r) => r.outcome === "spontaneous").length, rows.length),
       avecAide: pct(rows.filter((r) => r.outcome !== "revealed").length, rows.length),
     }));
-    const difficult = attempts.filter((a) => a.outcome === "revealed").slice(-6).reverse();
+    const difficult = valid.filter((a) => a.outcome === "revealed").slice(-6).reverse();
 
-    const choice = attempts.filter((a) => !a.kind || CHOICE.has(a.kind));
+    const choice = valid.filter((a) => !a.kind || CHOICE.has(a.kind));
     const sp = (rows: Attempt[]) => pct(rows.filter((r) => r.outcome === "spontaneous").length, rows.length);
     const comp = {
       spont: sp(choice),
@@ -134,13 +136,13 @@ function Aidant() {
       temps: sp(choice.filter((r) => r.skill === "temps")),
       cases: sp(choice.filter((r) => r.skill === "conseil")),
     };
-    const open = attempts.filter((a) => a.kind && OPEN.has(a.kind));
-    const recall = attempts.filter((a) => a.kind && RECALL.has(a.kind));
-    const spokenLens = attempts.filter((a) => a.kind && OPEN.has(a.kind) && a.option_count > 1).map((a) => a.option_count);
+    const open = valid.filter((a) => a.kind && OPEN.has(a.kind));
+    const recall = valid.filter((a) => a.kind && RECALL.has(a.kind));
+    const spokenLens = valid.filter((a) => a.kind && OPEN.has(a.kind) && a.option_count > 1).map((a) => a.option_count);
     const expr = {
       spont: sp(open),
       support: pct(open.filter((r) => r.outcome === "after_cue").length, open.length),
-      tried: open.filter((r) => r.outcome === "spontaneous").length + attempts.filter((a) => a.kind === "lire" && a.outcome === "spontaneous").length,
+      tried: open.filter((r) => r.outcome === "spontaneous").length + valid.filter((a) => a.kind === "lire" && a.outcome === "spontaneous").length,
       wordsSpont: recall.filter((r) => r.outcome === "spontaneous").length,
       wordsCue: recall.filter((r) => r.outcome === "after_cue").length,
       repeated: attempts.filter((a) => a.concept?.endsWith("#rep")).length,
@@ -160,15 +162,15 @@ function Aidant() {
     const completion = pct(done.length, sessions.length);
     const ORALK = new Set(["expliquer", "lire", "reformuler", "nommer"]);
     const oralBySession = new Map<string, number>();
-    for (const a of attempts) if (a.session_id && ORALK.has(a.kind ?? "") && a.option_count > 0) oralBySession.set(a.session_id, (oralBySession.get(a.session_id) ?? 0) + 1);
+    for (const a of attempts) if (a.session_id && (a.kind?.startsWith("discussion:") ? a.kind.includes(":shared:") : ORALK.has(a.kind ?? "") && a.option_count > 0)) oralBySession.set(a.session_id, (oralBySession.get(a.session_id) ?? 0) + 1);
     const oralPer = done.length ? Math.round(([...oralBySession.values()].reduce((t, n) => t + n, 0) / done.length) * 10) / 10 : null;
     const byTopic = new Map<string, { n: number; s: number }>();
     const byKind = new Map<string, { n: number; s: number }>();
     for (const a of attempts) {
-      const ok = a.outcome === "spontaneous" || (ORALK.has(a.kind ?? "") && a.option_count > 0) ? 1 : 0;
+      const ok = a.kind?.startsWith("discussion:") ? (a.kind.includes(":shared:") ? 1 : 0) : a.outcome === "spontaneous" || (ORALK.has(a.kind ?? "") && a.option_count > 0) ? 1 : 0;
       const t = topicOfId(a.item_id);
       if (t && t !== "general") { const x = byTopic.get(t) ?? { n: 0, s: 0 }; x.n++; x.s += ok; byTopic.set(t, x); }
-      const k = a.kind ?? "";
+      const k = a.kind?.startsWith("discussion:") ? (a.kind.includes(":conversation:") ? "conversation" : "regard") : a.kind ?? "";
       const y = byKind.get(k) ?? { n: 0, s: 0 }; y.n++; y.s += ok; byKind.set(k, y);
     }
     const rank = (m: Map<string, { n: number; s: number }>) => [...m].filter(([, v]) => v.n >= 3).sort((a, b) => b[1].s / b[1].n - a[1].s / a[1].n || b[1].n - a[1].n).slice(0, 3).map(([k]) => k);
@@ -177,7 +179,7 @@ function Aidant() {
     for (let k = 1; k < dayList.length; k++) if (new Date(dayList[k]!).getTime() - new Date(dayList[k - 1]!).getTime() > 3 * 864e5) returns++;
     return { avg, perWeek, completion, oralPer, topics: rank(byTopic), kinds: rank(byKind), returns };
   })();
-  const KIND_FR: Record<string, string> = { mcq: "Questions à choix", tf: "Vrai ou faux", evoke: "Retrouver un mot", complete: "Compléter une phrase", expliquer: "Donner son avis", reformuler: "Reformuler", lire: "Répéter une phrase", nommer: "Nommer" };
+  const KIND_FR: Record<string, string> = { conversation: "Conversation", regard: "Votre regard", mcq: "Questions à choix", tf: "Vrai ou faux", evoke: "Retrouver un mot", complete: "Compléter une phrase", expliquer: "Donner son avis", reformuler: "Reformuler", lire: "Répéter une phrase", nommer: "Nommer" };
   const last14 = Array.from({ length: 14 }, (_, k) => new Date(Date.now() - (13 - k) * 864e5).toISOString().slice(0, 10));
 
   return (
@@ -220,6 +222,7 @@ function Aidant() {
         </div>
 
         <h2 className="mt-10 text-3xl">Habitudes</h2>
+        {attempts.some((a) => a.kind?.startsWith("discussion:")) && <p className="mt-3 text-muted-foreground">Échanges guidés : {attempts.filter((a) => a.kind?.startsWith("discussion:")).length} moments parcourus. Ces échanges ne sont pas évalués dans les pourcentages de compréhension.</p>}
         <div className="mt-4 grid gap-5 md:grid-cols-3">
           <Card title="Rythme">
             <p className="font-serif text-4xl">{habits.perWeek} <span className="text-2xl">séances / semaine</span></p>

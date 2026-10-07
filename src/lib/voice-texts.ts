@@ -3,6 +3,8 @@
 import { BANK, BY_ID, type Item } from "./content";
 import { SEQ_ITEMS, SEQUENCES } from "./sequences";
 import { RESPONSE_INSTRUCTIONS } from "./response-guidance";
+import { discussionVoiceTexts } from "./discussion";
+import { toPlay } from "./builder";
 
 const FIXED = [
   "Écoutez cette information.",
@@ -49,6 +51,8 @@ export function voiceTextsFor(ids: string[]): string[] {
 export function allVoiceTexts(): string[] {
   const out = new Set<string>(FIXED);
   for (const i of [...BANK, ...SEQ_ITEMS]) for (const t of textsOf(i)) if (t && t.trim()) out.add(t.trim());
+  const items = [...BANK, ...SEQ_ITEMS].map((item) => toPlay(item, 1));
+  for (let n = 0; n < items.length; n += 12) for (const text of discussionVoiceTexts(items.slice(n, n + 12))) out.add(text);
   // "We talked about this before" lines read before a reactivated word.
   for (const q of SEQUENCES) for (const w of ["Il y a quelques jours", "La semaine dernière"]) out.add(`${w}, nous avions parlé de ce sujet : ${q.title}.`);
   return [...out];

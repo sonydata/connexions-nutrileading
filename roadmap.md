@@ -4,8 +4,8 @@
 - [x] Appliquer aussi la révision des formulations à toutes les catégories, pas uniquement Actu / repères (précision Sonia).
 - [x] Revoir toutes les questions Actu / repères et renforcer les indices explicites dans tous les sujets ; photo précise quand disponible, aucun remplacement générique.
 - [x] Préenregistrer les formulations révisées ; conserver la consigne de reformulation explicite déjà en cache pour éviter les refus du fournisseur vocal.
-- [ ] Mettre en place la proposition conversation / découverte validée : oral sans jugement, pistes facultatives, formulation et continuation toujours accessibles.
-- [ ] Valider la distinction proposée par Sonia : « Conversation » et « Votre regard » avant de poursuivre le nouveau déroulement.
+- [x] Mettre en place la proposition conversation / découverte validée : oral sans jugement, pistes facultatives, formulation et continuation toujours accessibles.
+- [x] Valider et vérifier la distinction proposée par Sonia : « Conversation » et « Votre regard », en compte connecté et en découverte.
 
 - [x] Généraliser les indices illustrés : 156 exercices de mots/conversations couverts, images précises à la demande, indices des séances à choix également illustrés.
 
