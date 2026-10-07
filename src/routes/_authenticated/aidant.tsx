@@ -4,6 +4,7 @@ import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianG
 import { DEFAULT_INTERESTS, INTERESTS, PREFIX, interestsOf, otherInterest } from "@/lib/interests";
 import { supabase } from "@/integrations/supabase/client";
 import { topicOfId } from "@/lib/builder";
+import { CaregiverProfile } from "@/components/caregiver-profile";
 
 export const Route = createFileRoute("/_authenticated/aidant")({
   head: () => ({
@@ -167,6 +168,7 @@ function Aidant() {
     const byTopic = new Map<string, { n: number; s: number }>();
     const byKind = new Map<string, { n: number; s: number }>();
     for (const a of attempts) {
+      if (a.kind?.startsWith("signal:")) continue;
       const ok = a.kind?.startsWith("discussion:") ? (a.kind.includes(":shared:") ? 1 : 0) : a.outcome === "spontaneous" || (ORALK.has(a.kind ?? "") && a.option_count > 0) ? 1 : 0;
       const t = topicOfId(a.item_id);
       if (t && t !== "general") { const x = byTopic.get(t) ?? { n: 0, s: 0 }; x.n++; x.s += ok; byTopic.set(t, x); }
@@ -196,6 +198,8 @@ function Aidant() {
         <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Suivi</p>
         <h1 className="mt-2 text-5xl">Suivi de {name}</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">60 derniers jours. Ces indicateurs servent au suivi de l'entraînement ; ils ne constituent pas un diagnostic médical.</p>
+
+        {userId && <CaregiverProfile userId={userId} attempts={attempts} sessions={sessions} />}
 
         <h2 className="mt-10 text-3xl">Compréhension</h2>
         <div className="mt-4 grid gap-5 md:grid-cols-4">
