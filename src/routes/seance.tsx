@@ -510,7 +510,7 @@ function Seance() {
           <div className="mt-4 w-full text-center">
             {it.image && (
               <div className={`mx-auto w-full max-w-xs overflow-hidden rounded-3xl shadow-lg transition ${success ? "ring-4 ring-calm-soft" : ""}`}>
-                <img src={imageSrc(it.image) ?? ""} alt="" className="aspect-square w-full object-cover" />
+                <img src={imageSrc(it.image) ?? ""} alt="" className={`w-full ${it.image === "legumes" ? "aspect-[3/2] object-contain" : "aspect-square object-cover"}`} />
               </div>
             )}
             {it.kind === "complete" ? (
@@ -624,7 +624,7 @@ function ChoiceBody({ it, accent, reading, stage, wrong, chosen, message, succes
             <button
               key={k}
               onClick={() => onChoose(k)}
-              className={`relative overflow-hidden rounded-3xl border-2 ${accent.soft} ${accent.edge} shadow-sm transition ${right ? "border-calm ring-4 ring-calm-soft animate-glow" : reading === k ? `ring-4 ${accent.ring} scale-[1.02]` : "hover:-translate-y-1 hover:shadow-lg"} ${dim ? "opacity-60" : ""}`}
+              className={`relative overflow-hidden rounded-3xl border-2 bg-card text-card-foreground shadow-sm transition ${right ? "border-calm ring-4 ring-calm-soft animate-glow" : reading === k ? "border-foreground/50 ring-4 ring-border scale-[1.02]" : "border-foreground/25 hover:border-foreground/50 hover:-translate-y-1 hover:shadow-lg"} ${dim ? "opacity-60" : ""}`}
             >
               <span className="absolute left-4 top-3 text-sm font-semibold text-foreground/70">Réponse {k + 1}</span>
               {hasImages && <div className="aspect-square w-full bg-muted">{src && <img src={src} alt={o.label} className="h-full w-full object-cover" />}</div>}

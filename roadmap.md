@@ -35,3 +35,4 @@
 - [x] Adaptation : réussites spontanées répétées → complexité légèrement supérieure ; échecs/demandes de répétition → phrase plus simple, moins de choix, plus de contexte
 - [x] Direction visuelle (fiche Sonia, 6 oct.) : fond ivoire chaud, vert profond principal, couleurs secondaires sobres par type d'activité (Comprendre bleu-vert, Retrouver ocre, S'exprimer prune, Reformuler argile, Temporalité bleu ardoise), boutons plus contrastés, cartes teintées et bordées, écrans d'exercice très lisibles, progression visible mais discrète, plus de variation entre les séances. Rouge réservé aux micro-accents, aucune gamification.
 - [x] Photos très pertinentes par question (pas de photos génériques par thème)
+- [x] Choix neutres avant validation et photo spécifique des lentilles, pois chiches et haricots secs.

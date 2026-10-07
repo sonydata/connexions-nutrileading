@@ -12,6 +12,7 @@ export const LIBRARY: LibraryItem[] = [
   { id: "olive_oil", label: "huile d'olive", group: "nutrition" },
   { id: "walnuts", label: "noix", group: "nutrition" },
   { id: "lentils", label: "lentilles", group: "nutrition" },
+  { id: "legumes", label: "lentilles, pois chiches et haricots secs", group: "nutrition" },
   { id: "water", label: "verre d'eau", group: "nutrition" },
   { id: "yogurt", label: "yaourt", group: "nutrition" },
   { id: "orange", label: "orange", group: "nutrition" },
