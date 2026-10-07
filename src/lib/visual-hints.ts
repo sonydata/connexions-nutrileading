@@ -1,4 +1,6 @@
 import { imageSrc, LIBRARY } from "./library";
+import { BY_ID, SCENE } from "./content";
+import { SEQ_ITEMS } from "./sequences";
 
 /** Explicit subject cues, never a random photo from an interest. */
 const HINTS: Record<string, string> = {};
@@ -85,13 +87,86 @@ assign("morning", "t-bilan t-sequence");
 assign("plate", "t-dinner t-meal");
 assign("evening", "t-evening");
 assign("summer", "t-season");
+assign("olive_oil", "i-olive tf-olive r-olive lf-olive");
+assign("salmon", "tf-salmon lf-salmon");
+assign("lentils", "tf-lentils lf-lentils");
+assign("orange", "tf-vitc");
+assign("water", "tf-water r-water i-thirst");
+assign("hint-pancreas", "tf-insulin m-glyc med-insulin");
+assign("hint-skeleton", "tf-calcium m-bone");
+assign("walnuts", "r-nuts tf-walnuts");
+assign("almonds", "lf-almonds");
+assign("broccoli", "lf-broccoli");
+assign("oats", "lf-oats");
+assign("sleep", "i-sleep med-sleep med-rd-sleep");
+assign("sq-sarcopenie", "i-muscle r-muscle tf-protage");
+assign("walk", "c-sarco-move med-age-activity");
+assign("hint-tension", "med-bp i-salt tf-saltbp");
+assign("hint-artery", "med-tf-heart");
+assign("sq-photosynthese", "sci-photo");
+assign("sq-adn", "sci-dna");
+assign("sq-renaissance", "his-renaissance");
+assign("sq-pasteur", "cu-pasteur med-vaccine");
+assign("sq-penicilline", "cu-fleming");
+assign("sq-abeilles", "nat-bees nat-rd-bees");
+assign("sq-hugo", "lit-hugo lit-rd-hugo");
+assign("monet", "art-impression cu-monet art-tf-monet art-rd-monet");
+assign("piano", "art-mozart");
+assign("sq-cubisme", "art-cubism");
+assign("mona_lisa", "art-louvre");
+assign("sq-venise", "geo-venice");
+assign("sq-internet", "tec-internet");
+assign("hint-satellite", "tec-gps");
+assign("sq-imagerie", "tec-xray");
+assign("phone", "tec-tf-phone");
+assign("cooking", "cui-steam cui-rd-steam c-salt-indus");
+assign("sq-epices", "cui-herbs");
+assign("vegetables", "cui-ratatouille c-constip2 c-microb i-microb r-variety");
+assign("bread", "cui-bread");
+assign("sq-marathon", "spo-marathon spo-olympic");
+assign("cheese", "c-density");
+assign("paris", "rp-jo");
+assign("elysee", "rp-fr-pres");
+assign("white_house", "rp-us-pres");
 
-export type VisualHint = { image: string; alt: string; caption?: string };
-export function visualHintFor(item: { id: string; image?: string | null | undefined; options?: { image?: string | undefined }[] }): VisualHint | null {
+const CAPTIONS: Record<string, string> = {
+  "rp-fr-pres": "Son prénom est Emmanuel.",
+  "rp-us-pres": "Son prénom est Donald.",
+  "rp-euro": "Son symbole est €.",
+  "rp-jo": "La tour Eiffel se trouve dans cette ville.",
+  "sq-monet-c": "Le même paysage change avec la lumière.",
+  "sq-microbiote-c": "Les fibres nourrissent les bactéries de l'intestin.",
+  "sq-mediterranee-c": "Pensez à la santé du cœur.",
+  "sq-sarcopenie-c": "Bien manger et bouger aident les muscles.",
+  "sq-photosynthese-c": "Les plantes libèrent le gaz que nous respirons.",
+  "sq-rome-c": "Ces constructions transportaient l'eau.",
+  "sq-abeilles-c": "L'abeille transporte le pollen entre les fleurs.",
+  "sq-epices-c": "Les épices donnent du goût sans ajouter de sel.",
+  "tf-lentils": "Les lentilles sont riches en fibres.",
+  "tf-soda": "Un jus apporte moins de fibres qu'un fruit entier.",
+  "tf-protage": "Avec l'âge, il reste important de manger assez de protéines.",
+  "i-thirst": "Proposez à boire, même sans sensation de soif.",
+};
+
+export type VisualHint = { image: string | null; alt: string; caption: string };
+export function visualHintFor(item: { id: string; hint?: string | null; keyword?: string | null; audio?: string; image?: string | null | undefined; options?: { image?: string | undefined }[] }): VisualHint {
+  const source = BY_ID.get(item.id) ?? SEQ_ITEMS.find((entry) => entry.id === item.id);
   const month = new Date().getMonth();
   const season = month === 11 || month < 2 ? "winter" : month < 5 ? "spring" : month < 8 ? "summer" : "autumn";
-  const image = item.id === "rp-season" ? season : HINTS[item.id] ?? item.image;
-  if (!image || !imageSrc(image)) return null;
+  const sequenceImage = item.id.match(/^(sq-[a-z]+)-[cref]$/)?.[1];
+  const scene = SCENE[item.id];
+  const preciseScene = scene && !["consultation", "book", "astronomy", "market", "elderly_meal"].includes(scene) ? scene : undefined;
+  const candidate = item.id === "rp-season" || item.id === "rp-ex-season" ? season : HINTS[item.id] ?? (source?.kind === "mcq" ? source.answer.image : undefined) ?? preciseScene ?? item.image ?? sequenceImage;
+  const image = candidate && imageSrc(candidate) ? candidate : null;
   if (item.id === "sq-microbiote-e") return { image, alt: "Un bol de yaourt nature, un lait fermenté", caption: "Yaourt nature · lait fermenté" };
-  return { image, alt: LIBRARY.find((entry) => entry.id === image)?.label ?? "Indice visuel pour cette question" };
+  const alt = LIBRARY.find((entry) => entry.id === image)?.label ?? "Indice illustré";
+  const semantic = item.hint ?? (source && "hint" in source ? source.hint : null);
+  let caption = CAPTIONS[item.id] ?? semantic;
+  if (item.id === "rp-year") caption = `L'année commence par ${String(new Date().getFullYear()).slice(0, 3)}…`;
+  if (item.id === "rp-month") caption = `Le mois commence par « ${new Intl.DateTimeFormat("fr-FR", { month: "long" }).format(new Date()).slice(0, 3)}… ».`;
+  if (item.id === "rp-season") caption = `Pensez à la saison illustrée : ${alt}.`;
+  if (!caption && source?.kind === "mcq") caption = `Une piste : ${source.answer.label}.`;
+  if (!caption && source?.kind === "tf") caption = source.answer ? source.audio : `À retenir : ${source.keyword}. Cette affirmation est à nuancer.`;
+  if (!caption) caption = image ? `Une piste pour en parler : ${alt}.` : `Vous pouvez reprendre cette idée : ${item.audio ?? "la question entendue"}`;
+  return { image, alt, caption };
 }

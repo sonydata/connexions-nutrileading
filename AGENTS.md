@@ -12,13 +12,14 @@
 ## Project rules
 - Session content comes from the local bank in `src/lib/content.ts`, assembled by rules in `src/lib/builder.ts` — no AI per session, to keep costs low and facts controlled.
 - Exercise photos come only from the curated library in `src/lib/library.ts`.
-- Visual hints use an explicit item-to-curated-photo map in `visual-hints.ts`, shared by oral, retrieval and choice views and revealed only on request; no AI, bank changes or scoring changes are involved.
+- Visual hints pair an explicit semantic cue with a precise curated photo when available, shared by all response modes and revealed only on request; never substitute a generic image for a missing subject or change scoring.
 - Spoken audio is synthesised once per sentence and cached in the private `voice` storage bucket — repeat plays cost nothing.
 - Adaptation is computed per skill from recent `attempts` outcomes at session start — local rules, never AI.
 - Spoken answers use the free browser SpeechRecognition (fr-FR) as an indicative signal only, never a score; recordings stay in browser memory and are discarded after each exercise — no paid transcription, no upload.
 - Oral rows in `attempts` reuse existing columns: `kind` = oral mode, `option_count` = approximate spoken word count, `concept` suffixed `#rep` when the model sentence was repeated — avoids a schema change.
 - Choice photos are shown only when every option has one, and never for advice/action answers, so an image never contradicts the answer; otherwise a context photo from `SCENE` illustrates the situation, never the answer.
 - Choice questions read the sentence, the question and every answer aloud; tapping an answer interrupts the reading.
+- Response-mode instructions live in a shared browser-safe module used by the session and voice inventory; each prompt names one concrete action without numbered answer announcements.
 - Discovery mode: /seance runs without an account — built locally, nothing saved, voice read from cache only (speakCached never synthesises) so visitors can't create paid calls.
 - Every bank item has a subject (`topic`, explicit or derived by topicOf) separate from its skill; buildSession fills ~80 % of slots from the chosen interests (rotating subjects) and ~20 % from transversal "general" items — personalisation stays rule-based.
 - First launch goes through /interets; signed-in choices are saved in caregiver_settings.topics ("i:" prefix), guest choices in localStorage.

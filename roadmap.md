@@ -1,5 +1,10 @@
 # Roadmap
 
+- [ ] Clarifier chaque mode de réponse, retirer les annonces/numéros, réduire le texte et raccourcir les questions.
+- [ ] Appliquer aussi la révision des formulations à toutes les catégories, pas uniquement Actu / repères (précision Sonia).
+- [ ] Revoir toutes les questions Actu / repères et renforcer les indices explicites dans tous les sujets.
+- [ ] Proposer un modèle conversation / découverte, sans le mettre en place avant validation.
+
 - [x] Généraliser les indices illustrés : 156 exercices de mots/conversations couverts, images précises à la demande, indices des séances à choix également illustrés.
 
 - [x] Question sur l’intestin : bouton Indice qui révèle une photo de yaourt nature / lait fermenté à la demande (vérifié dans une séance).

@@ -69,7 +69,7 @@ const CORE: Item[] = [
   mcq("c-hta-salt", "avis", "conseil", "Un patient est hypertendu. Il mange très salé.", "sel", o("réduire le sel", "salt"), [o("augmenter les fruits seuls"), o("supprimer toutes les graisses"), o("prendre un complément de magnésium")], { question: "Quel conseil serait prioritaire ?" }),
   mcq("c-diab-soda", "avis", "conseil", "Un patient diabétique boit beaucoup de sodas.", "sucre", o("remplacer par de l'eau", "water"), [o("passer aux sodas light"), o("supprimer tous les féculents"), o("boire plus de jus")], { question: "Que conseilleriez-vous d'abord ?" }),
   mcq("c-chol", "avis", "conseil", "Un patient a un cholestérol élevé. Il cuisine au beurre.", "graisses", o("cuisiner à l'huile d'olive", "olive_oil"), [o("supprimer les œufs"), o("cuisiner à la margarine"), o("éviter tous les fruits")], { question: "Quel changement proposeriez-vous ?" }),
-  mcq("c-hydra", "avis", "conseil", "Un patient boit très peu dans la journée.", "hydratation", o("boire régulièrement de l'eau", "water"), [o("boire surtout du café"), o("boire un litre le soir"), o("attendre d'avoir soif")], { question: "Quel conseil serait le plus approprié ?" }),
+  mcq("c-hydra", "avis", "conseil", "Un patient boit très peu dans la journée.", "hydratation", o("boire régulièrement de l'eau", "water"), [o("boire surtout du café"), o("boire un litre le soir"), o("attendre d'avoir soif")], { question: "Quel conseil donneriez-vous ?" }),
   mcq("c-constip", "avis", "conseil", "Une patiente souffre de constipation.", "transit", o("plus de fibres et d'eau", "vegetables"), [o("un laxatif d'emblée"), o("plus de produits laitiers"), o("plus de pain blanc", "bread")], { question: "Que lui conseilleriez-vous ?" }),
   mcq("c-elderly-protein", "avis", "conseil", "Une personne âgée perd de la masse musculaire.", "muscle", o("augmenter les protéines", "eggs"), [o("les fibres"), o("les glucides"), o("la vitamine C")], { question: "Quel apport faut-il surveiller ?" }),
   mcq("c-appetite", "avis", "conseil", "Un patient âgé a perdu l'appétit.", "appétit", o("petits repas enrichis"), [o("des compléments seuls"), o("un seul gros repas"), o("un régime sans sel")], { question: "Quelle stratégie proposeriez-vous ?" }),
@@ -88,7 +88,7 @@ const CORE: Item[] = [
   mcq("i-fibres", "sciences", "information", "Les fibres favorisent un bon transit intestinal.", "fibres", o("l'intestin"), [o("le cœur"), o("les poumons"), o("l'estomac")], { question: "De quel organe s'agit-il ?" }),
   mcq("i-vitd", "sciences", "information", "La vitamine D aide à fixer le calcium.", "vitamine D", o("les os"), [o("les cheveux"), o("les yeux"), o("les muscles")], { question: "Quelle partie du corps en profite surtout ?" }),
   mcq("i-salt", "sciences", "information", "Un excès de sel peut augmenter la tension artérielle.", "tension", o("la tension"), [o("la fréquence cardiaque"), o("la glycémie"), o("le cholestérol")], { question: "Qu'est-ce qui peut augmenter ?" }),
-  mcq("i-olive", "sciences", "information", "L'huile d'olive est au cœur du régime crétois.", "crétois", o("le régime méditerranéen"), [o("un régime sans gluten"), o("un régime hyperprotéiné"), o("un régime pauvre en fibres")], { question: "Quel régime aujourd'hui recommandé ce régime préfigure-t-il ?" }),
+  mcq("i-olive", "sciences", "information", "L'huile d'olive est au cœur du régime crétois.", "crétois", o("le régime méditerranéen"), [o("un régime sans gluten"), o("un régime hyperprotéiné"), o("un régime pauvre en fibres")], { question: "À quel régime cela fait-il penser ?" }),
 
   // ——— 6. Vrai / faux ———
   tf("tf-olive", "L'huile d'olive est surtout composée de graisses insaturées.", true, "huile d'olive"),
@@ -141,9 +141,9 @@ const CORE: Item[] = [
   oral("e-veg", "expliquer", ["Pourquoi recommande-t-on de manger des légumes ?"], { model: "Les légumes apportent des fibres, des vitamines et des minéraux." }),
   oral("e-prot", "expliquer", ["À quoi servent les protéines ?"], { model: "Les protéines construisent et entretiennent les muscles." }),
   oral("e-salt", "expliquer", ["Pourquoi limiter l'excès de sel ?"], { model: "L'excès de sel favorise l'hypertension." }),
-  oral("e-fish", "expliquer", ["Pourquoi le poisson est-il intéressant sur le plan nutritionnel ?"], { model: "Le poisson apporte des protéines, et les poissons gras des oméga-3." }),
+  oral("e-fish", "expliquer", ["Que nous apporte le poisson ?"], { model: "Le poisson apporte des protéines, et les poissons gras des oméga-3." }),
   oral("e-fibres", "expliquer", ["Quels aliments sont riches en fibres ?"], { model: "Les légumes, les fruits, les légumineuses et les céréales complètes." }),
-  oral("e-water", "expliquer", ["Pourquoi l'hydratation compte-t-elle chez la personne âgée ?"], { model: "La soif diminue avec l'âge, et le risque de déshydratation augmente." }),
+  oral("e-water", "expliquer", ["Pourquoi boire assez avec l'âge ?"], { model: "La soif diminue avec l'âge, et le risque de déshydratation augmente." }),
 
   // ——— 15–16. Lecture / élocution progressive ———
   oral("r-nuts", "lire", [
@@ -163,9 +163,9 @@ const CORE: Item[] = [
   ]),
 
   // ——— 17. Reformulation ———
-  oral("f-fish", "reformuler", ["Le poisson gras apporte des oméga-3. Pouvez-vous le dire avec vos mots ?"], { model: "Le saumon ou la sardine sont riches en oméga-3." }),
-  oral("f-olive", "reformuler", ["L'huile d'olive protège le cœur. Pouvez-vous le dire avec vos mots ?"], { model: "L'huile d'olive est bénéfique pour la santé cardiovasculaire." }),
-  oral("f-protein", "reformuler", ["Après soixante-dix ans, les besoins en protéines augmentent. Pouvez-vous le dire avec vos mots ?"], { model: "Avec l'âge, il faut davantage de protéines." }),
+  oral("f-fish", "reformuler", ["Le poisson gras apporte des oméga-3."], { model: "Le saumon ou la sardine sont riches en oméga-3." }),
+  oral("f-olive", "reformuler", ["L'huile d'olive protège le cœur."], { model: "L'huile d'olive est bénéfique pour la santé cardiovasculaire." }),
+  oral("f-protein", "reformuler", ["Après soixante-dix ans, les besoins en protéines augmentent."], { model: "Avec l'âge, il faut davantage de protéines." }),
 
   // ——— 9. Évocation lexicale + intérêt nutritionnel ———
   oral("l-olive", "nommer", ["Quel est cet aliment ?"], { image: "olive_oil", answer: "huile d'olive", hint: "La base du régime méditerranéen.", follow: "lf-olive" }),
@@ -182,7 +182,7 @@ const CORE: Item[] = [
   mcq("lf-oats", "nutrition", "lexique", "Quel est son principal intérêt nutritionnel ?", "intérêt", o("fibres"), [o("vitamine C"), o("oméga-3"), o("calcium")]),
 
   // ——— Évocation lexicale professionnelle ———
-  evoke("v-sarco", "nutrition", "Comment appelle-t-on la perte progressive de masse musculaire avec l'âge ?", "sarcopénie", "Elle touche les muscles.", "sar…", "La sarcopénie est la perte progressive de masse musculaire avec l'âge."),
+  evoke("v-sarco", "nutrition", "Comment s'appelle la perte de muscles avec l'âge ?", "sarcopénie", "Elle touche les muscles.", "sar…", "La sarcopénie est la perte progressive de masse musculaire avec l'âge."),
   evoke("v-glyc", "sciences", "Comment appelle-t-on le taux de sucre dans le sang ?", "glycémie", "On la mesure chez le diabétique.", "gly…", "La glycémie est le taux de sucre dans le sang."),
   evoke("v-microb", "nutrition", "Comment appelle-t-on l'ensemble des bactéries de l'intestin ?", "microbiote", "On parlait autrefois de flore intestinale.", "micro…", "Le microbiote est l'ensemble des bactéries de l'intestin."),
   evoke("v-insul", "sciences", "Quelle hormone fait baisser le sucre dans le sang ?", "insuline", "Elle est produite par le pancréas.", "in…", "L'insuline fait baisser la glycémie."),
@@ -190,34 +190,34 @@ const CORE: Item[] = [
   evoke("v-chol", "sciences", "Quelle graisse du sang surveille-t-on pour le cœur ?", "cholestérol", "On en distingue un bon et un mauvais.", "choles…", "Le cholestérol se surveille pour protéger le cœur."),
   evoke("v-fibres", "nutrition", "Quels composés végétaux favorisent le transit ?", "fibres", "Les légumineuses en sont riches.", "fi…", "Les fibres favorisent le transit intestinal."),
   evoke("v-hydra", "nutrition", "Comment appelle-t-on l'apport en eau de l'organisme ?", "hydratation", "La soif diminue avec l'âge.", "hydra…", "Une bonne hydratation est essentielle avec l'âge."),
-  evoke("v-antiox", "nutrition", "Comment appelle-t-on les composés qui protègent les cellules de l'oxydation ?", "antioxydants", "Les fruits colorés en apportent.", "anti…", "Les fruits et légumes colorés apportent des antioxydants."),
+  evoke("v-antiox", "nutrition", "Quels composés protègent les cellules de l'oxydation ?", "antioxydants", "Les fruits colorés en apportent.", "anti…", "Les fruits et légumes colorés apportent des antioxydants."),
   evoke("v-denut", "nutrition", "Comment appelle-t-on l'état où les apports ne couvrent plus les besoins ?", "dénutrition", "On la surveille par le poids.", "dé…", "La dénutrition se surveille par le poids et l'appétit."),
   evoke("v-prot", "nutrition", "Quels nutriments entretiennent les muscles ?", "protéines", "Œufs, poisson, légumineuses en apportent.", "pro…", "Les protéines entretiennent les muscles."),
   evoke("v-micronut", "nutrition", "Comment appelle-t-on ensemble les vitamines et les minéraux ?", "micronutriments", "On en a besoin en petites quantités.", "micro…", "Vitamines et minéraux sont des micronutriments."),
   evoke("v-legum", "nutrition", "Comment appelle-t-on les lentilles, les pois chiches et les haricots secs ?", "légumineuses", "Une famille riche en fibres et en protéines.", "légu…", "Les légumineuses sont riches en fibres et en protéines végétales."),
   evoke("v-calc", "nutrition", "Quel minéral est essentiel à la solidité des os ?", "calcium", "Les produits laitiers en apportent.", "cal…", "Le calcium est essentiel à la solidité des os."),
-  evoke("v-diab", "sciences", "Quelle maladie se caractérise par un excès de sucre dans le sang ?", "diabète", "L'insuline est en cause.", "dia…", "Le diabète se caractérise par un excès de sucre dans le sang."),
+  evoke("v-diab", "sciences", "Quelle maladie fait monter le sucre dans le sang ?", "diabète", "L'insuline est en cause.", "dia…", "Le diabète se caractérise par un excès de sucre dans le sang."),
 
   // ——— Mini-cas complémentaires ———
   mcq("c-weightloss", "avis", "conseil", "Un patient âgé perd du poids. Il mange peu de protéines.", "protéines", o("une protéine à chaque repas", "eggs"), [o("boire plus de jus"), o("plus de pain blanc", "bread"), o("supprimer le goûter")], { question: "Quel conseil serait prioritaire ?", audioShort: "Un patient âgé perd du poids." }),
   mcq("c-starch", "avis", "conseil", "Un repas apporte beaucoup de féculents. Il contient peu de protéines.", "protéines", o("ajouter poisson ou œufs", "salmon"), [o("supprimer les légumes"), o("ajouter du pain", "bread"), o("ajouter un dessert")], { question: "Que modifieriez-vous ?" }),
-  mcq("c-salt-indus", "avis", "conseil", "Une personne hypertendue mange souvent des plats industriels salés.", "sel", o("cuisiner davantage maison", "cooking"), [o("utiliser du sel allégé"), o("ne manger que des crudités"), o("supprimer tous les fromages")], { question: "Quel conseil donneriez-vous en priorité ?", audioShort: "Une personne hypertendue mange très salé." }),
+  mcq("c-salt-indus", "avis", "conseil", "Une personne hypertendue mange souvent des plats industriels salés.", "sel", o("cuisiner davantage maison", "cooking"), [o("utiliser du sel allégé"), o("ne manger que des crudités"), o("supprimer tous les fromages")], { question: "Quel conseil donneriez-vous ?", audioShort: "Une personne hypertendue mange très salé." }),
   mcq("c-density", "avis", "conseil", "Une personne âgée mange très peu à chaque repas.", "densité", o("enrichir les plats", "cheese"), [o("supprimer les desserts"), o("plus de salade verte"), o("de la soupe claire")], { question: "Comment enrichir sans augmenter le volume ?" }),
-  mcq("c-constip2", "avis", "conseil", "Un patient est constipé. Il mange très peu de végétaux.", "végétaux", o("plus de végétaux et d'eau", "vegetables"), [o("plus de pain blanc", "bread"), o("moins boire"), o("plus de viande")], { question: "Quel axe alimentaire serait pertinent ?" }),
-  mcq("c-sarco-move", "avis", "conseil", "Une patiente perd de la force. Elle bouge très peu.", "force", o("protéines et activité physique"), [o("plus de sucre"), o("un régime sans graisse"), o("le repos complet")], { question: "Quelle association serait la plus utile ?" }),
+  mcq("c-constip2", "avis", "conseil", "Un patient est constipé. Il mange très peu de végétaux.", "végétaux", o("plus de végétaux et d'eau", "vegetables"), [o("plus de pain blanc", "bread"), o("moins boire"), o("plus de viande")], { question: "Que lui conseilleriez-vous ?" }),
+  mcq("c-sarco-move", "avis", "conseil", "Une patiente perd de la force. Elle bouge très peu.", "force", o("protéines et activité physique"), [o("plus de sucre"), o("un régime sans graisse"), o("le repos complet")], { question: "Que lui proposeriez-vous ?" }),
   mcq("c-diab-bread", "avis", "conseil", "Un patient diabétique mange beaucoup de pain blanc.", "féculents", o("des féculents complets", "oats"), [o("ajouter de la confiture"), o("supprimer les légumes"), o("plus de jus de fruits")], { question: "Que proposeriez-vous ?" }),
   mcq("c-heat", "avis", "conseil", "Il fait très chaud. Une personne âgée boit peu.", "chaleur", o("la déshydratation", "water"), [o("l'anémie"), o("le cholestérol"), o("le surpoids")], { question: "Quel est le risque principal ?" }),
   mcq("c-nofish", "avis", "conseil", "Un patient ne mange jamais de poisson.", "poisson", o("les oméga-3", "sardines"), [o("le sel", "salt"), o("l'amidon"), o("le sucre")], { question: "Quel apport risque de manquer ?" }),
   mcq("c-indoor", "avis", "conseil", "Une personne âgée sort très peu de chez elle.", "soleil", o("la vitamine D", "summer"), [o("la vitamine B1"), o("la vitamine K"), o("la vitamine C")], { question: "Quelle vitamine faut-il surveiller ?" }),
   mcq("c-iron", "avis", "conseil", "Une patiente est fatiguée. Elle mange peu de viande et de légumineuses.", "fatigue", o("le fer", "lentils"), [o("l'iode"), o("le fluor"), o("le sodium", "salt")], { question: "Quel minéral faut-il surveiller ?" }),
-  mcq("c-microb", "avis", "conseil", "Un patient veut prendre soin de son microbiote.", "microbiote", o("manger varié et riche en fibres", "vegetables"), [o("prendre des probiotiques seuls"), o("éviter tous les féculents"), o("un jeûne régulier")], { question: "Quel conseil est le plus consensuel ?" }),
+  mcq("c-microb", "avis", "conseil", "Un patient veut prendre soin de son microbiote.", "microbiote", o("manger varié et riche en fibres", "vegetables"), [o("prendre des probiotiques seuls"), o("éviter tous les féculents"), o("un jeûne régulier")], { question: "Que lui conseilleriez-vous ?" }),
 
   // ——— Mini-informations ———
   mcq("i-sleep", "sciences", "information", "Un bon sommeil aide la mémoire à se consolider.", "sommeil", o("des oublis plus fréquents"), [o("une tension trop basse"), o("une perte de poids"), o("des muscles plus faibles")], { question: "Que risque une personne qui dort très peu ?" }),
-  mcq("i-walk", "sciences", "information", "Marcher trente minutes par jour aide le cœur.", "marcher", o("la natation"), [o("la lecture", "book"), o("regarder la télévision"), o("rester au repos")], { question: "Un patient ne peut pas marcher. Quelle autre activité aurait le même intérêt ?" }),
-  mcq("i-thirst", "sciences", "information", "Avec l'âge, la sensation de soif diminue.", "soif", o("proposer de l'eau régulièrement"), [o("attendre qu'elle demande à boire"), o("donner surtout du café"), o("limiter les boissons")], { question: "Que faut-il en conclure pour la journée ?" }),
+  mcq("i-walk", "sciences", "information", "Marcher trente minutes par jour aide le cœur.", "marcher", o("la natation"), [o("la lecture", "book"), o("regarder la télévision"), o("rester au repos")], { question: "Sans marcher, quelle activité aide le cœur ?" }),
+  mcq("i-thirst", "sciences", "information", "Avec l'âge, la sensation de soif diminue.", "soif", o("proposer de l'eau régulièrement"), [o("attendre qu'elle demande à boire"), o("donner surtout du café"), o("limiter les boissons")], { question: "Que proposer dans la journée ?" }),
   mcq("i-combine", "sciences", "information", "Associer céréales et légumineuses améliore l'apport en protéines.", "protéines", o("riz et lentilles", "lentils"), [o("pain et beurre", "butter"), o("pomme et fromage", "cheese"), o("café et sucre")], { question: "Quel duo d'aliments permet cela ?" }),
-  mcq("i-microb", "sciences", "information", "Les fibres nourrissent les bactéries de l'intestin.", "bactéries", o("des légumes et des légumineuses", "vegetables"), [o("du sel", "salt"), o("des sucres rapides"), o("des graisses saturées")], { question: "Que faut-il donc privilégier pour les nourrir ?" }),
+  mcq("i-microb", "sciences", "information", "Les fibres nourrissent les bactéries de l'intestin.", "bactéries", o("des légumes et des légumineuses", "vegetables"), [o("du sel", "salt"), o("des sucres rapides"), o("des graisses saturées")], { question: "Quels aliments les nourrissent ?" }),
 
   // ——— Culture générale et scientifique ———
   mcq("cu-joconde", "sciences", "information", "Qui a peint La Joconde ?", "Joconde", o("Léonard de Vinci", "mona_lisa"), [o("Rembrandt"), o("Picasso"), o("Michel-Ange")]),
@@ -279,9 +279,9 @@ const CORE: Item[] = [
   ], { model: "Un produit laitier, un féculent complet et un fruit." }),
 
   // ——— Reformulation (suite) ———
-  oral("f-fibres", "reformuler", ["Les fibres favorisent le transit intestinal. Pouvez-vous le dire avec vos mots ?"], { model: "Les fibres aident l'intestin à bien fonctionner." }),
-  oral("f-soda", "reformuler", ["Les sodas apportent beaucoup de sucres rapides. Pouvez-vous le dire avec vos mots ?"], { model: "Les sodas sont très sucrés." }),
-  oral("f-walk", "reformuler", ["Une marche quotidienne protège le cœur. Pouvez-vous le dire avec vos mots ?"], { model: "Marcher chaque jour est bon pour le cœur." }),
+  oral("f-fibres", "reformuler", ["Les fibres favorisent le transit intestinal."], { model: "Les fibres aident l'intestin à bien fonctionner." }),
+  oral("f-soda", "reformuler", ["Les sodas apportent beaucoup de sucres rapides."], { model: "Les sodas sont très sucrés." }),
+  oral("f-walk", "reformuler", ["Une marche quotidienne protège le cœur."], { model: "Marcher chaque jour est bon pour le cœur." }),
 
   // ——— Élocution progressive (suite) ———
   oral("r-muscle", "lire", [
@@ -326,15 +326,15 @@ function reperes(now = new Date()): Item[] {
   const si = m === 11 || m < 2 ? 0 : m < 5 ? 1 : m < 8 ? 2 : 3;
   const R = { topic: "actualite" as Topic };
   return [
-    mcq("rp-fr-pres", "avis", "information", "Un repère de la vie publique française.", "président", o("Emmanuel Macron"), [o("Jacques Chirac"), o("François Hollande"), o("Nicolas Sarkozy")], { ...R, question: "Qui est aujourd'hui le président de la République ?" }),
-    mcq("rp-us-pres", "avis", "information", "Aux États-Unis, l'élection présidentielle a eu lieu en novembre 2024.", "États-Unis", o("Donald Trump"), [o("Barack Obama"), o("Joe Biden"), o("Kamala Harris")], { ...R, question: "Qui est aujourd'hui le président des États-Unis ?" }),
-    mcq("rp-year", "temps", "temps", "Situons-nous dans le temps.", "année", o(String(y)), [o(String(y - 10)), o(String(y - 1)), o(String(y + 1))], { ...R, question: "En quelle année sommes-nous ?" }),
-    mcq("rp-month", "temps", "temps", "Regardons le calendrier.", "mois", o(MONTHS[m]!), [o(MONTHS[(m + 6) % 12]!), o(MONTHS[(m + 11) % 12]!), o(MONTHS[(m + 1) % 12]!)], { ...R, question: "Dans quel mois sommes-nous ?" }),
-    mcq("rp-season", "temps", "temps", "Pensez au temps qu'il fait et à la lumière du jour.", "saison", seasons[si]!, [seasons[(si + 2) % 4]!, seasons[(si + 1) % 4]!, seasons[(si + 3) % 4]!], { ...R, question: "En quelle saison sommes-nous ?" }),
-    mcq("rp-euro", "avis", "information", "Depuis 2002, les Français paient avec la même monnaie que beaucoup de pays voisins.", "monnaie", o("l'euro"), [o("le dollar"), o("la livre"), o("le franc")], { ...R, question: "Quelle est cette monnaie ?" }),
-    mcq("rp-jo", "avis", "information", "Paris a accueilli les Jeux olympiques d'été, cent ans après ceux de 1924.", "Jeux olympiques", o("en 2024"), [o("en 2012"), o("en 2016"), o("en 2020")], { ...R, question: "En quelle année ?" }),
-    oral("rp-ex-change", "expliquer", ["Selon vous, qu'est-ce qui a le plus changé dans la vie quotidienne ces dernières années ?"], { ...R, image: "phone", model: "Le téléphone portable et Internet ont transformé notre façon de communiquer." }),
-    oral("rp-ex-season", "expliquer", [`Nous sommes en ${MONTHS[m]}. Qu'aimez-vous dans cette période de l'année ?`], { ...R, image: seasons[si]!.image ?? "calendar", model: "J'aime la lumière, les fruits de saison et les promenades." }),
+    mcq("rp-fr-pres", "avis", "information", "Qui est le président de la France aujourd'hui ?", "président", o("Emmanuel Macron"), [o("François Hollande"), o("Nicolas Sarkozy")], R),
+    mcq("rp-us-pres", "avis", "information", "Qui est le président des États-Unis aujourd'hui ?", "États-Unis", o("Donald Trump"), [o("Joe Biden"), o("Barack Obama")], R),
+    mcq("rp-year", "temps", "temps", "En quelle année sommes-nous ?", "année", o(String(y)), [o(String(y - 1)), o(String(y + 1))], R),
+    mcq("rp-month", "temps", "temps", "Quel mois sommes-nous ?", "mois", o(MONTHS[m] ?? "janvier"), [o(MONTHS[(m + 11) % 12] ?? "décembre"), o(MONTHS[(m + 1) % 12] ?? "février")], R),
+    mcq("rp-season", "temps", "temps", "Quelle est la saison en France aujourd'hui ?", "saison", seasons[si] ?? o("l'automne", "autumn"), [seasons[(si + 2) % 4] ?? o("le printemps", "spring"), seasons[(si + 1) % 4] ?? o("l'hiver", "winter")], R),
+    mcq("rp-euro", "avis", "information", "Avec quelle monnaie paie-t-on en France ?", "monnaie", o("l'euro"), [o("le dollar"), o("le franc")], R),
+    mcq("rp-jo", "avis", "information", "Quelle ville a accueilli les Jeux olympiques de 2024 ?", "Jeux olympiques", o("Paris", "paris"), [o("Londres", "london"), o("Rome", "rome")], R),
+    oral("rp-ex-change", "expliquer", ["Le téléphone portable : qu'en pensez-vous ?"], { ...R, image: "phone", hint: "Il permet d'appeler et de recevoir des photos.", model: "Il permet de garder le contact avec ses proches." }),
+    oral("rp-ex-season", "expliquer", ["Qu'aimez-vous faire en cette saison ?"], { ...R, image: seasons[si]?.image ?? "calendar", hint: "Une promenade, un plat de saison ou un moment chez soi.", model: "J'aime me promener et profiter des produits de saison." }),
   ];
 }
 export const REPERES = reperes();
