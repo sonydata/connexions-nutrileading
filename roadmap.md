@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Généraliser les indices illustrés : 156 exercices de mots/conversations couverts, images précises à la demande, indices des séances à choix également illustrés.
+
 - [x] Question sur l’intestin : bouton Indice qui révèle une photo de yaourt nature / lait fermenté à la demande (vérifié dans une séance).
 
 - [x] Mise à jour du cahier des charges v3 : oral autonome, évocation, élocution, synthèse, objectifs, banque 154 items

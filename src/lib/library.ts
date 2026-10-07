@@ -72,6 +72,20 @@ export const LIBRARY: LibraryItem[] = [
   { id: "elysee", label: "palais de l'Élysée", group: "culture" },
   { id: "white_house", label: "Maison-Blanche", group: "culture" },
   { id: "forest", label: "forêt (nature)", group: "science" },
+  ...[
+    ["hint-tension", "Un tensiomètre autour du bras"], ["hint-pancreas", "Le pancréas"],
+    ["hint-weight", "Une balance pour surveiller le poids"], ["hint-skeleton", "Le squelette"],
+    ["hint-gard", "Le pont du Gard"], ["hint-staircase", "L’escalier de Chambord"],
+    ["hint-turmeric", "Du curcuma"], ["hint-bowler", "Un chapeau melon"],
+    ["hint-archipelago", "Un archipel"], ["hint-marmot", "Une marmotte endormie"],
+    ["hint-satellite", "Un satellite en orbite"], ["hint-stew", "Un plat qui mijote"],
+    ["hint-artery", "Une artère rétrécie"], ["hint-gravity", "Une pomme qui tombe"],
+    ["hint-pyramids", "Les pyramides de Gizeh"], ["hint-fresco", "Une peinture murale"],
+    ["hint-milk", "Du lait chauffé"], ["hint-cube", "Un cube"],
+    ["hint-mri", "Un appareil d’IRM"], ["hint-clay", "Une matière que l’on peut modeler"],
+    ["hint-sailor", "Un navigateur en mer"], ["hint-solstice", "La lumière du soleil en été"],
+    ["hint-david", "Le David de Michel-Ange"], ["hint-verse", "Un livre de vers au théâtre"],
+  ].map(([id, label]) => ({ id: id ?? "", label: label ?? "", group: "indices" })),
 ];
 
 export const LIBRARY_IDS = new Set(LIBRARY.map((i) => i.id));
