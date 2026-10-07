@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      adaptive_profiles: {
+        Row: {
+          answers: Json
+          diagnosis: string | null
+          expertise: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          diagnosis?: string | null
+          expertise?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          diagnosis?: string | null
+          expertise?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       attempts: {
         Row: {
           category: string
@@ -72,6 +96,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      caregiver_feedback: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          note: string | null
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: []
       }
       caregiver_settings: {
         Row: {
