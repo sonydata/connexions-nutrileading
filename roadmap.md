@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Question sur l’intestin : bouton Indice qui révèle une photo pertinente à la demande.
+
 - [x] Mise à jour du cahier des charges v3 : oral autonome, évocation, élocution, synthèse, objectifs, banque 154 items
 - [x] Images : photos coupées / pas adaptées aux réponses (retour de Sonia)
 - [x] « Connexion aidant » → « Connexion » ; écran de fin de séance repris (texte de Sonia)
