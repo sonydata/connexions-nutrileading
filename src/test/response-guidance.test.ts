@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { responseInstruction } from "../lib/response-guidance";
-import { REPERES } from "../lib/content";
+import { BANK, REPERES } from "../lib/content";
+import { SEQ_ITEMS } from "../lib/sequences";
 import { buildPlan } from "../lib/builder";
 import { visualHintFor } from "../lib/visual-hints";
 
@@ -19,6 +20,9 @@ describe("Explicit response instructions", () => {
     }
   });
   it("provides an explicit hidden-on-request hint for every session item", () => {
+    for (const item of [...BANK, ...SEQ_ITEMS]) {
+      expect(visualHintFor({ id: item.id }).caption.length).toBeGreaterThan(3);
+    }
     for (let n = 0; n < 20; n++) {
       const plan = buildPlan([], ["i:actualite", "i:art", "i:sciences", "i:medecine"], 1);
       for (const item of plan.items) expect(visualHintFor(item).caption.length).toBeGreaterThan(3);

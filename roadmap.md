@@ -1,9 +1,10 @@
 # Roadmap
 
-- [ ] Clarifier chaque mode de réponse, retirer les annonces/numéros, réduire le texte et raccourcir les questions.
-- [ ] Appliquer aussi la révision des formulations à toutes les catégories, pas uniquement Actu / repères (précision Sonia).
-- [ ] Revoir toutes les questions Actu / repères et renforcer les indices explicites dans tous les sujets.
-- [ ] Proposer un modèle conversation / découverte, sans le mettre en place avant validation.
+- [x] Clarifier chaque mode de réponse, retirer les annonces/numéros, réduire le texte et raccourcir les questions.
+- [x] Appliquer aussi la révision des formulations à toutes les catégories, pas uniquement Actu / repères (précision Sonia).
+- [x] Revoir toutes les questions Actu / repères et renforcer les indices explicites dans tous les sujets ; photo précise quand disponible, aucun remplacement générique.
+- [x] Préenregistrer les formulations révisées ; conserver la consigne de reformulation explicite déjà en cache pour éviter les refus du fournisseur vocal.
+- [x] Préparer la proposition conversation / découverte ; mise en place en attente de validation de Sonia.
 
 - [x] Généraliser les indices illustrés : 156 exercices de mots/conversations couverts, images précises à la demande, indices des séances à choix également illustrés.
 
@@ -20,7 +21,7 @@
 - [ ] Bouton « Créer de nouveaux exercices » IA (en attente de la décision de Sonia)
 - [x] Centres d'intérêt réels (écran /interets au premier démarrage, sauvegardés) et séances ~80 % issues des sujets choisis
 - [x] Banque étendue : médecine, sciences, histoire, art, géographie, nature, littérature, technologie, cuisine, sport
-- [x] Guidage oral : « Réponse 1… » lues avec mise en évidence, « À vous… » dit à voix haute, « Je vous écoute », tolérance aux pauses
+- [x] Guidage oral : consigne concrète selon le mode, choix lus sans annonce ni numérotation, « Je vous écoute », tolérance aux pauses
 - [ ] Actualité : en attente d'une source fiable (affichée « Bientôt disponible »)
 
 - [x] Une seule voix féminine (pas de bascule vers la voix du navigateur)

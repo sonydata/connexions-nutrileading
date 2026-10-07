@@ -596,7 +596,7 @@ function ChoiceBody({ it, accent, reading, stage, wrong, chosen, message, succes
   return (
     <>
       <div className="mt-2 min-h-24 text-center">
-        {it.image && (
+        {it.image && it.image !== visualHintFor(it).image && (
           <img src={imageSrc(it.image) ?? ""} alt="" className="mx-auto mb-5 max-h-64 w-auto max-w-full rounded-3xl shadow-md" />
         )}
         <p className="mx-auto max-w-3xl font-serif text-2xl leading-snug md:text-3xl">{it.audio}</p>
