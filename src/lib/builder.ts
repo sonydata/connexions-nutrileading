@@ -67,26 +67,19 @@ export function skillLevels(past: PastAttempt[], base: number): Record<string, n
 }
 
 // Illustration for every question: curated scene → photo whose subject is named in the
-// situation (never in the answers) → a photo of the subject area. Never shows the answer.
+// situation (never in the answers) . No generic fallback: no photo rather than an ambiguous one. Never shows the answer.
 const STOP = new Set(["les", "des", "une", "verre", "tasse", "pain", "soleil", "lever", "coucher", "haut"]);
 const norm = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const KEYS = LIBRARY.flatMap((l) => norm(l.label).split(/[^a-z]+/).filter((w) => w.length >= 4 && !STOP.has(w)).map((w) => [w, l.id] as const));
-const TOPIC_PHOTOS: Record<string, string[]> = {
-  sante: ["vegetables", "market", "balanced_meal", "olive_oil"], medecine: ["consultation", "elderly_meal", "sleep"], sciences: ["astronomy", "forest", "book"],
-  histoire: ["rome", "paris", "london", "book"], art: ["monet", "mona_lisa", "piano", "violin"], geographie: ["barcelona", "london", "rome", "paris"],
-  nature: ["forest", "spring", "autumn", "summer"], litterature: ["book", "newspaper", "pen"], technologie: ["phone", "watch"], cuisine: ["cooking", "market", "vegetables"],
-  sport: ["football", "walk"], actualite: ["newspaper", "elysee"], general: ["calendar", "watch"],
-};
 function illustrate(item: Item, text: string, answer?: string): string | null {
   if (SCENE[item.id]) return SCENE[item.id]!;
+  const seq = item.id.match(/^(sq-[a-z]+)-[cref]$/)?.[1];
+  if (seq && imageSrc(seq)) return seq;
   const t = norm(text);
   const bad = answer ? norm(answer) : "";
-  const hit = KEYS.find(([w, id]) => new RegExp(`\\b${w}`).test(t) && !(bad && bad.includes(w)) && imageSrc(id));
+  const hit = KEYS.find(([w, id]) => new RegExp(`\\b${w}s?\\b`).test(t) && !(bad && bad.includes(w)) && imageSrc(id));
   if (hit) return hit[1];
-  const pool = (TOPIC_PHOTOS[topicOf(item)] ?? TOPIC_PHOTOS["general"]!).filter((id) => imageSrc(id));
-  let h = 0;
-  for (const c of item.id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return pool[h % pool.length] ?? null;
+  return null;
 }
 
 function toPlay(item: Item, level: number): PlayItem {
