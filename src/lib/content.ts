@@ -363,6 +363,6 @@ export const SCENE: Record<string, string> = {
   "t-season": "calendar", "t-2h": "plate", "t-dinner": "evening", "t-sequence": "consultation", "t-3x": "calendar", "t-kine": "calendar",
   "tf-olive": "olive_oil", "tf-salmon": "salmon", "tf-lentils": "lentils", "tf-vitc": "orange", "tf-water": "water", "tf-soda": "soda",
   "tf-insulin": "consultation", "tf-calcium": "yogurt", "tf-walnuts": "walnuts", "tf-transit": "vegetables", "tf-protage": "elderly_meal",
-  "rp-fr-pres": "elysee", "rp-us-pres": "white_house", "rp-year": "calendar", "rp-month": "calendar", "rp-euro": "market", "rp-jo": "paris",
+  "rp-fr-pres": "elysee", "rp-us-pres": "white_house", "rp-year": "calendar", "rp-month": "calendar", "rp-euro": "euro", "rp-jo": "paris",
   "tf-vitdsun": "summer", "tf-saltbp": "salt",
 };
