@@ -59,9 +59,8 @@ export function discussionTurns(items: PlayItem[], mode: SessionMode): Discussio
       // The item's own question, asked once: context (if any) then the question itself.
       intro = item.question && item.question !== item.audio ? item.audio : null;
       prompt = item.question ?? item.audio;
-      if (mode === "conversation" && item.topic !== "actualite" && answer) model = item.model ?? `${capitalize(answer)}.`;
+      if (mode === "conversation" && item.topic !== "actualite" && answer) model = `${capitalize(answer)}.`;
     }
-    if (item.stage === "comprendre" && sequence && mode === "conversation") model = sequence.items[0].model ?? model;
     return {
       item,
       intro: intro && intro !== prompt ? intro : null,
