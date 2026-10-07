@@ -61,7 +61,8 @@ export function GuidedSession() {
     try {
       // Signed-in: one idea at a time with a pause (segments synthesised once, then cached).
       // Guests: whole sentences from the shared cache only.
-      const parts = signedIn.current ? texts.flatMap((t) => segment(t, params)) : texts;
+      const unique = texts.filter((t, n) => t && texts.indexOf(t) === n);
+      const parts = signedIn.current ? unique.flatMap((t) => segment(t, params)) : unique;
       for (const [n, text] of parts.entries()) {
         if (!text || id !== playId.current) continue;
         if (n > 0 && params.pauseMs) await new Promise((res) => setTimeout(res, params.pauseMs));
@@ -103,7 +104,7 @@ export function GuidedSession() {
   );
   useEffect(() => {
     if (state === "play" && turn)
-      read([turn.item.recall, turn.intro, turn.prompt, ...(params.repetition >= 2 ? [turn.prompt] : []), turn.instruction]);
+      read([turn.item.recall, turn.intro, turn.prompt, turn.instruction]);
     // Each new turn is read once; explicit controls handle rereading.
   }, [state, index]); // eslint-disable-line react-hooks/exhaustive-deps
 

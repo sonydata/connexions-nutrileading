@@ -52,24 +52,19 @@ export function discussionTurns(items: PlayItem[], mode: SessionMode): Discussio
     let intro: string | null = null;
     let prompt = item.audio;
     let model = item.kind === "tf" ? visualHintFor(item).caption : item.model ?? item.answerText ?? answer ?? item.audio;
-    if (mode === "conversation") {
-      if (item.stage === "comprendre") intro = item.audio;
-      else if (choice && item.topic === "actualite")
-        intro = presentReference(item.id, answer ?? "");
-      else if (choice) intro = item.question ? item.audio : model;
-      else if (item.stage === "retrouver") intro = item.model;
-      prompt = repeat ? item.audio : item.stage === "exprimer" ? item.audio : opening;
-      if (item.stage === "comprendre" && sequence) model = sequence.items[2].model ?? model;
-    } else if (item.kind === "tf") {
+    if (item.kind === "tf") {
       intro = model;
       prompt = opening;
     } else if (choice) {
-      intro = item.question ? item.audio : null;
+      // The item's own question, asked once: context (if any) then the question itself.
+      intro = item.question && item.question !== item.audio ? item.audio : null;
       prompt = item.question ?? item.audio;
+      if (mode === "conversation" && item.topic !== "actualite" && answer) model = item.model ?? `${capitalize(answer)}.`;
     }
+    if (item.stage === "comprendre" && sequence && mode === "conversation") model = sequence.items[0].model ?? model;
     return {
       item,
-      intro,
+      intro: intro && intro !== prompt ? intro : null,
       prompt,
       model,
       image: item.image ?? hint.image,
@@ -81,17 +76,30 @@ export function discussionTurns(items: PlayItem[], mode: SessionMode): Discussio
           : "exchange",
       instruction: repeat
         ? "Répétez la phrase à voix haute."
-        : mode === "regard" && (item.kind === "evoke" || item.mode === "nommer")
+        : item.kind === "evoke" || item.mode === "nommer"
           ? "Dites le nom à voix haute."
-          : item.kind === "complete" && mode === "regard"
+          : item.kind === "complete"
             ? "Dites le mot manquant à voix haute."
-            : DISCUSSION_INSTRUCTION,
-      followUp: item.stage === "comprendre" || item.stage === "retrouver"
-        ? sequence?.items[2].steps[0] ?? DEVELOP
-        : FOLLOW_UPS[item.topic] ?? DEVELOP,
+            : choice && mode === "conversation"
+              ? "Répondez à voix haute."
+              : DISCUSSION_INSTRUCTION,
+      followUp: REF_FOLLOW_UPS[item.id] ?? FOLLOW_UPS[item.topic] ?? DEVELOP,
     };
   });
 }
+
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** Specific, adult follow-ups for "Repères du moment" — never a second quiz question. */
+const REF_FOLLOW_UPS: Record<string, string> = {
+  "rp-fr-pres": "Où travaille le président de la France ?",
+  "rp-us-pres": "Dans quelle ville travaille-t-il ?",
+  "rp-year": "Qu'attendez-vous de cette année ?",
+  "rp-month": "Que fait-on souvent à cette période ?",
+  "rp-season": "Quels fruits et légumes trouve-t-on en cette saison ?",
+  "rp-euro": "Vous souvenez-vous du passage du franc à l'euro ?",
+  "rp-jo": "Quel sport aimez-vous regarder ?",
+};
 
 function presentReference(id: string, answer: string): string {
   const references: Record<string, string> = {
