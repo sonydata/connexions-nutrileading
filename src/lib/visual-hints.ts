@@ -82,8 +82,8 @@ assign("football", "spo-ex-team");
 assign("phone", "rp-ex-change");
 
 export type VisualHint = { image: string; alt: string; caption?: string };
-export function visualHintFor(item: { id: string; image?: string | null; options?: { image?: string }[] }): VisualHint | null {
-  const image = HINTS[item.id] ?? item.image ?? item.options?.find((o) => o.image)?.image;
+export function visualHintFor(item: { id: string; image?: string | null | undefined; options?: { image?: string | undefined }[] }): VisualHint | null {
+  const image = HINTS[item.id] ?? item.image;
   if (!image || !imageSrc(image)) return null;
   if (item.id === "sq-microbiote-e") return { image, alt: "Un bol de yaourt nature, un lait fermenté", caption: "Yaourt nature · lait fermenté" };
   return { image, alt: LIBRARY.find((entry) => entry.id === image)?.label ?? "Indice visuel pour cette question" };
