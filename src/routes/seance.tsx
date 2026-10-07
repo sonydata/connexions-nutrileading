@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Mic, Play, Square, Volume2 } from "lucide-react";
+import { Check, Lightbulb, Mic, Play, Square, Volume2 } from "lucide-react";
 import { completeSession, recordAttempt, speak, speakCached, startSession, type PlayItem } from "@/lib/session.functions";
 import { buildPlan } from "@/lib/builder";
 import { supabase } from "@/integrations/supabase/client";
@@ -545,6 +545,7 @@ function Seance() {
           <div className="mt-4 w-full text-center">
             {it.image && <img src={imageSrc(it.image) ?? ""} alt="" className="mx-auto mb-5 max-h-56 w-auto max-w-full rounded-3xl shadow-md" />}
             <p className="mx-auto max-w-3xl font-serif text-4xl leading-tight">{it.audio}</p>
+            {step === "ask" && it.id === "sq-microbiote-e" && <IntestinalHint key={it.id} />}
             {step === "ask" ? (
               <>
                 <Heard text={voice.transcript} />
@@ -699,9 +700,27 @@ function MicBtn({ listening, onClick, label, doneLabel = "Terminer ma réponse",
   );
 }
 
-function Btn({ children, onClick, subtle }: { children: React.ReactNode; onClick: () => void; subtle?: boolean }) {
+function IntestinalHint() {
+  const [visible, setVisible] = useState(false);
   return (
-    <button onClick={onClick} className={`inline-flex items-center gap-2 rounded-full px-7 py-4 text-lg transition ${subtle ? "border bg-card text-foreground hover:bg-muted" : "bg-primary text-primary-foreground hover:opacity-90"}`}>
+    <div className="mt-5">
+      <Btn subtle onClick={() => setVisible((v) => !v)} expanded={visible} controls="intestinal-hint">
+        <Lightbulb className="h-6 w-6 text-u-retrouver" aria-hidden />
+        {visible ? "Masquer l’indice" : "Indice"}
+      </Btn>
+      {visible && (
+        <figure id="intestinal-hint" className="mx-auto mt-4 max-w-56" aria-live="polite">
+          <img src={imageSrc("yogurt") ?? ""} alt="Un bol de yaourt nature, un lait fermenté" width={768} height={768} className="aspect-square w-full rounded-lg object-contain" />
+          <figcaption className="mt-2 text-lg text-foreground">Yaourt nature · lait fermenté</figcaption>
+        </figure>
+      )}
+    </div>
+  );
+}
+
+function Btn({ children, onClick, subtle, expanded, controls }: { children: React.ReactNode; onClick: () => void; subtle?: boolean; expanded?: boolean; controls?: string }) {
+  return (
+    <button onClick={onClick} aria-expanded={expanded} aria-controls={controls} className={`inline-flex items-center gap-2 rounded-full px-7 py-4 text-lg transition ${subtle ? "border bg-card text-foreground hover:bg-muted" : "bg-primary text-primary-foreground hover:opacity-90"}`}>
       {children}
     </button>
   );

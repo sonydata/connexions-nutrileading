@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Question sur l’intestin : bouton Indice qui révèle une photo de yaourt nature / lait fermenté à la demande (vérifié dans une séance).
+
 - [x] Mise à jour du cahier des charges v3 : oral autonome, évocation, élocution, synthèse, objectifs, banque 154 items
 - [x] Images : photos coupées / pas adaptées aux réponses (retour de Sonia)
 - [x] « Connexion aidant » → « Connexion » ; écran de fin de séance repris (texte de Sonia)
