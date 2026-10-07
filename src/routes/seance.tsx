@@ -6,6 +6,7 @@ import { completeSession, recordAttempt, speak, speakCached, startSession, type 
 import { buildPlan } from "@/lib/builder";
 import { supabase } from "@/integrations/supabase/client";
 import { imageSrc } from "@/lib/library";
+import { visualHintFor, type VisualHint } from "@/lib/visual-hints";
 import { accentOf } from "@/lib/accents";
 import { heardWord, useVoiceInput, wordCount } from "@/lib/voice-input";
 import { praise, praiseChoice } from "@/lib/praise";
@@ -524,6 +525,7 @@ function Seance() {
               </>
             )}
             {stage === 1 && it.hint && <p className="mt-4 font-serif text-2xl italic text-muted-foreground">{it.hint}</p>}
+            {stage >= 1 && step === "ask" && <HintPhoto hint={visualHintFor(it)} />}
             <Feedback message={message} success={success} />
             {step === "model" && it.model && it.kind !== "oral" && <p className="mx-auto mt-2 max-w-3xl font-serif text-2xl italic text-muted-foreground">{it.model}</p>}
             <Heard text={voice.listening ? voice.transcript : step === "ask" ? heard : ""} />
@@ -531,7 +533,7 @@ function Seance() {
               {step === "ask" ? (
                 <>
                   <MicBtn listening={voice.listening} onClick={answerRecall} label="Répondre" />
-                  {!voice.listening && (canHint || stage > 0) && <Btn subtle onClick={nextCue}>{stage === 0 ? "Un indice" : stage === 1 ? "Le premier son" : "Voir le mot"}</Btn>}
+                  {!voice.listening && <Btn subtle onClick={nextCue}><Lightbulb className="h-6 w-6 text-u-retrouver" aria-hidden />{stage === 0 ? "Indice" : stage === 1 ? "Le premier son" : "Voir le mot"}</Btn>}
                   {!voice.listening && <Btn subtle onClick={() => found(false)}>Je l'ai trouvé</Btn>}
                 </>
               ) : (
@@ -545,7 +547,7 @@ function Seance() {
           <div className="mt-4 w-full text-center">
             {it.image && <img src={imageSrc(it.image) ?? ""} alt="" className="mx-auto mb-5 max-h-56 w-auto max-w-full rounded-3xl shadow-md" />}
             <p className="mx-auto max-w-3xl font-serif text-4xl leading-tight">{it.audio}</p>
-            {step === "ask" && it.id === "sq-microbiote-e" && <IntestinalHint key={it.id} />}
+            {step === "ask" && <OptionalVisualHint key={it.id} hint={visualHintFor(it)} />}
             {step === "ask" ? (
               <>
                 <Heard text={voice.transcript} />
@@ -614,6 +616,7 @@ function ChoiceBody({ it, accent, reading, stage, wrong, chosen, message, succes
         <p className="mx-auto max-w-3xl font-serif text-4xl leading-snug md:text-5xl">{it.audio}</p>
         {it.question && <p className={`mt-3 font-serif text-2xl italic md:text-3xl ${accent.text}`}>{it.question}</p>}
         {stage >= 2 && it.keyword && <span className="mt-3 inline-block rounded-full bg-gold/25 px-5 py-1.5 text-xl">{it.keyword}</span>}
+        {chosen === null && <OptionalVisualHint key={it.id} hint={visualHintFor(it)} />}
         <Feedback message={message} success={success} />
       </div>
       <div className={`mt-4 grid w-full gap-5 ${cols} ${hasImages && n === 2 ? "max-w-2xl" : ""}`}>
@@ -700,19 +703,27 @@ function MicBtn({ listening, onClick, label, doneLabel = "Terminer ma réponse",
   );
 }
 
-function IntestinalHint() {
+function HintPhoto({ hint }: { hint: VisualHint | null }) {
+  if (!hint) return null;
+  return (
+    <figure className="mx-auto mt-4 max-w-56" aria-live="polite">
+      <img src={imageSrc(hint.image) ?? ""} alt={hint.alt} width={480} height={480} className="max-h-56 w-full rounded-lg object-contain" />
+      {hint.caption && <figcaption className="mt-2 text-lg text-foreground">{hint.caption}</figcaption>}
+    </figure>
+  );
+}
+
+function OptionalVisualHint({ hint }: { hint: VisualHint | null }) {
   const [visible, setVisible] = useState(false);
+  if (!hint) return null;
   return (
     <div className="mt-5">
-      <Btn subtle onClick={() => setVisible((v) => !v)} expanded={visible} controls="intestinal-hint">
+      <Btn subtle onClick={() => setVisible((v) => !v)} expanded={visible} controls="visual-hint">
         <Lightbulb className="h-6 w-6 text-u-retrouver" aria-hidden />
         {visible ? "Masquer l’indice" : "Indice"}
       </Btn>
       {visible && (
-        <figure id="intestinal-hint" className="mx-auto mt-4 max-w-56" aria-live="polite">
-          <img src={imageSrc("yogurt") ?? ""} alt="Un bol de yaourt nature, un lait fermenté" width={768} height={768} className="aspect-square w-full rounded-lg object-contain" />
-          <figcaption className="mt-2 text-lg text-foreground">Yaourt nature · lait fermenté</figcaption>
-        </figure>
+        <div id="visual-hint"><HintPhoto hint={hint} /></div>
       )}
     </div>
   );
