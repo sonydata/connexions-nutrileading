@@ -295,16 +295,19 @@ export function buildPlan(past: PastAttempt[], topics: string[], base: number, f
   }
   if (novel) items.push(...novel.items.map((i) => toPlay(i, levels[i.skill] ?? base)));
 
-  // Actualité: two "repères du moment" questions + one conversation, rotating.
+  // Actualité: two current reference questions + one short exchange, rotating.
+  // Put this coherent block first so it is never mistaken for the neighbouring cultural sequence.
   if (interestsOf(topics).includes("actualite") && (!focus || focus === "actualite")) {
     const fresh2 = (xs: Item[]) => { const f = xs.filter((i) => !recent.has(i.id)); return shuffle(f.length >= 2 ? f : xs); };
     const qs = fresh2(REPERES.filter((i) => i.kind === "mcq")).slice(0, 2);
     const talk = fresh2(REPERES.filter((i) => i.kind === "oral"))[0];
+    const current: PlayItem[] = [];
     for (const i of [...qs, ...(talk ? [talk] : [])]) {
       const p = toPlay(i, levels[i.skill] ?? base);
       p.seqTitle = "Repères du moment";
-      items.push(p);
+      current.push(p);
     }
+    items.unshift(...current);
   }
 
   // Teaser: tomorrow's subjects, hinted without revealing them.

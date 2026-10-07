@@ -20,9 +20,9 @@ export const Route = createFileRoute("/seance")({
   head: () => ({
     meta: [
       { title: "Séance du jour — Connexions" },
-      { name: "description", content: "Conversation ou Votre regard : une séance de découverte et d'expression, avec des aides facultatives." },
+      { name: "description", content: "Une séance guidée de découverte et d'expression, avec des aides facultatives." },
       { property: "og:title", content: "Séance du jour — Connexions" },
-      { property: "og:description", content: "Conversation ou Votre regard : une séance de découverte et d'expression, avec des aides facultatives." },
+      { property: "og:description", content: "Une séance guidée de découverte et d'expression, avec des aides facultatives." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

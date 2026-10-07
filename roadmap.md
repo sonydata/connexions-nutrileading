@@ -5,7 +5,8 @@
 - [x] Revoir toutes les questions Actu / repères et renforcer les indices explicites dans tous les sujets ; photo précise quand disponible, aucun remplacement générique.
 - [x] Préenregistrer les formulations révisées ; conserver la consigne de reformulation explicite déjà en cache pour éviter les refus du fournisseur vocal.
 - [x] Mettre en place la proposition conversation / découverte validée : oral sans jugement, pistes facultatives, formulation et continuation toujours accessibles.
-- [x] Valider et vérifier la distinction proposée par Sonia : « Conversation » et « Votre regard », en compte connecté et en découverte.
+- [x] Simplifier en un parcours guidé unique, sans choix préalable « Conversation » / « Votre regard ».
+- [x] Placer le bloc « Repères du moment » avant les parcours culturels afin que l’Actualité ne soit jamais confondue avec la Renaissance.
 
 - [x] Généraliser les indices illustrés : 156 exercices de mots/conversations couverts, images précises à la demande, indices des séances à choix également illustrés.
 
