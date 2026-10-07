@@ -82,7 +82,15 @@ export function discussionTurns(items: PlayItem[], mode: SessionMode): Discussio
             : choice && mode === "conversation"
               ? "Répondez à voix haute."
               : DISCUSSION_INSTRUCTION,
-      followUp: REF_FOLLOW_UPS[item.id] ?? FOLLOW_UPS[item.topic] ?? DEVELOP,
+      followUp:
+        REF_FOLLOW_UPS[item.id] ??
+        (repeat
+          ? "Voulez-vous ajouter quelque chose ?"
+          : item.kind === "evoke" || item.kind === "complete"
+            ? "Que savez-vous d'autre à ce sujet ?"
+            : item.kind === "oral"
+              ? DEVELOP
+              : FOLLOW_UPS[item.topic] ?? DEVELOP),
     };
   });
 }
