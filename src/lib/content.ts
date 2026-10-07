@@ -365,4 +365,5 @@ export const SCENE: Record<string, string> = {
   "tf-insulin": "consultation", "tf-calcium": "yogurt", "tf-walnuts": "walnuts", "tf-transit": "vegetables", "tf-protage": "elderly_meal",
   "rp-fr-pres": "elysee", "rp-us-pres": "white_house", "rp-year": "calendar", "rp-month": "calendar", "rp-euro": "market", "rp-jo": "paris",
   "tf-vitdsun": "summer", "tf-saltbp": "salt",
+  "sq-mediterranee-r": "legumes", "v-legum": "legumes",
 };
