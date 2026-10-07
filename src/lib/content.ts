@@ -334,7 +334,7 @@ function reperes(now = new Date()): Item[] {
     mcq("rp-euro", "avis", "information", "Depuis 2002, les Français paient avec la même monnaie que beaucoup de pays voisins.", "monnaie", o("l'euro"), [o("le dollar"), o("la livre"), o("le franc")], { ...R, question: "Quelle est cette monnaie ?" }),
     mcq("rp-jo", "avis", "information", "Paris a accueilli les Jeux olympiques d'été, cent ans après ceux de 1924.", "Jeux olympiques", o("en 2024"), [o("en 2012"), o("en 2016"), o("en 2020")], { ...R, question: "En quelle année ?" }),
     oral("rp-ex-change", "expliquer", ["Selon vous, qu'est-ce qui a le plus changé dans la vie quotidienne ces dernières années ?"], { ...R, image: "phone", model: "Le téléphone portable et Internet ont transformé notre façon de communiquer." }),
-    oral("rp-ex-season", "expliquer", [`Nous sommes en ${MONTHS[m]}. Qu'aimez-vous dans cette période de l'année ?`], { ...R, image: seasons[si]!.image, model: "J'aime la lumière, les fruits de saison et les promenades." }),
+    oral("rp-ex-season", "expliquer", [`Nous sommes en ${MONTHS[m]}. Qu'aimez-vous dans cette période de l'année ?`], { ...R, image: seasons[si]!.image ?? "calendar", model: "J'aime la lumière, les fruits de saison et les promenades." }),
   ];
 }
 export const REPERES = reperes();

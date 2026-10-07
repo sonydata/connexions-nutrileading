@@ -48,7 +48,7 @@ function Index() {
       setUserId(data.user.id);
       const { data: s } = await supabase.from("caregiver_settings").select("topics").eq("user_id", data.user.id).maybeSingle();
       const md = data.user.user_metadata ?? {};
-      setName(md.full_name || md.name || data.user.email?.split("@")[0] || "");
+      setName(md["full_name"] || md["name"] || data.user.email?.split("@")[0] || "");
       setConfigured(hasInterests(s?.topics ?? []));
       setTopics(s?.topics ?? []);
       setState("in");
