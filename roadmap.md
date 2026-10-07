@@ -50,4 +50,4 @@
 
 - [x] Profil fonctionnel, adaptation par règles, signaux, Espace proche « Cette semaine »
 - [ ] Module Actualité adaptatif (en attente d’une source d’actualité fiable)
-- [ ] Séance : moins de boutons, écran plus simple
+- [x] Séance : moins de boutons, écran plus simple
