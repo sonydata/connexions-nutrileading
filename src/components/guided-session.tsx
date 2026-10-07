@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, HelpCircle, Lightbulb, MessageCircle, Mic, Play, Square, Volume2 } from "lucide-react";
+import { ArrowRight, Lightbulb, MessageCircle, Mic, Play, Square, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { buildPlan } from "@/lib/builder";
 import { discussionTurns, type DiscussionTurn, type SessionMode } from "@/lib/discussion";
