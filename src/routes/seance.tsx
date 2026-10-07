@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { imageSrc } from "@/lib/library";
 import { visualHintFor, type VisualHint } from "@/lib/visual-hints";
 import { responseInstruction } from "@/lib/response-guidance";
+import { GuidedSession } from "@/components/guided-session";
 import { accentOf } from "@/lib/accents";
 import { heardWord, useVoiceInput, wordCount } from "@/lib/voice-input";
 import { praise, praiseChoice } from "@/lib/praise";
@@ -19,14 +20,14 @@ export const Route = createFileRoute("/seance")({
   head: () => ({
     meta: [
       { title: "Séance du jour — Connexions" },
-      { name: "description", content: "La séance d'écoute du jour." },
+      { name: "description", content: "Conversation ou Votre regard : une séance de découverte et d'expression, avec des aides facultatives." },
       { property: "og:title", content: "Séance du jour — Connexions" },
-      { property: "og:description", content: "La séance d'écoute du jour." },
+      { property: "og:description", content: "Conversation ou Votre regard : une séance de découverte et d'expression, avec des aides facultatives." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: Seance,
+  component: GuidedSession,
 });
 
 type Outcome = "spontaneous" | "after_repeat" | "after_cue" | "revealed";

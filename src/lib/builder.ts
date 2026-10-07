@@ -3,7 +3,7 @@ import { BANK, REPERES, BY_ID, FOLLOW_IDS, SCENE, topicOf, type Item, type Opt, 
 import { interestsOf } from "./interests";
 import { COLLECTIONS, SEQUENCES, SEQ_BY_ID, SEQ_TITLE, STAGE_OF, exploredSeqs, type Sequence, type Stage } from "./sequences";
 
-export type PastAttempt = { item_id: string | null; skill: string; outcome: string; created_at: string; response_ms: number | null };
+export type PastAttempt = { item_id: string | null; kind?: string | null; skill: string; outcome: string; created_at: string; response_ms: number | null };
 
 export type PlayItem = {
   id: string;
@@ -48,7 +48,7 @@ export function firstSound(w: string) {
 export function skillLevels(past: PastAttempt[], base: number): Record<string, number> {
   const out: Record<string, number> = {};
   for (const s of ["lexique", "conseil", "information", "temps", "completion", "expression", "evocation", "elocution"]) {
-    const rows = past.filter((p) => p.skill === s).slice(0, 20);
+    const rows = past.filter((p) => p.skill === s && !p.kind?.startsWith("discussion:")).slice(0, 20);
     let lvl = base;
     if (rows.length >= 4) {
       const spont = rows.filter((r) => r.outcome === "spontaneous");
@@ -82,7 +82,7 @@ function illustrate(item: Item, text: string, answer?: string): string | null {
   return null;
 }
 
-function toPlay(item: Item, level: number): PlayItem {
+export function toPlay(item: Item, level: number): PlayItem {
   const base = { id: item.id, kind: item.kind, theme: item.theme, topic: topicOf(item), skill: item.skill, level, question: null, keyword: null, hint: null, answerText: null, image: null, model: null, syllable: null, options: [] as Opt[], correctIndex: -1, stage: STAGE_OF.get(item.id) ?? null, seqTitle: SEQ_TITLE.get(item.id) ?? null, recall: null as string | null };
   if (item.kind === "mcq") {
     let opts = shuffle([item.answer, ...item.distractors.slice(0, level)]);
@@ -215,6 +215,7 @@ export const topicOfId = (id: string | null) => (id ? ITEM_TOPIC.get(id.replace(
 export function topicAffinity(past: PastAttempt[]) {
   const acc = new Map<Topic, { n: number; s: number }>();
   for (const p of past.slice(0, 200)) {
+    if (p.kind?.startsWith("discussion:")) continue;
     const t = topicOfId(p.item_id);
     if (!t) continue;
     const a = acc.get(t) ?? { n: 0, s: 0 };

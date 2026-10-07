@@ -31,7 +31,7 @@ export async function weekSummary(): Promise<Week> {
   const minutes = Math.round(rows.reduce((t, r) => t + Math.min(40, (new Date(r.completed_at!).getTime() - new Date(r.started_at).getTime()) / 60000), 0));
   const days = new Set(rows.map((r) => r.started_at.slice(0, 10))).size;
   const ORAL = new Set(["expliquer", "lire", "reformuler", "nommer"]);
-  const oral = att.filter((x) => ORAL.has(x.kind ?? "") && (x.option_count ?? 0) > 0).length;
+  const oral = att.filter((x) => x.kind?.startsWith("discussion:") ? x.kind.includes(":shared:") : ORAL.has(x.kind ?? "") && (x.option_count ?? 0) > 0).length;
   const found = att.filter((x) => (x.kind === "evoke" || x.kind === "complete") && x.outcome !== "revealed").length;
   const topics = new Set(att.map((x) => topicOfId(x.item_id)).filter((t) => t && t !== "general")).size;
   const prev = last.data?.[0]?.started_at;

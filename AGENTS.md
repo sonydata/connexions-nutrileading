@@ -14,11 +14,11 @@
 - Exercise photos come only from the curated library in `src/lib/library.ts`.
 - Visual hints pair an explicit semantic cue with a precise curated photo when available, shared by all response modes and revealed only on request; never substitute a generic image for a missing subject or change scoring.
 - Spoken audio is synthesised once per sentence and cached in the private `voice` storage bucket — repeat plays cost nothing.
-- Adaptation is computed per skill from recent `attempts` outcomes at session start — local rules, never AI.
+- Adaptation is computed per skill from recent evaluated legacy `attempts` at session start; discussion-prefixed participation rows are excluded from level and affinity inference to avoid interpreting speech as success or failure.
 - Spoken answers use the free browser SpeechRecognition (fr-FR) as an indicative signal only, never a score; recordings stay in browser memory and are discarded after each exercise — no paid transcription, no upload.
 - Oral rows in `attempts` reuse existing columns: `kind` = oral mode, `option_count` = approximate spoken word count, `concept` suffixed `#rep` when the model sentence was repeated — avoids a schema change.
 - Choice photos are shown only when every option has one, and never for advice/action answers, so an image never contradicts the answer; otherwise a context photo from `SCENE` illustrates the situation, never the answer.
-- Choice questions read the sentence, the question and every answer aloud; tapping an answer interrupts the reading.
+- Guided sessions use two local presentation modes: Conversation opens with information and a personal invitation; Votre regard opens with a question and optional pistes. All paths permit continuing without validation; speech is never evaluated.
 - Response-mode instructions live in a shared browser-safe module used by the session and voice inventory; each prompt names one concrete action without numbered answer announcements.
 - Discovery mode: /seance runs without an account — built locally, nothing saved, voice read from cache only (speakCached never synthesises) so visitors can't create paid calls.
 - Every bank item has a subject (`topic`, explicit or derived by topicOf) separate from its skill; buildSession fills ~80 % of slots from the chosen interests (rotating subjects) and ~20 % from transversal "general" items — personalisation stays rule-based.
