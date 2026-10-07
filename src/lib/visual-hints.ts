@@ -80,10 +80,17 @@ assign("hint-satellite", "tec-ev-satellite");
 assign("hint-stew", "cui-ev-mijoter cui-ex-share");
 assign("football", "spo-ex-team");
 assign("phone", "rp-ex-change");
+assign("calendar", "rp-year rp-month rp-jo t-twice t-15h t-week t-2h t-3x t-kine");
+assign("morning", "t-bilan t-sequence");
+assign("plate", "t-dinner t-meal");
+assign("evening", "t-evening");
+assign("summer", "t-season");
 
 export type VisualHint = { image: string; alt: string; caption?: string };
 export function visualHintFor(item: { id: string; image?: string | null | undefined; options?: { image?: string | undefined }[] }): VisualHint | null {
-  const image = HINTS[item.id] ?? item.image;
+  const month = new Date().getMonth();
+  const season = month === 11 || month < 2 ? "winter" : month < 5 ? "spring" : month < 8 ? "summer" : "autumn";
+  const image = item.id === "rp-season" ? season : HINTS[item.id] ?? item.image;
   if (!image || !imageSrc(image)) return null;
   if (item.id === "sq-microbiote-e") return { image, alt: "Un bol de yaourt nature, un lait fermenté", caption: "Yaourt nature · lait fermenté" };
   return { image, alt: LIBRARY.find((entry) => entry.id === image)?.label ?? "Indice visuel pour cette question" };

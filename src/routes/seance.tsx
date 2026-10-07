@@ -509,7 +509,7 @@ function Seance() {
 
         {isRecall && (
           <div className="mt-4 w-full text-center">
-            {it.image && (
+            {it.image && (it.mode === "nommer" || it.image !== visualHintFor(it)?.image) && (
               <div className={`mx-auto w-full max-w-xs overflow-hidden rounded-3xl shadow-lg transition ${success ? "ring-4 ring-calm-soft" : ""}`}>
                 <img src={imageSrc(it.image) ?? ""} alt="" className={`w-full ${it.image === "legumes" ? "aspect-[3/2] object-contain" : "aspect-square object-cover"}`} />
               </div>
@@ -545,7 +545,7 @@ function Seance() {
 
         {isOpen && (
           <div className="mt-4 w-full text-center">
-            {it.image && <img src={imageSrc(it.image) ?? ""} alt="" className="mx-auto mb-5 max-h-56 w-auto max-w-full rounded-3xl shadow-md" />}
+            {it.image && it.image !== visualHintFor(it)?.image && <img src={imageSrc(it.image) ?? ""} alt="" className="mx-auto mb-5 max-h-56 w-auto max-w-full rounded-3xl shadow-md" />}
             <p className="mx-auto max-w-3xl font-serif text-4xl leading-tight">{it.audio}</p>
             {step === "ask" && <OptionalVisualHint key={it.id} hint={visualHintFor(it)} />}
             {step === "ask" ? (

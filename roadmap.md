@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Généraliser les indices illustrés à tous les exercices, avec images pertinentes et affichage à la demande.
+- [x] Généraliser les indices illustrés : 156 exercices de mots/conversations couverts, images précises à la demande, indices des séances à choix également illustrés.
 
 - [x] Question sur l’intestin : bouton Indice qui révèle une photo de yaourt nature / lait fermenté à la demande (vérifié dans une séance).
 
