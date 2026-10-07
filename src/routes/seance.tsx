@@ -510,7 +510,7 @@ function Seance() {
           <div className="mt-4 w-full text-center">
             {it.image && (
               <div className={`mx-auto w-full max-w-xs overflow-hidden rounded-3xl shadow-lg transition ${success ? "ring-4 ring-calm-soft" : ""}`}>
-                <img src={imageSrc(it.image) ?? ""} alt="" className="aspect-square w-full object-cover" />
+                <img src={imageSrc(it.image) ?? ""} alt="" className={`w-full ${it.image === "legumes" ? "aspect-[3/2] object-contain" : "aspect-square object-cover"}`} />
               </div>
             )}
             {it.kind === "complete" ? (
