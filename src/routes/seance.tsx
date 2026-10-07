@@ -543,6 +543,7 @@ function Seance() {
 
         {isOpen && (
           <div className="mt-4 w-full text-center">
+            {it.image && <img src={imageSrc(it.image) ?? ""} alt="" className="mx-auto mb-5 max-h-56 w-auto max-w-full rounded-3xl shadow-md" />}
             <p className="mx-auto max-w-3xl font-serif text-4xl leading-tight">{it.audio}</p>
             {step === "ask" ? (
               <>
