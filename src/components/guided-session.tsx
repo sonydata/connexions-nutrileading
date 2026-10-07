@@ -312,6 +312,7 @@ export function GuidedSession() {
           size="icon"
           aria-label="Réécouter"
           onClick={() => {
+            if (view === "prompt") return notUnderstood();
             signal("repeat");
             read(
               view === "model"
@@ -349,42 +350,24 @@ export function GuidedSession() {
             « {voice.transcript || heard} »
           </p>
         )}
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          {view !== "model" && (
-            <>
-              <Button variant="outline" onClick={notUnderstood} className="h-12 text-lg">
-                <HelpCircle />
-                Je n'ai pas compris
-              </Button>
-              <Button
-                variant={params.cueEarly ? "secondary" : "outline"}
-                onClick={() => { supportUsed.current = true; setHintVisible((v) => !v); }}
-                aria-expanded={hintVisible}
-                aria-controls="discussion-hint"
-                className="h-12 text-lg"
-              >
-                <Lightbulb />
-                {hintVisible ? "Masquer l’indice" : "Indice"}
-              </Button>
-              {turn.options.length > 0 && (
-                <Button
-                  variant="outline"
-                  aria-expanded={optionsVisible}
-                  onClick={() => {
-                    supportUsed.current = true;
-                    setOptionsVisible((v) => !v);
-                    if (!optionsVisible) read(turn.options.map((o) => o.label));
-                  }}
-                  className="h-12 text-lg"
-                >
-                  {optionsVisible
-                    ? "Masquer les pistes"
-                    : `${turn.options.length === 2 ? "Deux" : "Trois"} pistes`}
-                </Button>
-              )}
-            </>
-          )}
-        </div>
+        {view !== "model" && (
+          <Button
+            variant="ghost"
+            onClick={() => {
+              supportUsed.current = true;
+              const open = !hintVisible;
+              setHintVisible(open);
+              setOptionsVisible(open && turn.options.length > 0);
+              if (open && turn.options.length) read(turn.options.map((o) => o.label));
+            }}
+            aria-expanded={hintVisible}
+            aria-controls="discussion-hint"
+            className="mt-5 h-12 text-lg text-primary"
+          >
+            <Lightbulb />
+            {hintVisible ? "Masquer l’aide" : "Besoin d’aide ?"}
+          </Button>
+        )}
         {hintVisible && view !== "model" && (
           <figure id="discussion-hint" className="mt-5 max-w-64" aria-live="polite">
             {hint.image && (
@@ -395,6 +378,9 @@ export function GuidedSession() {
               />
             )}
             <figcaption className="mt-3 text-lg">{hint.caption}</figcaption>
+            <Button variant="link" onClick={showModel} className="mt-1 text-lg">
+              Entendre une réponse possible
+            </Button>
           </figure>
         )}
         {optionsVisible && view !== "model" && (
@@ -430,18 +416,8 @@ export function GuidedSession() {
                 ? "Répéter"
                 : "Répondre"}
           </Button>
-          {view !== "model" && (
-            <Button
-              variant="outline"
-              onClick={showModel}
-              className="h-14 whitespace-normal text-lg"
-            >
-              <Volume2 />
-              Une formulation
-            </Button>
-          )}
           {voice.recording && (
-            <Button variant="outline" onClick={voice.playRecording} className="h-14 text-lg">
+            <Button variant="ghost" onClick={voice.playRecording} className="h-14 text-lg">
               <Play />
               M'écouter
             </Button>

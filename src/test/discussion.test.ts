@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildPlan, skillLevels, toPlay, topicAffinity } from "../lib/builder";
 import { BANK, REPERES } from "../lib/content";
 import { discussionTurns } from "../lib/discussion";
+import { SEQUENCES } from "../lib/sequences";
 
 describe("Two guided modes", () => {
   it("covers all subjects, hides choices in conversation and preserves local items", () => {
