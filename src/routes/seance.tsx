@@ -7,6 +7,7 @@ import { buildPlan } from "@/lib/builder";
 import { supabase } from "@/integrations/supabase/client";
 import { imageSrc } from "@/lib/library";
 import { visualHintFor, type VisualHint } from "@/lib/visual-hints";
+import { responseInstruction } from "@/lib/response-guidance";
 import { accentOf } from "@/lib/accents";
 import { heardWord, useVoiceInput, wordCount } from "@/lib/voice-input";
 import { praise, praiseChoice } from "@/lib/praise";
@@ -57,17 +58,6 @@ function speakLocally(text: string, rate: number): Promise<void> {
 
 const MODE_TITLE: Record<string, string> = { expliquer: "Votre avis", lire: "Formulation", reformuler: "Avec vos mots", nommer: "Regard d'expert" };
 const TOPIC_TITLE: Record<string, string> = { ...Object.fromEntries(INTERESTS.map((x) => [x.id, x.label])), sante: "Santé & nutrition", general: "Organisation" };
-/** Spoken "your turn" cue, chosen by exercise type and varied. */
-function turnCue(it: PlayItem, n: number): string {
-  if (it.kind === "oral" && it.mode === "lire") return "À vous. Répétez la phrase.";
-  if (it.kind === "oral" && it.mode === "reformuler") return "À vous. Dites-le avec vos mots.";
-  if (it.kind === "oral" && it.mode === "expliquer") {
-    if (/conseil/i.test(it.audio)) return "À vous. Quel serait votre conseil ?";
-    if (/avis|frappe/i.test(it.audio)) return "À vous. Quel est votre avis ?";
-    return n % 2 ? "Vous pouvez répondre à voix haute." : "À vous. Comment l'expliqueriez-vous ?";
-  }
-  return "À vous de répondre.";
-}
 const THEME_TITLE: Record<string, string> = { nutrition: "Nutrition", avis: "Cas pratique", sciences: "Culture scientifique", temps: "Organisation" };
 const THEME_FR: Record<string, string> = { nutrition: "de nutrition", avis: "les cas pratiques", sciences: "de culture scientifique", temps: "d'organisation" };
 
@@ -169,7 +159,7 @@ function Seance() {
           const t = texts[k];
           if (!t) continue;
           if (id !== playId.current) return false;
-          if (prev) await sleep(/^Réponse \d\.$/.test(prev) ? 200 : 700);
+          if (prev) await sleep(700);
           if (id !== playId.current) return false;
           onStep?.(k);
           await playOne(t, slow ? 0.85 : 1);
@@ -242,23 +232,19 @@ function Seance() {
   /** Full prompt read aloud: sentence, question, then each answer. */
   const intro = (x: PlayItem) => [...(x.recall ? [x.recall] : []), ...(x.stage === "comprendre" ? ["Écoutez cette information."] : [])];
   const isChoiceItem = (x: PlayItem) => x.kind === "mcq" || x.kind === "tf";
-  const ANNOUNCE = "Voici les réponses possibles.";
-  const spoken = (x: PlayItem) => [...intro(x), x.audio, x.question, ...(isChoiceItem(x) ? [ANNOUNCE, ...x.options.flatMap((o, k) => [`Réponse ${k + 1}.`, o.label])] : [])];
-  /** Questions whose answers have already been announced out loud — never announced twice. */
-  const announced = useRef(new Set<string>());
+  const spoken = (x: PlayItem) => [...intro(x), x.audio, x.question, ...(isChoiceItem(x) ? [responseInstruction(x), ...x.options.map((o) => o.label)] : [])];
   /** Read the prompt; highlight each answer while it is read; then say clearly when it is his turn to speak. */
-  const readItem = async (x: PlayItem, slow = false, questionOnly = false, announce = true) => {
+  const readItem = async (x: PlayItem, slow = false, questionOnly = false) => {
     setCue(null);
     const full = spoken(x);
-    const texts = questionOnly ? [x.audio, x.question] : announce && !announced.current.has(x.id) ? full : full.filter((t) => t !== ANNOUNCE);
-    const h = texts.findIndex((t) => t === "Réponse 1.");
+    const texts = questionOnly ? [x.audio, x.question] : full;
+    const h = isChoiceItem(x) && !questionOnly ? texts.length - x.options.length : -1;
     const done = await play(texts, slow, (k) => {
-      if (texts[k] === ANNOUNCE) announced.current.add(x.id);
-      setReading(h >= 0 && k >= h ? Math.floor((k - h) / 2) : -1);
+      setReading(h >= 0 && k >= h ? k - h : -1);
     });
     const open = x.kind === "oral" || x.kind === "evoke" || x.kind === "complete";
     if (done && open && !questionOnly) {
-      const c = turnCue(x, i);
+      const c = responseInstruction(x);
       setCue(c);
       const ok = await play([c]);
       if (ok && !(x.kind === "oral" && x.mode === "lire")) voice.start();
@@ -336,12 +322,12 @@ function Seance() {
       setStage(1);
       setMessage("Écoutons encore.");
       await play(["Écoutons encore."]);
-      readItem(it, true, false, false);
+      readItem(it, true);
     } else if (stage === 1) {
       setStage(2);
       setMessage("Voici un indice.");
       await play(["Voici un indice."]);
-      readItem(it, true, false, false);
+      readItem(it, true);
     } else {
       setStage(3);
       setChosen(it.correctIndex);
@@ -503,7 +489,7 @@ function Seance() {
         {isChoice && !speaking && it.question && chosen === null && (
           <button onClick={() => readItem(it, false, true)} className="mt-1 text-sm text-muted-foreground underline underline-offset-4">Question seulement</button>
         )}
-        {cue && step === "ask" && <TurnCue text={cue} listening={voice.listening} />}
+        {!isChoice && step === "ask" && <TurnCue text={cue ?? responseInstruction(it)} listening={voice.listening} />}
 
         {isChoice && <ChoiceBody it={it} accent={accent} reading={reading} stage={stage} wrong={wrong} chosen={chosen} message={message} success={success} onChoose={choose} onNext={goNext} />}
 
@@ -515,16 +501,15 @@ function Seance() {
               </div>
             )}
             {it.kind === "complete" ? (
-              <p className="mx-auto mt-4 max-w-3xl font-serif text-5xl leading-tight">
+              <p className="mx-auto mt-4 max-w-3xl font-serif text-2xl leading-snug md:text-3xl">
                 {it.audio.replace(/…$/, "")} <span className="text-calm">{stage >= 3 ? it.answerText : stage === 2 ? it.syllable : "…"}</span>
               </p>
             ) : (
               <>
-                {it.kind === "evoke" && <p className="mx-auto mt-2 max-w-3xl font-serif text-4xl leading-tight">{it.audio}</p>}
+                {it.kind === "evoke" && <p className="mx-auto mt-2 max-w-3xl font-serif text-2xl leading-snug md:text-3xl">{it.audio}</p>}
                 <p className="mt-6 h-14 font-serif text-5xl text-calm">{stage >= 3 ? it.answerText : stage === 2 ? it.syllable : ""}</p>
               </>
             )}
-            {stage === 1 && it.hint && <p className="mt-4 font-serif text-2xl italic text-muted-foreground">{it.hint}</p>}
             {stage >= 1 && step === "ask" && <HintPhoto hint={visualHintFor(it)} />}
             <Feedback message={message} success={success} />
             {step === "model" && it.model && it.kind !== "oral" && <p className="mx-auto mt-2 max-w-3xl font-serif text-2xl italic text-muted-foreground">{it.model}</p>}
@@ -546,7 +531,7 @@ function Seance() {
         {isOpen && (
           <div className="mt-4 w-full text-center">
             {it.image && it.image !== visualHintFor(it)?.image && <img src={imageSrc(it.image) ?? ""} alt="" className="mx-auto mb-5 max-h-56 w-auto max-w-full rounded-3xl shadow-md" />}
-            <p className="mx-auto max-w-3xl font-serif text-4xl leading-tight">{it.audio}</p>
+            <p className="mx-auto max-w-3xl font-serif text-2xl leading-snug md:text-3xl">{it.audio}</p>
             {step === "ask" && <OptionalVisualHint key={it.id} hint={visualHintFor(it)} />}
             {step === "ask" ? (
               <>
@@ -572,7 +557,8 @@ function Seance() {
 
         {isLire && (
           <div className="mt-4 w-full text-center">
-            <p className="mx-auto max-w-3xl font-serif text-5xl leading-tight">{it.audio}</p>
+            <p className="mx-auto max-w-3xl font-serif text-2xl leading-snug md:text-3xl">{it.audio}</p>
+            {step === "ask" && <OptionalVisualHint key={it.id} hint={visualHintFor(it)} />}
             <p className="mt-4 text-2xl font-medium">{repeated ? "" : "Écoutez, puis répétez la phrase."}</p>
             <Feedback message={message} success={success} />
             <Actions>
@@ -606,15 +592,16 @@ function RepeatActions({ voice, repeated, onListen, onRepeat, onNext }: { voice:
 function ChoiceBody({ it, accent, reading, stage, wrong, chosen, message, success, onChoose, onNext }: { it: PlayItem; accent: ReturnType<typeof accentOf>; reading: number; stage: number; wrong: number[]; chosen: number | null; message: string | null; success: boolean; onChoose: (k: number) => void; onNext: () => void }) {
   const hasImages = it.options.length > 0 && it.options.every((o) => o.image);
   const n = it.options.length;
-  const cols = n === 4 ? "grid-cols-2 lg:grid-cols-4" : n === 3 ? "grid-cols-3" : "grid-cols-2";
+  const cols = n === 4 ? "grid-cols-2 lg:grid-cols-4" : n === 3 ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2";
   return (
     <>
       <div className="mt-2 min-h-24 text-center">
-        {it.image && (
+        {it.image && it.image !== visualHintFor(it).image && (
           <img src={imageSrc(it.image) ?? ""} alt="" className="mx-auto mb-5 max-h-64 w-auto max-w-full rounded-3xl shadow-md" />
         )}
-        <p className="mx-auto max-w-3xl font-serif text-4xl leading-snug md:text-5xl">{it.audio}</p>
-        {it.question && <p className={`mt-3 font-serif text-2xl italic md:text-3xl ${accent.text}`}>{it.question}</p>}
+        <p className="mx-auto max-w-3xl font-serif text-2xl leading-snug md:text-3xl">{it.audio}</p>
+        {it.question && <p className={`mt-3 font-serif text-2xl ${accent.text}`}>{it.question}</p>}
+        {chosen === null && <p className="mt-4 text-xl font-medium text-foreground">{responseInstruction(it)}</p>}
         {stage >= 2 && it.keyword && <span className="mt-3 inline-block rounded-full bg-gold/25 px-5 py-1.5 text-xl">{it.keyword}</span>}
         {chosen === null && <OptionalVisualHint key={it.id} hint={visualHintFor(it)} />}
         <Feedback message={message} success={success} />
@@ -630,9 +617,8 @@ function ChoiceBody({ it, accent, reading, stage, wrong, chosen, message, succes
               onClick={() => onChoose(k)}
               className={`relative overflow-hidden rounded-3xl border-2 bg-card text-card-foreground shadow-sm transition ${right ? "border-calm ring-4 ring-calm-soft animate-glow" : reading === k ? "border-foreground/50 ring-4 ring-border scale-[1.02]" : "border-foreground/25 hover:border-foreground/50 hover:-translate-y-1 hover:shadow-lg"} ${dim ? "opacity-60" : ""}`}
             >
-              <span className="absolute left-4 top-3 text-sm font-semibold text-foreground/70">Réponse {k + 1}</span>
               {hasImages && <div className="aspect-square w-full bg-muted">{src && <img src={src} alt={o.label} className="h-full w-full object-cover" />}</div>}
-              <div className={`px-4 text-center ${hasImages ? "py-4 text-2xl" : "pt-14 pb-10 font-serif text-3xl"}`}>{o.label}</div>
+              <div className={`px-4 text-center ${hasImages ? "py-4 text-2xl" : "py-8 font-serif text-2xl"}`}>{o.label}</div>
               {right && success && (
                 <span className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-calm text-primary-foreground animate-pop">
                   <Check className="h-6 w-6" />
@@ -707,7 +693,7 @@ function HintPhoto({ hint }: { hint: VisualHint | null }) {
   if (!hint) return null;
   return (
     <figure className="mx-auto mt-4 max-w-56" aria-live="polite">
-      <img src={imageSrc(hint.image) ?? ""} alt={hint.alt} width={480} height={480} className="max-h-56 w-full rounded-lg object-contain" />
+      {hint.image && <img src={imageSrc(hint.image) ?? ""} alt={hint.alt} width={480} height={480} className="max-h-56 w-full rounded-lg object-contain" />}
       {hint.caption && <figcaption className="mt-2 text-lg text-foreground">{hint.caption}</figcaption>}
     </figure>
   );

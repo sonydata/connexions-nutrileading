@@ -2,20 +2,13 @@
 // so the same natural voice is heard everywhere (guests included) with no live synthesis.
 import { BANK, BY_ID, type Item } from "./content";
 import { SEQ_ITEMS, SEQUENCES } from "./sequences";
+import { RESPONSE_INSTRUCTIONS } from "./response-guidance";
 
 const FIXED = [
   "Écoutez cette information.",
-  "Voici les réponses possibles.",
-  "Réponse 1.", "Réponse 2.", "Réponse 3.", "Réponse 4.", "Réponse 5.",
+  ...RESPONSE_INSTRUCTIONS,
   "Vrai ou faux ?", "Vrai", "Faux",
   "Voici une formulation possible.",
-  "À vous. Répétez la phrase.",
-  "À vous. Dites-le avec vos mots.",
-  "À vous. Quel serait votre conseil ?",
-  "À vous. Quel est votre avis ?",
-  "Vous pouvez répondre à voix haute.",
-  "À vous. Comment l'expliqueriez-vous ?",
-  "À vous de répondre.",
   "L'idée est là.", "Bonne formulation.", "Bonne mobilisation du langage.", "Réponse pertinente.",
   // Encouragements (dits à voix haute après chaque réponse)
   "Très juste.", "Bonne analyse.", "Très bon raisonnement.", "Belle précision.", "Tout à fait.",
@@ -46,7 +39,7 @@ function textsOf(i: Item): (string | undefined)[] {
 export function voiceTextsFor(ids: string[]): string[] {
   const out = new Set<string>();
   for (const id of ids) {
-    const i = BY_ID.get(id);
+    const i = BY_ID.get(id) ?? SEQ_ITEMS.find((item) => item.id === id);
     if (!i) continue;
     for (const t of textsOf(i)) if (t && t.trim()) out.add(t.trim());
   }
