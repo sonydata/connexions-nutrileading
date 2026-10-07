@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Lightbulb, MessageCircle, Mic, Play, Square, Volume2 } from "lucide-react";
+import { ArrowRight, Lightbulb, Mic, Play, Square, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { buildPlan } from "@/lib/builder";
-import { discussionTurns, type DiscussionTurn, type SessionMode } from "@/lib/discussion";
+import { discussionTurns, type DiscussionTurn } from "@/lib/discussion";
 import { completeSession, recordAttempt, speak, speakCached, startSession } from "@/lib/session.functions";
 import { deriveParams, segment, type SessionParams } from "@/lib/adaptive-profile";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,8 +24,7 @@ export function GuidedSession() {
   const record = useServerFn(recordAttempt);
   const complete = useServerFn(completeSession);
   const voice = useVoiceInput();
-  const [state, setState] = useState<"mode" | "loading" | "play" | "done" | "error">("mode");
-  const [mode, setMode] = useState<SessionMode>("conversation");
+  const [state, setState] = useState<"loading" | "play" | "done" | "error">("loading");
   const [turns, setTurns] = useState<DiscussionTurn[]>([]);
   const [index, setIndex] = useState(0);
   const [view, setView] = useState<"prompt" | "develop" | "model">("prompt");
@@ -45,6 +44,7 @@ export function GuidedSession() {
   const participationCount = useRef(0);
   const words = useRef(0);
   const supportUsed = useRef(false);
+  const started = useRef(false);
   const turn = turns[index];
 
   function stopAudio() {
@@ -108,9 +108,13 @@ export function GuidedSession() {
     // Each new turn is read once; explicit controls handle rereading.
   }, [state, index]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function begin(chosenMode: SessionMode) {
-    setMode(chosenMode);
-    setState("loading");
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    begin();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function begin() {
     try {
       const { data } = await supabase.auth.getSession();
       let topics = DEFAULT_INTERESTS.map((t) => PREFIX + t);
@@ -125,7 +129,7 @@ export function GuidedSession() {
       sessionId.current = result.sessionId;
       setTeaser(result.teaser);
       setParams(result.params);
-      const next = discussionTurns(result.items, chosenMode)
+      const next = discussionTurns(result.items, "regard")
         .slice(0, result.params.maxTurns)
         .map((t) => ({ ...t, options: t.options.slice(0, result.params.optionCount) }));
       if (!next.length) throw new Error("empty");
@@ -183,7 +187,7 @@ export function GuidedSession() {
           data: {
             sessionId: sessionId.current,
             itemId: turn.item.id,
-            kind: `discussion:${mode}:${turn.phase}:${participated.current ? "shared" : "listened"}:${supportUsed.current ? "supported" : "independent"}`,
+            kind: `discussion:guided:${turn.phase}:${participated.current ? "shared" : "listened"}:${supportUsed.current ? "supported" : "independent"}`,
             category: turn.item.theme,
             skill: turn.item.skill,
             prompt: turn.prompt,
@@ -212,34 +216,6 @@ export function GuidedSession() {
     if (index + 1 >= turns.length) setState("done");
     else setIndex((n) => n + 1);
   }
-  if (state === "mode")
-    return (
-      <Frame>
-        <p className="text-sm font-semibold uppercase text-primary">Connexions</p>
-        <h1 className="mt-4 font-serif text-4xl">Aujourd'hui, vous préférez…</h1>
-        <div className="mt-10 grid w-full max-w-2xl gap-5 sm:grid-cols-2">
-          {(
-            [
-              { id: "conversation", label: "Conversation", Icon: MessageCircle },
-              { id: "regard", label: "Votre regard", Icon: Mic },
-            ] as const
-          ).map(({ id, label, Icon }) => (
-            <Button
-              key={id}
-              variant="outline"
-              onClick={() => begin(id)}
-              className="h-36 flex-col gap-4 whitespace-normal rounded-lg border-2 bg-card text-2xl text-foreground"
-            >
-              <Icon className="size-8" />
-              {label}
-            </Button>
-          ))}
-        </div>
-        <Button asChild variant="link" className="mt-8">
-          <Link to="/">Accueil</Link>
-        </Button>
-      </Frame>
-    );
   if (state === "loading")
     return (
       <Frame>
@@ -298,7 +274,7 @@ export function GuidedSession() {
         className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center py-10 text-center"
       >
         <p className={`mb-5 text-sm font-semibold uppercase ${accent.text}`}>
-          {mode === "conversation" ? "Conversation" : "Votre regard"} · {title}
+          {title}
         </p>
         {src && (
           <img
