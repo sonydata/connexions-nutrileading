@@ -101,19 +101,6 @@ const REF_FOLLOW_UPS: Record<string, string> = {
   "rp-jo": "Quel sport aimez-vous regarder ?",
 };
 
-function presentReference(id: string, answer: string): string {
-  const references: Record<string, string> = {
-    "rp-fr-pres": `Le président de la France est ${answer}.`,
-    "rp-us-pres": `Le président des États-Unis est ${answer}.`,
-    "rp-year": `Nous sommes en ${answer}.`,
-    "rp-month": `Nous sommes en ${answer}.`,
-    "rp-season": `La saison actuelle en France est ${answer}.`,
-    "rp-euro": "En France, on paie en euros.",
-    "rp-jo": "Paris a accueilli les Jeux olympiques de 2024.",
-  };
-  return references[id] ?? answer;
-}
-
 export function discussionVoiceTexts(items: PlayItem[]): string[] {
   const out = new Set([DEVELOP, ...Object.values(OPENINGS)]);
   for (const mode of ["conversation", "regard"] as const)

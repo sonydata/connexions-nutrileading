@@ -333,7 +333,6 @@ function reperes(now = new Date()): Item[] {
     mcq("rp-season", "temps", "temps", "Quelle est la saison en France aujourd'hui ?", "saison", seasons[si] ?? o("l'automne", "autumn"), [seasons[(si + 2) % 4] ?? o("le printemps", "spring"), seasons[(si + 1) % 4] ?? o("l'hiver", "winter")], R),
     mcq("rp-euro", "avis", "information", "Avec quelle monnaie paie-t-on en France ?", "monnaie", o("l'euro"), [o("le dollar"), o("le franc")], R),
     mcq("rp-jo", "avis", "information", "Quelle ville a accueilli les Jeux olympiques de 2024 ?", "Jeux olympiques", o("Paris", "paris"), [o("Londres", "london"), o("Rome", "rome")], R),
-    oral("rp-ex-change", "expliquer", ["Le téléphone portable : qu'en pensez-vous ?"], { ...R, image: "phone", hint: "Il permet d'appeler et de recevoir des photos.", model: "Il permet de garder le contact avec ses proches." }),
     oral("rp-ex-season", "expliquer", ["Qu'aimez-vous faire en cette saison ?"], { ...R, image: seasons[si]?.image ?? "calendar", hint: "Une promenade, un plat de saison ou un moment chez soi.", model: "J'aime me promener et profiter des produits de saison." }),
   ];
 }
