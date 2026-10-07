@@ -1,3 +1,4 @@
+import { LIBRARY, imageSrc } from "./library";
 import { BANK, REPERES, BY_ID, FOLLOW_IDS, SCENE, topicOf, type Item, type Opt, type Skill, type Theme, type Topic } from "./content";
 import { interestsOf } from "./interests";
 import { COLLECTIONS, SEQUENCES, SEQ_BY_ID, SEQ_TITLE, STAGE_OF, exploredSeqs, type Sequence, type Stage } from "./sequences";
@@ -65,6 +66,29 @@ export function skillLevels(past: PastAttempt[], base: number): Record<string, n
   return out;
 }
 
+// Illustration for every question: curated scene → photo whose subject is named in the
+// situation (never in the answers) → a photo of the subject area. Never shows the answer.
+const STOP = new Set(["les", "des", "une", "verre", "tasse", "pain", "soleil", "lever", "coucher", "haut"]);
+const norm = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const KEYS = LIBRARY.flatMap((l) => norm(l.label).split(/[^a-z]+/).filter((w) => w.length >= 4 && !STOP.has(w)).map((w) => [w, l.id] as const));
+const TOPIC_PHOTOS: Record<string, string[]> = {
+  sante: ["vegetables", "market", "balanced_meal", "olive_oil"], medecine: ["consultation", "elderly_meal", "sleep"], sciences: ["astronomy", "forest", "book"],
+  histoire: ["rome", "paris", "london", "book"], art: ["monet", "mona_lisa", "piano", "violin"], geographie: ["barcelona", "london", "rome", "paris"],
+  nature: ["forest", "spring", "autumn", "summer"], litterature: ["book", "newspaper", "pen"], technologie: ["phone", "watch"], cuisine: ["cooking", "market", "vegetables"],
+  sport: ["football", "walk"], actualite: ["newspaper", "elysee"], general: ["calendar", "watch"],
+};
+function illustrate(item: Item, text: string, answer?: string): string | null {
+  if (SCENE[item.id]) return SCENE[item.id]!;
+  const t = norm(text);
+  const bad = answer ? norm(answer) : "";
+  const hit = KEYS.find(([w, id]) => new RegExp(`\\b${w}`).test(t) && !(bad && bad.includes(w)) && imageSrc(id));
+  if (hit) return hit[1];
+  const pool = (TOPIC_PHOTOS[topicOf(item)] ?? TOPIC_PHOTOS.general!).filter((id) => imageSrc(id));
+  let h = 0;
+  for (const c of item.id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return pool[h % pool.length] ?? null;
+}
+
 function toPlay(item: Item, level: number): PlayItem {
   const base = { id: item.id, kind: item.kind, theme: item.theme, topic: topicOf(item), skill: item.skill, level, question: null, keyword: null, hint: null, answerText: null, image: null, model: null, syllable: null, options: [] as Opt[], correctIndex: -1, stage: STAGE_OF.get(item.id) ?? null, seqTitle: SEQ_TITLE.get(item.id) ?? null, recall: null as string | null };
   if (item.kind === "mcq") {
@@ -80,21 +104,21 @@ function toPlay(item: Item, level: number): PlayItem {
       keyword: item.keyword,
       options: opts,
       correctIndex: opts.indexOf(answer),
-      image: opts.every((o) => o.image) ? null : (SCENE[item.id] ?? null),
+      image: opts.every((o) => o.image) ? null : illustrate(item, `${item.audio} ${item.question ?? ""}`, item.answer.label),
     };
   }
   if (item.kind === "tf") {
-    return { ...base, audio: item.audio, question: "Vrai ou faux ?", keyword: item.keyword, options: [{ label: "Vrai" }, { label: "Faux" }], correctIndex: item.answer ? 0 : 1, image: SCENE[item.id] ?? null };
+    return { ...base, audio: item.audio, question: "Vrai ou faux ?", keyword: item.keyword, options: [{ label: "Vrai" }, { label: "Faux" }], correctIndex: item.answer ? 0 : 1, image: illustrate(item, item.audio) };
   }
   if (item.kind === "complete") {
-    return { ...base, audio: item.audio, hint: item.hint, answerText: item.answer, syllable: firstSound(item.answer), model: item.audio.replace(/…$/, item.answer + ".") };
+    return { ...base, audio: item.audio, hint: item.hint, answerText: item.answer, image: illustrate(item, item.audio, item.answer), syllable: firstSound(item.answer), model: item.audio.replace(/…$/, item.answer + ".") };
   }
   if (item.kind === "evoke") {
-    return { ...base, audio: item.audio, hint: item.hint, answerText: item.answer, syllable: item.syllable, model: item.model };
+    return { ...base, audio: item.audio, hint: item.hint, answerText: item.answer, image: illustrate(item, item.audio, item.answer), syllable: item.syllable, model: item.model };
   }
   const step = item.steps[Math.min(level - 1, item.steps.length - 1)]!;
   const model = item.mode === "lire" ? step : item.mode === "nommer" && item.answer ? cap(item.answer) + "." : (item.model ?? null);
-  return { ...base, mode: item.mode, audio: step, image: item.image ?? null, answerText: item.answer ?? null, hint: item.hint ?? null, syllable: item.answer ? firstSound(item.answer) : null, model };
+  return { ...base, mode: item.mode, audio: step, image: item.image ?? (item.mode === "nommer" ? null : illustrate(item, step)), answerText: item.answer ?? null, hint: item.hint ?? null, syllable: item.answer ? firstSound(item.answer) : null, model };
 }
 
 // One session = 15 activities. ~80 % come from the person's chosen subjects
