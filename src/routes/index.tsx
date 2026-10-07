@@ -29,7 +29,7 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const [state, setState] = useState<"loading" | "out" | "in">("loading");
-  const [name, setName] = useState("Hafid");
+  const [name, setName] = useState("");
   const [week, setWeek] = useState<Week | null>(null);
   const [topics, setTopics] = useState<string[]>([]);
   const [configured, setConfigured] = useState(true);
@@ -46,8 +46,9 @@ function Index() {
         return setState("out");
       }
       setUserId(data.user.id);
-      const { data: s } = await supabase.from("caregiver_settings").select("patient_name, topics").eq("user_id", data.user.id).maybeSingle();
-      if (s?.patient_name) setName(s.patient_name);
+      const { data: s } = await supabase.from("caregiver_settings").select("topics").eq("user_id", data.user.id).maybeSingle();
+      const md = data.user.user_metadata ?? {};
+      setName(md.full_name || md.name || data.user.email?.split("@")[0] || "");
       setConfigured(hasInterests(s?.topics ?? []));
       setTopics(s?.topics ?? []);
       setState("in");
@@ -58,8 +59,8 @@ function Index() {
   const today = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
   const ICON: Record<string, typeof Apple> = { sante: Apple, medecine: Stethoscope, sciences: Microscope, histoire: Landmark, art: Palette, geographie: MapIcon, actualite: Newspaper, nature: Leaf, litterature: BookOpen, technologie: Cpu, cuisine: ChefHat, sport: Trophy };
-  const ids = interestsOf(topics).filter((x) => !x.startsWith("autre:") && x !== "actualite");
-  const myIds = ids.length ? ids : DEFAULT_INTERESTS.filter((x) => x !== "actualite");
+  const ids = interestsOf(topics).filter((x) => !x.startsWith("autre:"));
+  const myIds = ids.length ? ids : DEFAULT_INTERESTS;
   const label = (id: string) => INTERESTS.find((x) => x.id === id)?.label ?? id;
   const short = (id: string) => label(id).split(" &")[0]!;
   const other = otherInterest(topics);
@@ -67,7 +68,7 @@ function Index() {
   const startLink = { to: configured ? "/seance" : "/interets", search: configured ? {} : { next: "seance" as const } } as const;
 
   async function toggleInterest(id: string) {
-    const stored = interestsOf(topics).filter((x) => x !== "actualite");
+    const stored = interestsOf(topics);
     const cur = stored.length ? stored : myIds;
     const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
     if (!next.length) return;
@@ -90,7 +91,7 @@ function Index() {
           {today}
         </p>
         <nav className="flex flex-wrap items-center justify-end gap-1 text-sm font-medium">
-          {state === "in" && (
+          {state === "in" && name && (
             <span className="mr-2 flex items-center gap-2 rounded-full border border-border bg-card py-1.5 pl-2 pr-4">
               <span className="grid h-7 w-7 place-items-center rounded-full bg-brand text-xs font-bold text-primary-foreground">{name.charAt(0).toUpperCase()}</span>
               <span className="text-foreground">{name}</span>

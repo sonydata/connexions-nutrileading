@@ -9,7 +9,7 @@ export const INTERESTS = [
   { id: "histoire", label: "Histoire" },
   { id: "art", label: "Art & culture" },
   { id: "geographie", label: "Géographie & voyages" },
-  { id: "actualite", label: "Actualité", soon: true },
+  { id: "actualite", label: "Actualité & repères" },
   { id: "nature", label: "Nature" },
   { id: "litterature", label: "Littérature" },
   { id: "technologie", label: "Technologie" },
