@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildPlan } from "./builder";
 import { voiceFileName } from "./voice-key";
+import { deriveParams, isSignal, summariseSignals, type ProfileAnswers } from "./adaptive-profile";
 
 export type { PlayItem } from "./builder";
 
@@ -12,16 +13,20 @@ export const startSession = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: settings } = await supabase.from("caregiver_settings").select("topics, difficulty").eq("user_id", userId).maybeSingle();
+    const { data: profile } = await supabase.from("adaptive_profiles").select("answers").eq("user_id", userId).maybeSingle();
     const { data: past } = await supabase
       .from("attempts")
-      .select("item_id, kind, skill, outcome, created_at, response_ms")
+      .select("item_id, kind, skill, outcome, created_at, response_ms, option_count")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(300);
-    const { items, teaser } = buildPlan(past ?? [], settings?.topics ?? [], settings?.difficulty ?? 1, data?.focus ?? null);
+    const rows = past ?? [];
+    const base = settings?.difficulty ?? 1;
+    const params = deriveParams((profile?.answers ?? {}) as ProfileAnswers, summariseSignals(rows), base);
+    const { items, teaser } = buildPlan(rows.filter((r) => !isSignal(r.kind)), settings?.topics ?? [], base, data?.focus ?? null);
     const { data: session, error } = await supabase.from("practice_sessions").insert({ user_id: userId }).select("id").single();
     if (error) throw new Error(error.message);
-    return { sessionId: session.id, items, teaser };
+    return { sessionId: session.id, items, teaser, params };
   });
 
 export const recordAttempt = createServerFn({ method: "POST" })
