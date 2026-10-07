@@ -83,7 +83,7 @@ function illustrate(item: Item, text: string, answer?: string): string | null {
   const bad = answer ? norm(answer) : "";
   const hit = KEYS.find(([w, id]) => new RegExp(`\\b${w}`).test(t) && !(bad && bad.includes(w)) && imageSrc(id));
   if (hit) return hit[1];
-  const pool = (TOPIC_PHOTOS[topicOf(item)] ?? TOPIC_PHOTOS.general!).filter((id) => imageSrc(id));
+  const pool = (TOPIC_PHOTOS[topicOf(item)] ?? TOPIC_PHOTOS["general"]!).filter((id) => imageSrc(id));
   let h = 0;
   for (const c of item.id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   return pool[h % pool.length] ?? null;
