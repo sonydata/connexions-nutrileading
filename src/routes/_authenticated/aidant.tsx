@@ -86,7 +86,7 @@ function Aidant() {
   async function save() {
     if (!userId) return;
     const picked = [...interests, ...(other.trim() ? [`autre:${other.trim()}`] : [])].map((x) => PREFIX + x);
-    await supabase.from("caregiver_settings").upsert({ user_id: userId, patient_name: name.trim() || "Hafid", topics: [...topics, ...picked], difficulty, updated_at: new Date().toISOString() });
+    await supabase.from("caregiver_settings").upsert({ user_id: userId, patient_name: name.trim(), topics: [...topics, ...picked], difficulty, updated_at: new Date().toISOString() });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }

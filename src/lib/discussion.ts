@@ -13,6 +13,8 @@ export type DiscussionTurn = {
   phase: "exchange" | "knowledge" | "repeat";
   instruction: string;
   followUp: string;
+  /** Expected answer of a knowledge turn (choice, word to find); null for opinions. Always said aloud at the end. */
+  answer: string | null;
 };
 export const OPENINGS: Record<string, string> = {
   art: "Qu'est-ce qui vous plaît dans cette œuvre ?",
@@ -31,6 +33,18 @@ export const OPENINGS: Record<string, string> = {
 };
 export const DISCUSSION_INSTRUCTION = "Donnez votre avis à voix haute.";
 export const DEVELOP = "Pourquoi, selon vous ?";
+/** Said after a knowledge turn — the target is always heard, gently, whatever happened. */
+export const confirmText = (answer: string) => `Oui, c'est bien cela : ${answer}.`;
+export const revealText = (answer: string) => `La réponse : ${answer}.`;
+/** Reinforced support: one short, concrete instruction. */
+export const REINFORCED_INSTRUCTIONS = ["Touchez votre réponse.", "À vous de parler."];
+
+/** Expected answer of an item, when it has one (choice question, word to find, name to say). */
+export function answerOf(item: PlayItem): string | null {
+  if (item.kind === "mcq") return item.options[item.correctIndex]?.label ?? null;
+  if (item.kind === "evoke" || item.kind === "complete" || (item.kind === "oral" && item.mode === "nommer")) return item.answerText;
+  return null;
+}
 
 /** Local presentation only: no interpretation of the person's answer. */
 export function discussionTurns(items: PlayItem[], mode: SessionMode): DiscussionTurn[] {
@@ -70,9 +84,10 @@ export function discussionTurns(items: PlayItem[], mode: SessionMode): Discussio
       options: mode === "regard" && item.kind === "mcq" ? item.options : [],
       phase: repeat
         ? "repeat"
-        : mode === "regard" && (choice || item.kind === "evoke" || item.kind === "complete")
+        : mode === "regard" && (choice || item.kind === "evoke" || item.kind === "complete" || item.mode === "nommer")
           ? "knowledge"
           : "exchange",
+      answer: !repeat && mode === "regard" ? answerOf(item) : null,
       instruction: repeat
         ? "Répétez la phrase à voix haute."
         : item.kind === "evoke" || item.mode === "nommer"
@@ -101,19 +116,23 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const REF_FOLLOW_UPS: Record<string, string> = {
   "rp-fr-pres": "Où travaille le président de la France ?",
   "rp-us-pres": "Dans quelle ville travaille-t-il ?",
-  "rp-year": "Qu'attendez-vous de cette année ?",
-  "rp-month": "Que fait-on souvent à cette période ?",
+  "rp-year": "Quel moment de l'année préférez-vous ?",
+  "rp-month": "Qu'aimez-vous manger à cette période ?",
   "rp-season": "Quels fruits et légumes trouve-t-on en cette saison ?",
   "rp-euro": "Vous souvenez-vous du passage du franc à l'euro ?",
   "rp-jo": "Quel sport aimez-vous regarder ?",
 };
 
 export function discussionVoiceTexts(items: PlayItem[]): string[] {
-  const out = new Set([DEVELOP, ...Object.values(OPENINGS)]);
+  const out = new Set([DEVELOP, DISCUSSION_INSTRUCTION, ...REINFORCED_INSTRUCTIONS, ...Object.values(OPENINGS)]);
   for (const mode of ["conversation", "regard"] as const)
     for (const turn of discussionTurns(items, mode)) {
       for (const text of [turn.intro, turn.prompt, turn.model, turn.instruction, turn.followUp])
         if (text) out.add(text);
+      if (turn.answer) {
+        out.add(confirmText(turn.answer));
+        out.add(revealText(turn.answer));
+      }
     }
   return [...out];
 }

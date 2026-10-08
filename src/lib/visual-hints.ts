@@ -162,8 +162,6 @@ export function visualHintFor(item: { id: string; hint?: string | null; keyword?
   const alt = LIBRARY.find((entry) => entry.id === image)?.label ?? "Indice illustré";
   const semantic = item.hint ?? (source && "hint" in source ? source.hint : null);
   let caption = CAPTIONS[item.id] ?? semantic;
-  if (item.id === "rp-year") caption = `L'année commence par ${String(new Date().getFullYear()).slice(0, 3)}…`;
-  if (item.id === "rp-month") caption = `Le mois commence par « ${new Intl.DateTimeFormat("fr-FR", { month: "long" }).format(new Date()).slice(0, 3)}… ».`;
   if (item.id === "rp-season") caption = `Pensez à la saison illustrée : ${alt}.`;
   if (!caption && source?.kind === "mcq") caption = `Une piste : ${source.answer.label}.`;
   if (!caption && source?.kind === "tf") caption = source.answer ? source.audio : `À retenir : ${source.keyword}. Cette affirmation est à nuancer.`;

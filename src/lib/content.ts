@@ -326,14 +326,15 @@ function reperes(now = new Date()): Item[] {
   const si = m === 11 || m < 2 ? 0 : m < 5 ? 1 : m < 8 ? 2 : 3;
   const R = { topic: "actualite" as Topic };
   return [
-    mcq("rp-fr-pres", "avis", "information", "Qui est le président de la France aujourd'hui ?", "président", o("Emmanuel Macron"), [o("François Hollande"), o("Nicolas Sarkozy")], R),
-    mcq("rp-us-pres", "avis", "information", "Qui est le président des États-Unis aujourd'hui ?", "États-Unis", o("Donald Trump"), [o("Joe Biden"), o("Barack Obama")], R),
-    mcq("rp-year", "temps", "temps", "En quelle année sommes-nous ?", "année", o(String(y)), [o(String(y - 1)), o(String(y + 1))], R),
-    mcq("rp-month", "temps", "temps", "Quel mois sommes-nous ?", "mois", o(MONTHS[m] ?? "janvier"), [o(MONTHS[(m + 11) % 12] ?? "décembre"), o(MONTHS[(m + 1) % 12] ?? "février")], R),
-    mcq("rp-season", "temps", "temps", "Quelle est la saison en France aujourd'hui ?", "saison", seasons[si] ?? o("l'automne", "autumn"), [seasons[(si + 2) % 4] ?? o("le printemps", "spring"), seasons[(si + 1) % 4] ?? o("l'hiver", "winter")], R),
+    // Facts tied to a past date stay true after elections — never "who is president today?".
+    mcq("rp-fr-pres", "avis", "information", "Qui a été élu président de la République en 2017 ?", "président", o("Emmanuel Macron"), [o("François Hollande"), o("Nicolas Sarkozy")], R),
+    mcq("rp-us-pres", "avis", "information", "Qui a été élu président des États-Unis en 2024 ?", "États-Unis", o("Donald Trump"), [o("Joe Biden"), o("Barack Obama")], R),
+    // The date is GIVEN, then talked about — never asked (year/month/season questions feel like a memory test).
+    oral("rp-year", "expliquer", [`Nous sommes en ${y}. Qu'attendez-vous de cette année ?`], { ...R, image: "calendar", hint: "Un projet, un voyage, un moment en famille.", model: "J'aimerais profiter de ma famille et faire de belles promenades." }),
+    oral("rp-month", "expliquer", [`Nous sommes au mois ${/^[aeiouy]/.test(MONTHS[m] ?? "") ? "d'" : "de "}${MONTHS[m] ?? "janvier"}. Que fait-on souvent à cette période ?`], { ...R, image: "calendar", hint: "Une fête, une récolte, une habitude de saison.", model: "À cette période, on prépare souvent les fêtes et on profite des produits de saison." }),
     mcq("rp-euro", "avis", "information", "Avec quelle monnaie paie-t-on en France ?", "monnaie", o("l'euro"), [o("le dollar"), o("le franc")], R),
     mcq("rp-jo", "avis", "information", "Quelle ville a accueilli les Jeux olympiques de 2024 ?", "Jeux olympiques", o("Paris", "paris"), [o("Londres", "london"), o("Rome", "rome")], R),
-    oral("rp-ex-season", "expliquer", ["Qu'aimez-vous faire en cette saison ?"], { ...R, image: seasons[si]?.image ?? "calendar", hint: "Une promenade, un plat de saison ou un moment chez soi.", model: "J'aime me promener et profiter des produits de saison." }),
+    oral("rp-ex-season", "expliquer", [`C'est ${seasons[si]?.label ?? "l'automne"}. Qu'aimez-vous faire en cette saison ?`], { ...R, image: seasons[si]?.image ?? "calendar", hint: "Une promenade, un plat de saison ou un moment chez soi.", model: "J'aime me promener et profiter des produits de saison." }),
   ];
 }
 export const REPERES = reperes();

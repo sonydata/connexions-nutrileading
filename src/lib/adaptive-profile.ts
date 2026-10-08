@@ -16,6 +16,7 @@ export type ProfileAnswers = {
   vision?: boolean;
   fatigue?: number; // 1 = tolerant … 3 = tires / frustrates quickly
   knowledge?: number; // 1 … 5 general knowledge / reasoning retained (5 = high)
+  reinforced?: boolean | undefined; // "Accompagnement renforcé", set by the caregiver (saved with the profile)
 };
 
 export type SignalSummary = { turns: number; repeats: number; notUnderstood: number; shared: number; avgWords: number };
@@ -33,6 +34,8 @@ export type SessionParams = {
   maxTurns: number;
   largeText: boolean;
   preferStructured: boolean; // offer pistes first rather than fully open questions
+  reinforced: boolean; // choices and hints shown from the start, one idea at a time
+  voiceRate: number; // playback speed of the natural voice (slower with more language support)
 };
 
 const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
@@ -79,6 +82,9 @@ export function deriveParams(a: ProfileAnswers, s?: SignalSummary | null, base =
     maxTurns: clamp(Math.round(minutes * (support >= 2 ? 0.8 : 1)), 4, 12),
     largeText: !!a.vision || (a.reading ?? 1) >= 3,
     preferStructured: expr >= 4,
+    // Explicit caregiver choice wins; otherwise on when spoken comprehension is often difficult.
+    reinforced: a.reinforced ?? comp >= 4,
+    voiceRate: [1, 1, 0.92, 0.88][support]!,
   };
 }
 
@@ -98,13 +104,25 @@ export function segment(text: string | null, p: Pick<SessionParams, "ideasPerUtt
   return out.length ? out : [text];
 }
 
-type Row = { kind?: string | null; option_count?: number | null };
+type Row = { kind?: string | null; option_count?: number | null; outcome?: string | null };
+
+/** Knowledge turns are saved with their exercise kind and a real outcome (found alone, with help, answer shown). */
+export const KNOWLEDGE_KINDS = new Set(["mcq", "tf", "evoke", "complete", "nommer"]);
+/** One row per guided turn: either a neutral discussion row or an evaluated knowledge row. */
+export function turnInfo(r: Row): { turn: boolean; shared: boolean; supported: boolean } {
+  const k = r.kind ?? "";
+  if (k.startsWith("discussion:")) return { turn: true, shared: k.includes(":shared:"), supported: k.endsWith(":supported") };
+  if (KNOWLEDGE_KINDS.has(k)) return { turn: true, shared: r.outcome !== "revealed", supported: r.outcome !== "spontaneous" };
+  return { turn: false, shared: false, supported: false };
+}
+
 /** Summarise recent guided turns and explicit signals ("signal:*" rows). */
 export function summariseSignals(rows: Row[]): SignalSummary {
   const recent = rows.slice(0, 120);
-  const turns = recent.filter((r) => r.kind?.startsWith("discussion:"));
-  const shared = turns.filter((r) => r.kind!.includes(":shared:"));
-  const words = shared.map((r) => r.option_count ?? 0).filter((n) => n > 0);
+  const turns = recent.filter((r) => turnInfo(r).turn);
+  const shared = turns.filter((r) => turnInfo(r).shared);
+  // Spoken length only from open exchanges (knowledge rows store other counts).
+  const words = shared.filter((r) => r.kind?.startsWith("discussion:")).map((r) => r.option_count ?? 0).filter((n) => n > 0);
   return {
     turns: turns.length,
     shared: shared.length,

@@ -4,15 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Lightbulb, Mic, Play, Square, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { buildPlan } from "@/lib/builder";
-import { discussionTurns, type DiscussionTurn } from "@/lib/discussion";
+import { confirmText, discussionTurns, revealText, type DiscussionTurn } from "@/lib/discussion";
 import { completeSession, recordAttempt, speak, speakCached, startSession } from "@/lib/session.functions";
 import { deriveParams, segment, type SessionParams } from "@/lib/adaptive-profile";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, PREFIX } from "@/lib/interests";
 import { visualHintFor } from "@/lib/visual-hints";
 import { imageSrc } from "@/lib/library";
-import { useVoiceInput, wordCount } from "@/lib/voice-input";
+import { heardWord, useVoiceInput, wordCount } from "@/lib/voice-input";
 import { accentOf } from "@/lib/accents";
+
+type Outcome = "spontaneous" | "after_repeat" | "after_cue" | "revealed";
+const OPINION = "Donnez votre avis à voix haute.";
 
 export function GuidedSession() {
   const start = useServerFn(startSession);
@@ -35,91 +38,87 @@ export function GuidedSession() {
   const [heard, setHeard] = useState("");
   const [teaser, setTeaser] = useState("");
   const [audioUnavailable, setAudioUnavailable] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [reinforced, setReinforced] = useState(false);
   const [introDone, setIntroDone] = useState(false);
-  const [shown, setShown] = useState<string | null>(null);
-  useEffect(() => {
-    setReinforced(localStorage.getItem("connexions:renforce") === "1");
-  }, []);
-  function toggleReinforced() {
-    const v = !reinforced;
-    setReinforced(v);
-    localStorage.setItem("connexions:renforce", v ? "1" : "0");
-  }
+  /** The expected answer once it has been said (confirmed or revealed) — a knowledge turn always ends with it. */
+  const [answerLine, setAnswerLine] = useState<string | null>(null);
+  // Set by the caregiver in the profile (or automatically when comprehension is difficult) — never toggled from the session.
+  const reinforced = params.reinforced;
   const instr = (t: DiscussionTurn) =>
     reinforced ? (t.options.length ? "Touchez votre réponse." : "À vous de parler.") : t.instruction;
   const sessionId = useRef("");
   const audio = useRef<HTMLAudioElement | null>(null);
   const playId = useRef(0);
-  const clips = useRef(new Map<string, string>());
+  const clips = useRef(new Map<string, Promise<string | null>>());
   const participated = useRef(false);
   const participationCount = useRef(0);
   const words = useRef(0);
   const supportUsed = useRef(false);
+  /** Silent outcome of a knowledge turn — saved for adaptation and the caregiver, never shown. */
+  const outcome = useRef<Outcome | null>(null);
+  const readyAt = useRef(Date.now());
+  const responseMs = useRef<number | null>(null);
   const started = useRef(false);
   const turn = turns[index];
 
   function stopAudio() {
     playId.current++;
     audio.current?.pause();
-    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     setSpeaking(false);
   }
-  /** Device French voice (free, offline). Resolves false if unavailable. */
-  function speakDevice(text: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      const s = typeof window !== "undefined" ? window.speechSynthesis : undefined;
-      if (!s) return resolve(false);
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = "fr-FR";
-      u.rate = 0.9;
-      const frs = s.getVoices().filter((v) => v.lang?.toLowerCase().startsWith("fr"));
-      const fem = /am[ée]lie|audrey|aur[ée]lie|marie|virginie|julie|denise|hortense|c[ée]line|eloise|vivienne|google fran/i;
-      const v = frs.find((x) => fem.test(x.name)) ?? frs[0];
-      if (v) u.voice = v;
-      u.onend = () => resolve(true);
-      u.onerror = () => resolve(true);
-      s.speak(u);
-    });
+
+  /** One natural voice only: a clip is fetched (and generated once if needed), with one retry. Never a robot voice. */
+  function clip(text: string): Promise<string | null> {
+    let p = clips.current.get(text);
+    if (!p) {
+      const fetchOnce = () => (signedIn.current ? synth({ data: { text } }) : cached({ data: { text } }));
+      p = fetchOnce()
+        .catch(() => fetchOnce())
+        .then((r) => {
+          if (!r.audio) return null;
+          const bytes = Uint8Array.from(atob(r.audio), (c) => c.charCodeAt(0));
+          return URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
+        })
+        .catch(() => null);
+      p.then((url) => {
+        if (!url) clips.current.delete(text); // retried on the next play
+      });
+      clips.current.set(text, p);
+    }
+    return p;
   }
-  async function read(texts: (string | null)[]) {
+  const partsOf = (texts: (string | null | undefined)[], p = params) => {
+    const unique = texts.filter((t, n): t is string => !!t && texts.indexOf(t) === n);
+    return signedIn.current ? unique.flatMap((t) => segment(t, p)) : unique;
+  };
+
+  async function read(texts: (string | null | undefined)[], p = params) {
     stopAudio();
     voice.stop();
     const id = playId.current;
     setSpeaking(true);
     setAudioUnavailable(false);
     try {
-      // Signed-in: one idea at a time with a pause (segments synthesised once, then cached).
-      // Guests: whole sentences from the shared cache only.
-      const unique = texts.filter((t, n) => t && texts.indexOf(t) === n);
-      const parts = signedIn.current ? unique.flatMap((t) => segment(t, params)) : unique;
+      // One idea at a time with a pause when language support is high (segments are voiced like the rest).
+      const parts = partsOf(texts, p);
       for (const [n, text] of parts.entries()) {
-        if (!text || id !== playId.current) continue;
-        if (n > 0 && params.pauseMs) await new Promise((res) => setTimeout(res, params.pauseMs));
         if (id !== playId.current) return;
-        let url = clips.current.get(text);
+        if (n > 0 && p.pauseMs) await new Promise((res) => setTimeout(res, p.pauseMs));
+        if (id !== playId.current) return;
+        const url = await clip(text);
+        if (id !== playId.current) return;
         if (!url) {
-          const result = await (signedIn.current ? synth({ data: { text } }) : cached({ data: { text } })).catch(() => ({ audio: null }));
-          if (id !== playId.current) return;
-          if (result.audio) {
-            const bytes = Uint8Array.from(atob(result.audio), (c) => c.charCodeAt(0));
-            url = URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
-            clips.current.set(text, url);
-          }
-        }
-        if (!url) {
-          // Missing clip: free device voice instead of silence.
-          if (!(await speakDevice(text))) setAudioUnavailable(true);
+          // The text stays on screen; the person can tap the speaker to try again.
+          setAudioUnavailable(true);
           continue;
         }
         const element = audio.current ?? new Audio();
         audio.current = element;
         element.src = url;
+        element.playbackRate = p.voiceRate;
         try {
           await element.play();
         } catch (e) {
-          // Browser blocked autoplay before any tap: wait for the speaker button, no error.
+          // Browser blocked autoplay before any tap: the speaker button starts it.
           if ((e as Error)?.name === "NotAllowedError") return;
           throw e;
         }
@@ -131,14 +130,17 @@ export function GuidedSession() {
     } catch {
       setAudioUnavailable(true);
     } finally {
-      if (id === playId.current) setSpeaking(false);
+      if (id === playId.current) {
+        setSpeaking(false);
+        readyAt.current = Date.now();
+      }
     }
   }
   useEffect(
     () => () => {
       playId.current++;
       audio.current?.pause();
-      for (const url of clips.current.values()) URL.revokeObjectURL(url);
+      for (const p of clips.current.values()) p.then((url) => url && URL.revokeObjectURL(url));
     },
     [],
   );
@@ -148,6 +150,9 @@ export function GuidedSession() {
     if (reinforced && turn.intro && !introDone) read([turn.item.recall, turn.intro]);
     else if (reinforced && turn.intro) read([turn.prompt, instr(turn)]);
     else read([turn.item.recall, turn.intro, turn.prompt, instr(turn)]);
+    // Prepare the next turn's voice while this one is played, so it starts without waiting.
+    const next = turns[index + 1];
+    if (next) for (const t of partsOf([next.item.recall, next.intro, next.prompt, instr(next)])) clip(t);
     // Each new turn is read once; explicit controls handle rereading.
   }, [state, index, introDone]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -166,15 +171,21 @@ export function GuidedSession() {
         if (Array.isArray(saved) && saved.every((t) => typeof t === "string")) topics = saved;
       } catch {}
       signedIn.current = !!data.session;
-      const result = data.session
-        ? await start({ data: {} })
-        : { sessionId: "", ...buildPlan([], topics, 1), params: deriveParams({}) };
+      const local = () => ({ sessionId: "", ...buildPlan([], topics, 1), params: deriveParams({}) });
+      // If the server is unreachable, the session still runs (nothing saved) rather than an error screen.
+      const result = data.session ? await start({ data: {} }).catch(local) : local();
       sessionId.current = result.sessionId;
       setTeaser(result.teaser);
       setParams(result.params);
       const next = discussionTurns(result.items, "regard")
         .slice(0, result.params.maxTurns)
-        .map((t) => ({ ...t, options: t.options.slice(0, result.params.optionCount) }));
+        .map((t) => ({ ...t, options: t.options.slice(0, result.params.optionCount) }))
+        // Keep the expected answer among the choices when options are trimmed.
+        .map((t) =>
+          t.answer && t.options.length && !t.options.some((o) => o.label === t.answer)
+            ? { ...t, options: [...t.options.slice(0, -1), t.item.options.find((o) => o.label === t.answer) ?? { label: t.answer }].sort(() => Math.random() - 0.5) }
+            : t,
+        );
       if (!next.length) throw new Error("empty");
       setTurns(next);
       setState("play");
@@ -182,73 +193,144 @@ export function GuidedSession() {
       setState("error");
     }
   }
+
+  /** First outcome of a knowledge turn wins; later actions never overwrite it. */
+  function settle(o: Outcome) {
+    if (outcome.current) return;
+    outcome.current = o;
+    if (o === "spontaneous") responseMs.current = Math.max(0, Date.now() - readyAt.current);
+  }
+  /** Close a knowledge turn: the answer is always heard and shown, then the conversation goes on. */
+  function closeKnowledge(found: boolean, andThen: (string | null)[] = []) {
+    if (!turn?.answer) return;
+    const line = found ? confirmText(turn.answer) : revealText(turn.answer);
+    setAnswerLine(line);
+    read([line, ...andThen]);
+  }
+
   async function answer() {
     stopAudio();
-    if (voice.listening) {
-      const text = voice.stop();
-      setHeard(text);
-      participated.current = true;
-      words.current += wordCount(text);
-      if (view === "develop" || view === "model" || turn?.phase === "repeat") showModel();
-      else {
-        setView("develop");
-        read([turn?.followUp ?? null, "Donnez votre avis à voix haute."]);
-      }
-    } else await voice.start();
+    if (!voice.listening) return void (await voice.start());
+    const text = voice.stop();
+    setHeard(text);
+    participated.current = true;
+    words.current += wordCount(text);
+    if (view === "develop" || view === "model" || turn?.phase === "repeat") return showModel();
+    setView("develop");
+    if (turn?.answer && !answerLine) {
+      // Speech recognition is only a hint: a match confirms; anything else simply gives the answer, never "wrong".
+      const found = !!text && heardWord(text, turn.answer);
+      if (found) settle(supportUsed.current ? "after_cue" : "spontaneous");
+      else if (text) settle("after_repeat");
+      closeKnowledge(found, [turn.followUp, OPINION]);
+      return;
+    }
+    read([turn?.followUp ?? null, OPINION]);
+  }
+  function choose(n: number) {
+    if (!turn || selected !== null) return;
+    stopAudio();
+    setSelected(n);
+    participated.current = true;
+    const label = turn.options[n]?.label;
+    if (turn.answer) {
+      const found = label === turn.answer;
+      // Choices are a support (recognition rather than recall): a right choice counts as "with help".
+      settle(found ? "after_cue" : "revealed");
+      setView("develop");
+      closeKnowledge(found, [turn.followUp, OPINION]);
+      return;
+    }
+    setView("develop");
+    read([turn.followUp, OPINION]);
   }
   function signal(kind: "repeat" | "notunderstood" | "abandon") {
     if (!sessionId.current || !turn) return;
     record({ data: { sessionId: sessionId.current, itemId: turn.item.id, kind: `signal:${kind}`, category: turn.item.theme, skill: turn.item.skill, prompt: turn.prompt, optionCount: 0, outcome: "after_repeat", responseMs: null } }).catch(() => {});
   }
+  /** Explicit "I didn't understand" — distinct from simply listening again. */
   function notUnderstood() {
     if (!turn) return;
     signal("notunderstood");
     supportUsed.current = true;
     confusion.current++;
-    // Gentle, gradual: after two requests in this session, shorten what follows.
+    // Gentle, gradual: after two requests in this session, shorten and slow what follows.
     let p = params;
     if (confusion.current === 2 && params.languageSupport < 3) {
-      p = { ...params, languageSupport: params.languageSupport + 1, ideasPerUtterance: 1, maxSentenceWords: Math.max(8, params.maxSentenceWords - 4), pauseMs: params.pauseMs + 300 };
+      const support = params.languageSupport + 1;
+      p = { ...params, languageSupport: support, ideasPerUtterance: 1, maxSentenceWords: Math.max(8, params.maxSentenceWords - 4), pauseMs: params.pauseMs + 300, voiceRate: Math.min(params.voiceRate, [1, 1, 0.92, 0.88][support]!) };
       setParams(p);
     }
-    read([turn.prompt]);
+    read([turn.prompt], p);
+  }
+  function relisten() {
+    if (!turn) return;
+    signal("repeat");
+    read(
+      view === "model"
+        ? [turn.model]
+        : view === "develop"
+          ? [answerLine, turn.followUp, OPINION]
+          : [turn.intro, turn.prompt, instr(turn)],
+    );
   }
   function showModel() {
     voice.stop();
+    if (turn?.answer && !answerLine) settle("revealed");
     setView("model");
     read(["Voici une formulation possible.", turn?.model ?? null]);
   }
-  async function next() {
-    if (!turn || saving) return;
-    setSaving(true);
-    stopAudio();
-    voice.clear();
-    if (participated.current) participationCount.current++;
-    try {
-      if (sessionId.current)
-        await record({
-          data: {
-            sessionId: sessionId.current,
-            itemId: turn.item.id,
-            kind: `discussion:guided:${turn.phase}:${participated.current ? "shared" : "listened"}:${supportUsed.current ? "supported" : "independent"}`,
-            category: turn.item.theme,
-            skill: turn.item.skill,
-            prompt: turn.prompt,
-            optionCount: words.current,
-            outcome: "after_repeat",
-            responseMs: null,
-            repeated: turn.phase === "repeat" && participated.current,
-          },
-        });
-      if (index + 1 >= turns.length && sessionId.current)
-        await complete({ data: { sessionId: sessionId.current } });
-    } catch {
-      setState("error");
-      setSaving(false);
+  function save(t: DiscussionTurn) {
+    if (!sessionId.current) return;
+    const id = sessionId.current;
+    // Knowledge turns carry their real outcome (for adaptation and the caregiver); other turns stay neutral.
+    const evaluated = t.answer && outcome.current;
+    const data = evaluated
+      ? {
+          sessionId: id,
+          itemId: t.item.id,
+          kind: t.item.kind === "oral" ? (t.item.mode ?? "oral") : t.item.kind,
+          category: t.item.theme,
+          skill: t.item.skill,
+          prompt: t.prompt,
+          optionCount: selected !== null ? t.options.length : words.current,
+          outcome: outcome.current!,
+          responseMs: responseMs.current,
+          repeated: false,
+        }
+      : {
+          sessionId: id,
+          itemId: t.item.id,
+          kind: `discussion:guided:${t.phase}:${participated.current ? "shared" : "listened"}:${supportUsed.current ? "supported" : "independent"}`,
+          category: t.item.theme,
+          skill: t.item.skill,
+          prompt: t.prompt,
+          optionCount: words.current,
+          outcome: "after_repeat" as Outcome,
+          responseMs: null,
+          repeated: t.phase === "repeat" && participated.current,
+        };
+    // Saved in the background, with one retry: a network hiccup must never interrupt the session.
+    record({ data }).catch(() => record({ data }).catch(() => {}));
+  }
+  function next() {
+    if (!turn) return;
+    // A knowledge turn never ends without its answer: the first "Continuer" gives it, the second moves on.
+    if (turn.answer && !answerLine) {
+      settle("revealed");
+      closeKnowledge(false);
       return;
     }
+    stopAudio();
+    voice.clear();
+    save(turn);
+    if (participated.current) participationCount.current++;
+    const last = index + 1 >= turns.length;
+    if (last && sessionId.current) complete({ data: { sessionId: sessionId.current } }).catch(() => {});
     participated.current = false;
     supportUsed.current = false;
+    outcome.current = null;
+    responseMs.current = null;
     words.current = 0;
     setView("prompt");
     setHeard("");
@@ -256,9 +338,8 @@ export function GuidedSession() {
     setOptionsVisible(false);
     setSelected(null);
     setIntroDone(false);
-    setShown(null);
-    setSaving(false);
-    if (index + 1 >= turns.length) setState("done");
+    setAnswerLine(null);
+    if (last) setState("done");
     else setIndex((n) => n + 1);
   }
   if (state === "loading")
@@ -270,7 +351,7 @@ export function GuidedSession() {
   if (state === "error")
     return (
       <Frame>
-        <p className="font-serif text-2xl">La séance n'a pas pu être poursuivie.</p>
+        <p className="font-serif text-2xl">La séance n'a pas pu être préparée.</p>
         <Button asChild variant="outline" className="mt-8">
           <Link to="/">Accueil</Link>
         </Button>
@@ -303,7 +384,7 @@ export function GuidedSession() {
     "Un moment ensemble";
   const introStep = reinforced && !!turn.intro && !introDone;
   const showHint = (hintVisible || reinforced) && !introStep;
-  const showOptions = (optionsVisible || (reinforced && turn.options.length > 0)) && !introStep;
+  const showOptions = (optionsVisible || (reinforced && turn.options.length > 0)) && !introStep && !answerLine;
   const factual = turn.phase !== "exchange";
   const modelWords = (turn.model ?? "").split(/\s+/).filter(Boolean);
   const starter = factual
@@ -317,22 +398,9 @@ export function GuidedSession() {
         <Link to="/" onClick={() => signal("abandon")} className="font-serif text-2xl">
           Connexions
         </Link>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            aria-pressed={reinforced}
-            onClick={toggleReinforced}
-            className="text-base text-muted-foreground"
-          >
-            Accompagnement renforcé : {reinforced ? "oui" : "non"}
-          </Button>
-          <span
-            className="text-lg text-muted-foreground"
-            aria-label={`${index + 1} sur ${turns.length}`}
-          >
-            {index + 1} / {turns.length}
-          </span>
-        </div>
+        <span className="text-lg text-muted-foreground" aria-label={`${index + 1} sur ${turns.length}`}>
+          {index + 1} / {turns.length}
+        </span>
       </header>
       <section
         key={index}
@@ -352,24 +420,19 @@ export function GuidedSession() {
           variant="default"
           size="icon"
           aria-label="Réécouter"
-          onClick={() => {
-            if (view === "prompt") return notUnderstood();
-            signal("repeat");
-            read(
-              view === "model"
-                ? [turn.model]
-                : view === "develop"
-                  ? [turn.followUp, "Donnez votre avis à voix haute."]
-                  : [turn.intro, turn.prompt, turn.instruction],
-            );
-          }}
-          className="mb-6 size-16 rounded-full"
+          onClick={relisten}
+          className="mb-2 size-16 rounded-full"
         >
           <Volume2 className="size-7" />
         </Button>
+        {view === "prompt" && !introStep && (
+          <Button variant="link" onClick={notUnderstood} className="mb-4 text-base text-muted-foreground">
+            Je n'ai pas compris
+          </Button>
+        )}
         {audioUnavailable && (
           <p role="status" className="mb-3 text-base text-muted-foreground">
-            L'audio est momentanément indisponible.
+            Le son n'a pas pu être lu. Touchez le haut-parleur pour réessayer.
           </p>
         )}
         {view === "prompt" && turn.intro && !reinforced && (
@@ -378,9 +441,14 @@ export function GuidedSession() {
         <h1 className={`max-w-2xl font-serif leading-snug ${params.largeText ? "text-3xl md:text-4xl" : "text-2xl md:text-3xl"}`}>
           {introStep ? turn.intro : view === "model" ? turn.model : view === "develop" ? turn.followUp : turn.prompt}
         </h1>
+        {answerLine && view !== "model" && (
+          <p role="status" className="mt-4 max-w-2xl font-serif text-2xl text-calm">
+            {answerLine}
+          </p>
+        )}
         {!introStep && (
           <p className="mt-4 text-xl text-primary">
-            {view === "model" ? "Une formulation possible" : view === "develop" ? "Donnez votre avis à voix haute." : instr(turn)}
+            {view === "model" ? "Une formulation possible" : view === "develop" ? OPINION : instr(turn)}
           </p>
         )}
         {voice.listening && (
@@ -393,7 +461,7 @@ export function GuidedSession() {
             « {voice.transcript || heard} »
           </p>
         )}
-        {view !== "model" && !reinforced && (
+        {view !== "model" && !reinforced && !answerLine && (
           <Button
             variant="ghost"
             onClick={() => {
@@ -411,7 +479,7 @@ export function GuidedSession() {
             {hintVisible ? "Masquer l’aide" : "Besoin d’aide ?"}
           </Button>
         )}
-        {showHint && view !== "model" && (
+        {showHint && view !== "model" && !answerLine && (
           <figure id="discussion-hint" className="mt-5 max-w-64" aria-live="polite">
             {hint.image && (
               <img
@@ -440,39 +508,21 @@ export function GuidedSession() {
         )}
         {showOptions && view !== "model" && (
           <div className="mt-5 w-full">
-          {!reinforced && <p className="mb-3 text-lg text-primary">Cliquez sur votre choix, puis donnez votre avis.</p>}
-          <div className="grid w-full gap-3 sm:grid-cols-2">
-            {turn.options.map((option, n) => (
-              <Button
-                key={option.label}
-                variant="outline"
-                aria-pressed={selected === n}
-                onClick={() => {
-                  stopAudio();
-                  setSelected(n);
-                  const correct = turn.item.options[turn.item.correctIndex]?.label;
-                  if (reinforced && turn.item.kind === "mcq" && correct && option.label !== correct) {
-                    // Calmly show the answer; an assisted answer never counts as autonomous.
-                    supportUsed.current = true;
-                    setShown(correct);
-                    read([`Une réponse possible : ${correct}.`]);
-                    return;
-                  }
-                  setView("develop");
-                  read([turn.followUp, "Donnez votre avis à voix haute."]);
-                }}
-                className="h-auto min-h-16 flex-col whitespace-normal rounded-lg bg-card py-4 text-xl text-foreground"
-              >
-                {turn.options.every((o) => o.image && imageSrc(o.image)) && option.image && <img src={imageSrc(option.image) ?? ""} alt="" className="h-28 w-full object-contain" />}
-                {option.label}
-              </Button>
-            ))}
-          </div>
-          {shown && (
-            <p role="status" className="mt-4 text-xl">
-              Une réponse possible : <strong>{shown}</strong>
-            </p>
-          )}
+            {!reinforced && <p className="mb-3 text-lg text-primary">Touchez votre choix.</p>}
+            <div className="grid w-full gap-3 sm:grid-cols-2">
+              {turn.options.map((option, n) => (
+                <Button
+                  key={option.label}
+                  variant="outline"
+                  aria-pressed={selected === n}
+                  onClick={() => choose(n)}
+                  className="h-auto min-h-16 flex-col whitespace-normal rounded-lg bg-card py-4 text-xl text-foreground"
+                >
+                  {turn.options.every((o) => o.image && imageSrc(o.image)) && option.image && <img src={imageSrc(option.image) ?? ""} alt="" className="h-28 w-full object-contain" />}
+                  {option.label}
+                </Button>
+              ))}
+            </div>
           </div>
         )}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -495,7 +545,6 @@ export function GuidedSession() {
           <Button
             variant="outline"
             onClick={() => (introStep ? setIntroDone(true) : next())}
-            disabled={saving}
             className="h-14 text-xl"
           >
             Continuer

@@ -5,6 +5,7 @@ import { SEQ_ITEMS, SEQUENCES } from "./sequences";
 import { RESPONSE_INSTRUCTIONS } from "./response-guidance";
 import { discussionVoiceTexts } from "./discussion";
 import { toPlay } from "./builder";
+import { segment } from "./adaptive-profile";
 
 const FIXED = [
   "Écoutez cette information.",
@@ -55,5 +56,15 @@ export function allVoiceTexts(): string[] {
   for (let n = 0; n < items.length; n += 12) for (const text of discussionVoiceTexts(items.slice(n, n + 12))) out.add(text);
   // "We talked about this before" lines read before a reactivated word.
   for (const q of SEQUENCES) for (const w of ["Il y a quelques jours", "La semaine dernière"]) out.add(`${w}, nous avions parlé de ce sujet : ${q.title}.`);
+  // "One idea at a time" support reads shorter segments: they are voiced by the same natural voice.
+  for (const text of [...out])
+    for (const max of [11, 8]) for (const part of segment(text, { ideasPerUtterance: 1, maxSentenceWords: max })) out.add(part);
   return [...out];
+}
+
+let allowed: Set<string> | null = null;
+/** Only sentences the app can actually say may be voiced — nobody can make the server pay for arbitrary text. */
+export function isVoiceText(text: string): boolean {
+  allowed ??= new Set(allVoiceTexts());
+  return allowed.has(text.trim());
 }

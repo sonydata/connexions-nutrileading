@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { INTERESTS } from "@/lib/interests";
 import { topicOfId } from "@/lib/builder";
-import { QUESTIONS, deriveParams, summariseSignals, type ProfileAnswers } from "@/lib/adaptive-profile";
+import { QUESTIONS, deriveParams, summariseSignals, turnInfo, type ProfileAnswers } from "@/lib/adaptive-profile";
 
-type Row = { item_id: string | null; session_id: string | null; kind: string | null; option_count: number; word_count: number; created_at: string };
+type Row = { item_id: string | null; session_id: string | null; kind: string | null; option_count: number; word_count: number; created_at: string; outcome?: string | null };
 type Session = { started_at: string; completed_at: string | null };
 
 /** "Espace proche": functional profile questionnaire + cautious weekly observations. */
@@ -43,7 +43,7 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
   const week = useMemo(() => {
     const since = Date.now() - 7 * 864e5;
     const rows = attempts.filter((a) => new Date(a.created_at).getTime() >= since);
-    const turns = rows.filter((r) => r.kind?.startsWith("discussion:"));
+    const turns = rows.filter((r) => turnInfo(r).turn);
     const sig = summariseSignals([...rows].reverse());
     const obs: { title: string; text: string }[] = [];
     if (turns.length < 4) return { obs, topics: [] as string[], few: true };
@@ -59,7 +59,7 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
       if (!tp || tp === "general") continue;
       const x = byTopic.get(tp) ?? { n: 0, w: 0, shared: 0 };
       x.n++;
-      if (t.kind!.includes(":shared:")) { x.shared++; x.w += t.option_count; }
+      if (turnInfo(t).shared) { x.shared++; if (t.kind?.startsWith("discussion:")) x.w += t.option_count; }
       byTopic.set(tp, x);
     }
     const ranked = [...byTopic].filter(([, v]) => v.n >= 2).sort((a, b) => b[1].shared / b[1].n - a[1].shared / a[1].n || b[1].w - a[1].w);
@@ -73,7 +73,7 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
       const m = Math.round(mins[Math.floor(mins.length / 2)]!);
       obs.push({ title: "Attention", text: abandons > done.length ? `Plusieurs séances ont été interrompues ; des séances plus courtes que ${m} minutes pourraient être plus confortables.` : `Des séances d'environ ${m} minutes semblent confortables.` });
     }
-    const supported = turns.filter((t) => t.kind!.endsWith(":supported")).length;
+    const supported = turns.filter((t) => turnInfo(t).supported).length;
     if (supported / turns.length > 0.5) obs.push({ title: "Observation utile", text: "Les indices et pistes ont souvent été utilisés ; les questions contenant plusieurs informations semblent plus difficiles." });
     return { obs, topics: ranked.slice(0, 3).map(([k]) => INTERESTS.find((i) => i.id === k)?.label ?? k), few: false };
   }, [attempts, sessions]);
@@ -136,7 +136,7 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
         </div>
         {!open && (
           <p className="mt-4 text-sm text-muted-foreground">
-            Séances d'environ {p.sessionMinutes} min · {p.ideasPerUtterance === 1 ? "une idée à la fois" : "phrases naturelles"} · {p.optionCount} pistes{p.repetition >= 2 ? " · question répétée" : ""}
+            Séances d'environ {p.sessionMinutes} min · {p.ideasPerUtterance === 1 ? "une idée à la fois" : "phrases naturelles"} · {p.optionCount} pistes{p.repetition >= 2 ? " · question répétée" : ""}{p.reinforced ? " · accompagnement renforcé" : ""}
           </p>
         )}
         {open && (
@@ -159,6 +159,18 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
               <div className="mt-2 flex flex-wrap gap-5">
                 <label className="flex items-center gap-2"><input type="checkbox" className="h-5 w-5" checked={!!answers.hearing} onChange={(e) => setAnswers({ ...answers, hearing: e.target.checked })} />Entend moins bien</label>
                 <label className="flex items-center gap-2"><input type="checkbox" className="h-5 w-5" checked={!!answers.vision} onChange={(e) => setAnswers({ ...answers, vision: e.target.checked })} />Voit moins bien</label>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend className="text-lg font-medium">Accompagnement renforcé</legend>
+              <p className="mt-1 text-sm text-muted-foreground">Choix et indices affichés d'emblée, une seule consigne courte. Automatique : activé quand comprendre reste souvent difficile.</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {([["Automatique", undefined], ["Oui", true], ["Non", false]] as const).map(([label, value]) => (
+                  <button key={label} type="button" aria-pressed={answers.reinforced === value} onClick={() => setAnswers({ ...answers, reinforced: value })}
+                    className={`rounded-xl border px-4 py-2 text-left ${answers.reinforced === value ? "border-primary bg-primary text-primary-foreground" : "bg-background"}`}>
+                    {label}
+                  </button>
+                ))}
               </div>
             </fieldset>
             <label className="block max-w-2xl">

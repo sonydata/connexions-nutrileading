@@ -75,40 +75,43 @@ export const completeSession = createServerFn({ method: "POST" })
   });
 
 /**
- * Natural voice, cached in storage so each sentence is synthesised only once.
+ * The ONE natural voice, cached in storage so each sentence is synthesised only once.
  * Key = SHA-256(VOICE_VERSION + "|" + exact text) — flat, stable, scales to any bank size.
  * An existing file is never regenerated nor overwritten.
+ * Only sentences the app itself can say are synthesised (isVoiceText), for everyone — signed in or not —
+ * so a missing clip never falls back to a robotic device voice, and the cost stays bounded to the bank.
  */
+async function voiceAudio(text: string): Promise<{ audio: string | null }> {
+  const name = await voiceFileName(text);
+  // Privileged client: the voice bucket is a shared, server-only cache.
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const bucket = supabaseAdmin.storage.from("voice");
+  const cached = await bucket.download(name);
+  if (cached.data && cached.data.size > 0) return { audio: Buffer.from(await cached.data.arrayBuffer()).toString("base64") };
+  const { isVoiceText } = await import("./voice-texts");
+  if (!isVoiceText(text)) {
+    console.warn("voice: sentence not in the bank, not synthesised:", text.slice(0, 80));
+    return { audio: null };
+  }
+  const { synthesizeSpeech } = await import("./gateway.server");
+  let buf: ArrayBuffer;
+  try {
+    buf = await synthesizeSpeech(text);
+  } catch {
+    buf = await synthesizeSpeech(text); // one retry: a transient gateway error should not cost the natural voice
+  }
+  // upsert:false — if another request stored it meanwhile, keep that file.
+  const up = await bucket.upload(name, new Blob([buf], { type: "audio/wav" }), { contentType: "audio/wav", upsert: false });
+  if (up.error && !/exists|duplicate/i.test(up.error.message)) console.error("voice cache upload failed:", up.error.message);
+  return { audio: Buffer.from(buf).toString("base64") };
+}
+
 export const speak = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ text: z.string().trim().min(1).max(400) }).parse(d))
-  .handler(async ({ data, context }) => {
-    const name = await voiceFileName(data.text);
-    // Privileged client: the voice bucket is a shared, server-only cache —
-    // direct client access is revoked by policy, so reads/writes go through here.
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const bucket = supabaseAdmin.storage.from("voice");
-    const cached = await bucket.download(name);
-    if (cached.data && cached.data.size > 0) return { audio: Buffer.from(await cached.data.arrayBuffer()).toString("base64") };
-    const { synthesizeSpeech } = await import("./gateway.server");
-    const buf = await synthesizeSpeech(data.text);
-    // upsert:false — if another request stored it meanwhile, keep that file.
-    const up = await bucket.upload(name, new Blob([buf], { type: "audio/wav" }), { contentType: "audio/wav", upsert: false });
-    if (up.error && !/exists|duplicate/i.test(up.error.message)) console.error("voice cache upload failed:", up.error.message);
-    return { audio: Buffer.from(buf).toString("base64") };
-  });
+  .handler(async ({ data }) => voiceAudio(data.text));
 
-/**
- * Discovery mode (no account): read-only access to the shared voice cache.
- * Never synthesises — a missing clip returns null and the browser voice is used,
- * so visitors without an account can never create a paid call.
- */
+/** Discovery mode (no account): same natural voice, same bank-only rule. */
 export const speakCached = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ text: z.string().trim().min(1).max(400) }).parse(d))
-  .handler(async ({ data }) => {
-    const name = await voiceFileName(data.text);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const cached = await supabaseAdmin.storage.from("voice").download(name);
-    if (cached.data && cached.data.size > 0) return { audio: Buffer.from(await cached.data.arrayBuffer()).toString("base64") };
-    return { audio: null as string | null };
-  });
+  .handler(async ({ data }) => voiceAudio(data.text));

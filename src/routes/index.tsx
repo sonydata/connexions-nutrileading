@@ -99,7 +99,8 @@ function Index() {
           )}
           {[
             { to: "/interets" as const, label: "Mes centres d'intérêt", search: { next: undefined } },
-            { to: (state === "in" ? "/aidant" : "/auth") as "/aidant" | "/auth", label: state === "in" ? "Vos progrès" : "Mon espace", search: undefined },
+            // Progress lives in the caregiver space (footer link), never on the person's own screen.
+            ...(state === "in" ? [] : [{ to: "/auth" as const, label: "Mon espace", search: undefined }]),
           ].map((l) => (
             <Link key={l.label} to={l.to} search={l.search as never} className="rounded-full px-4 py-2 text-muted-foreground transition hover:bg-muted hover:text-primary">
               {l.label}
@@ -293,6 +294,11 @@ function Index() {
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-4 px-6 py-12 text-center md:px-8">
           <img src={logo.url} alt="Nutrileading" className="h-16 w-16" />
           <p className="text-base text-muted-foreground">Une initiative Nutrileading, inspirée par le parcours du Dr Hafid Halhol.</p>
+          {state === "in" && (
+            <Link to="/aidant" className="text-sm text-muted-foreground underline underline-offset-4 hover:text-primary">
+              Espace aidant
+            </Link>
+          )}
 
         </div>
       </footer>

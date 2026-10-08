@@ -27,7 +27,7 @@ describe("Two guided modes", () => {
     const items = REPERES.map((item) => toPlay(item, 1));
     const turns = discussionTurns(items, "conversation");
     const pres = turns.find((turn) => turn.item.id === "rp-fr-pres")!;
-    expect(pres.prompt).toContain("président de la France");
+    expect(pres.prompt).toContain("président de la République");
     expect(pres.intro).toBeNull();
     expect(pres.followUp).not.toBe(pres.prompt);
     expect(turns.every((turn) => turn.options.length === 0 && turn.intro !== turn.prompt)).toBe(true);
