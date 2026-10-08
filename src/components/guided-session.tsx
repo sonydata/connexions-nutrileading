@@ -36,6 +36,19 @@ export function GuidedSession() {
   const [teaser, setTeaser] = useState("");
   const [audioUnavailable, setAudioUnavailable] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [reinforced, setReinforced] = useState(false);
+  const [introDone, setIntroDone] = useState(false);
+  const [shown, setShown] = useState<string | null>(null);
+  useEffect(() => {
+    setReinforced(localStorage.getItem("connexions:renforce") === "1");
+  }, []);
+  function toggleReinforced() {
+    const v = !reinforced;
+    setReinforced(v);
+    localStorage.setItem("connexions:renforce", v ? "1" : "0");
+  }
+  const instr = (t: DiscussionTurn) =>
+    reinforced ? (t.options.length ? "Touchez votre réponse." : "À vous de parler.") : t.instruction;
   const sessionId = useRef("");
   const audio = useRef<HTMLAudioElement | null>(null);
   const playId = useRef(0);
@@ -103,10 +116,13 @@ export function GuidedSession() {
     [],
   );
   useEffect(() => {
-    if (state === "play" && turn)
-      read([turn.item.recall, turn.intro, turn.prompt, turn.instruction]);
+    if (state !== "play" || !turn) return;
+    // Reinforced support: one idea at a time — intro first, question after "Continuer".
+    if (reinforced && turn.intro && !introDone) read([turn.item.recall, turn.intro]);
+    else if (reinforced && turn.intro) read([turn.prompt, instr(turn)]);
+    else read([turn.item.recall, turn.intro, turn.prompt, instr(turn)]);
     // Each new turn is read once; explicit controls handle rereading.
-  }, [state, index]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [state, index, introDone]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (started.current) return;
@@ -212,6 +228,8 @@ export function GuidedSession() {
     setHintVisible(false);
     setOptionsVisible(false);
     setSelected(null);
+    setIntroDone(false);
+    setShown(null);
     setSaving(false);
     if (index + 1 >= turns.length) setState("done");
     else setIndex((n) => n + 1);
@@ -256,18 +274,38 @@ export function GuidedSession() {
     turn.item.seqTitle ??
     INTERESTS.find((t) => t.id === turn.item.topic)?.label ??
     "Un moment ensemble";
+  const introStep = reinforced && !!turn.intro && !introDone;
+  const showHint = (hintVisible || reinforced) && !introStep;
+  const showOptions = (optionsVisible || (reinforced && turn.options.length > 0)) && !introStep;
+  const factual = turn.phase !== "exchange";
+  const modelWords = (turn.model ?? "").split(/\s+/).filter(Boolean);
+  const starter = factual
+    ? modelWords.length >= 4
+      ? `${modelWords.slice(0, Math.ceil(modelWords.length / 2)).join(" ")} …`
+      : null
+    : "Je pense que…";
   return (
     <main className="paper-grain flex min-h-screen flex-col px-6 py-6 md:px-12">
       <header className="flex items-center justify-between gap-4">
         <Link to="/" onClick={() => signal("abandon")} className="font-serif text-2xl">
           Connexions
         </Link>
-        <span
-          className="text-lg text-muted-foreground"
-          aria-label={`${index + 1} sur ${turns.length}`}
-        >
-          {index + 1} / {turns.length}
-        </span>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            aria-pressed={reinforced}
+            onClick={toggleReinforced}
+            className="text-base text-muted-foreground"
+          >
+            Accompagnement renforcé : {reinforced ? "oui" : "non"}
+          </Button>
+          <span
+            className="text-lg text-muted-foreground"
+            aria-label={`${index + 1} sur ${turns.length}`}
+          >
+            {index + 1} / {turns.length}
+          </span>
+        </div>
       </header>
       <section
         key={index}
@@ -307,15 +345,17 @@ export function GuidedSession() {
             L'audio est momentanément indisponible.
           </p>
         )}
-        {view === "prompt" && turn.intro && (
+        {view === "prompt" && turn.intro && !reinforced && (
           <p className="mb-5 max-w-2xl font-serif text-2xl leading-snug">{turn.intro}</p>
         )}
         <h1 className={`max-w-2xl font-serif leading-snug ${params.largeText ? "text-3xl md:text-4xl" : "text-2xl md:text-3xl"}`}>
-          {view === "model" ? turn.model : view === "develop" ? turn.followUp : turn.prompt}
+          {introStep ? turn.intro : view === "model" ? turn.model : view === "develop" ? turn.followUp : turn.prompt}
         </h1>
-        <p className="mt-4 text-xl text-primary">
-          {view === "model" ? "Une formulation possible" : view === "develop" ? "Donnez votre avis à voix haute." : turn.instruction}
-        </p>
+        {!introStep && (
+          <p className="mt-4 text-xl text-primary">
+            {view === "model" ? "Une formulation possible" : view === "develop" ? "Donnez votre avis à voix haute." : instr(turn)}
+          </p>
+        )}
         {voice.listening && (
           <p className="mt-3 text-lg text-primary" role="status">
             Je vous écoute
@@ -326,7 +366,7 @@ export function GuidedSession() {
             « {voice.transcript || heard} »
           </p>
         )}
-        {view !== "model" && (
+        {view !== "model" && !reinforced && (
           <Button
             variant="ghost"
             onClick={() => {
@@ -344,7 +384,7 @@ export function GuidedSession() {
             {hintVisible ? "Masquer l’aide" : "Besoin d’aide ?"}
           </Button>
         )}
-        {hintVisible && view !== "model" && (
+        {showHint && view !== "model" && (
           <figure id="discussion-hint" className="mt-5 max-w-64" aria-live="polite">
             {hint.image && (
               <img
@@ -354,14 +394,26 @@ export function GuidedSession() {
               />
             )}
             <figcaption className="mt-3 text-lg">{hint.caption}</figcaption>
-            <Button variant="link" onClick={showModel} className="mt-1 text-lg">
-              Entendre une réponse possible
-            </Button>
+            {reinforced && starter && (
+              <p className="mt-2 text-lg italic text-muted-foreground">Pour commencer : « {starter} »</p>
+            )}
+            {(!reinforced || factual) && (
+              <Button
+                variant="link"
+                onClick={() => {
+                  supportUsed.current = true;
+                  showModel();
+                }}
+                className="mt-1 text-lg"
+              >
+                Entendre une réponse possible
+              </Button>
+            )}
           </figure>
         )}
-        {optionsVisible && view !== "model" && (
+        {showOptions && view !== "model" && (
           <div className="mt-5 w-full">
-          <p className="mb-3 text-lg text-primary">Cliquez sur votre choix, puis donnez votre avis.</p>
+          {!reinforced && <p className="mb-3 text-lg text-primary">Cliquez sur votre choix, puis donnez votre avis.</p>}
           <div className="grid w-full gap-3 sm:grid-cols-2">
             {turn.options.map((option, n) => (
               <Button
@@ -371,6 +423,14 @@ export function GuidedSession() {
                 onClick={() => {
                   stopAudio();
                   setSelected(n);
+                  const correct = turn.item.options[turn.item.correctIndex]?.label;
+                  if (reinforced && turn.item.kind === "mcq" && correct && option.label !== correct) {
+                    // Calmly show the answer; an assisted answer never counts as autonomous.
+                    supportUsed.current = true;
+                    setShown(correct);
+                    read([`Une réponse possible : ${correct}.`]);
+                    return;
+                  }
                   setView("develop");
                   read([turn.followUp, "Donnez votre avis à voix haute."]);
                 }}
@@ -381,24 +441,36 @@ export function GuidedSession() {
               </Button>
             ))}
           </div>
+          {shown && (
+            <p role="status" className="mt-4 text-xl">
+              Une réponse possible : <strong>{shown}</strong>
+            </p>
+          )}
           </div>
         )}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Button onClick={answer} className="h-14 whitespace-normal text-xl">
-            {voice.listening ? <Square /> : <Mic />}
-            {voice.listening
-              ? "Terminer ma réponse"
-              : view === "model" || turn.phase === "repeat"
-                ? "Répéter"
-                : "Répondre"}
-          </Button>
+          {!introStep && (
+            <Button onClick={answer} className="h-14 whitespace-normal text-xl">
+              {voice.listening ? <Square /> : <Mic />}
+              {voice.listening
+                ? "Terminer ma réponse"
+                : view === "model" || turn.phase === "repeat"
+                  ? "Répéter"
+                  : "Répondre"}
+            </Button>
+          )}
           {voice.recording && (
             <Button variant="ghost" onClick={voice.playRecording} className="h-14 text-lg">
               <Play />
               M'écouter
             </Button>
           )}
-          <Button variant="outline" onClick={next} disabled={saving} className="h-14 text-xl">
+          <Button
+            variant="outline"
+            onClick={() => (introStep ? setIntroDone(true) : next())}
+            disabled={saving}
+            className="h-14 text-xl"
+          >
             Continuer
             <ArrowRight />
           </Button>
