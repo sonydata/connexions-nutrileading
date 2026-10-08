@@ -1,13 +1,14 @@
 // Every sentence the session can read aloud — used once to pre-record the whole bank,
 // so the same natural voice is heard everywhere (guests included) with no live synthesis.
-import { BANK, BY_ID, type Item } from "./content";
+import { BANK, BY_ID, datedReperes, type Item } from "./content";
 import { SEQ_ITEMS, SEQUENCES } from "./sequences";
 import { RESPONSE_INSTRUCTIONS } from "./response-guidance";
 import { discussionVoiceTexts } from "./discussion";
 import { toPlay } from "./builder";
-import { segment } from "./adaptive-profile";
 
+export const VOICE_TEST = "Bonjour, je suis la voix de Connexions.";
 const FIXED = [
+  VOICE_TEST,
   "Écoutez cette information.",
   ...RESPONSE_INSTRUCTIONS,
   "Vrai ou faux ?", "Vrai", "Faux",
@@ -56,15 +57,22 @@ export function allVoiceTexts(): string[] {
   for (let n = 0; n < items.length; n += 12) for (const text of discussionVoiceTexts(items.slice(n, n + 12))) out.add(text);
   // "We talked about this before" lines read before a reactivated word.
   for (const q of SEQUENCES) for (const w of ["Il y a quelques jours", "La semaine dernière"]) out.add(`${w}, nous avions parlé de ce sujet : ${q.title}.`);
-  // "One idea at a time" support reads shorter segments: they are voiced by the same natural voice.
-  for (const text of [...out])
-    for (const max of [11, 8]) for (const part of segment(text, { ideasPerUtterance: 1, maxSentenceWords: max })) out.add(part);
+  // Date-based conversation starters, for every month around today (built at call time, inside a request).
+  const y = new Date().getFullYear();
+  for (const year of [y - 1, y, y + 1])
+    for (let m = 0; m < 12; m++)
+      for (const i of datedReperes(new Date(year, m, 15))) {
+        for (const t of textsOf(i)) if (t && t.trim()) out.add(t.trim());
+        for (const text of discussionVoiceTexts([toPlay(i, 1)])) out.add(text);
+      }
   return [...out];
 }
 
 let allowed: Set<string> | null = null;
 /** Only sentences the app can actually say may be voiced — nobody can make the server pay for arbitrary text. */
 export function isVoiceText(text: string): boolean {
-  allowed ??= new Set(allVoiceTexts());
-  return allowed.has(text.trim());
+  if (allowed) return allowed.has(text.trim());
+  const set = new Set(allVoiceTexts());
+  if (new Date().getFullYear() >= 2020) allowed = set; // never keep a list built without a real clock
+  return set.has(text.trim());
 }

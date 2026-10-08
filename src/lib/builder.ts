@@ -1,5 +1,5 @@
 import { LIBRARY, imageSrc } from "./library";
-import { BANK, REPERES, BY_ID, FOLLOW_IDS, SCENE, topicOf, type Item, type Opt, type Skill, type Theme, type Topic } from "./content";
+import { BANK, REPERES, datedReperes, BY_ID, FOLLOW_IDS, SCENE, topicOf, type Item, type Opt, type Skill, type Theme, type Topic } from "./content";
 import { interestsOf } from "./interests";
 import { COLLECTIONS, SEQUENCES, SEQ_BY_ID, SEQ_TITLE, STAGE_OF, exploredSeqs, type Sequence, type Stage } from "./sequences";
 
@@ -295,14 +295,16 @@ export function buildPlan(past: PastAttempt[], topics: string[], base: number, f
   }
   if (novel) items.push(...novel.items.map((i) => toPlay(i, levels[i.skill] ?? base)));
 
-  // Actualité: two current reference questions + one short exchange, rotating.
-  // Put this coherent block first so it is never mistaken for the neighbouring cultural sequence.
-  if (interestsOf(topics).includes("actualite") && (!focus || focus === "actualite")) {
-    const fresh2 = (xs: Item[]) => { const f = xs.filter((i) => !recent.has(i.id)); return shuffle(f.length >= 2 ? f : xs); };
-    const qs = fresh2(REPERES.filter((i) => i.kind === "mcq")).slice(0, 2);
-    const talk = fresh2(REPERES.filter((i) => i.kind === "oral"))[0];
+  // Actualité: a short opening (one stable fact + one chat about today's date), at most every 3 days,
+  // always the least recently seen ones — so sessions never all start with the same questions.
+  const lastSeenRepere = Math.max(0, ...[...lastSeen].filter(([id]) => id.startsWith("rp-")).map(([, t]) => t));
+  if (interestsOf(topics).includes("actualite") && (!focus || focus === "actualite") && now - lastSeenRepere > 3 * 864e5) {
+    const leastRecent = (xs: Item[]) => shuffle(xs).sort((a, b) => (lastSeen.get(a.id) ?? 0) - (lastSeen.get(b.id) ?? 0))[0];
+    const fact = leastRecent(REPERES.filter((i) => i.kind === "mcq"));
+    const talk = leastRecent(datedReperes(new Date(now)));
     const current: PlayItem[] = [];
-    for (const i of [...qs, ...(talk ? [talk] : [])]) {
+    for (const i of [fact, talk]) {
+      if (!i) continue;
       const p = toPlay(i, levels[i.skill] ?? base);
       p.seqTitle = "Repères du moment";
       current.push(p);

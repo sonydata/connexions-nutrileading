@@ -317,27 +317,34 @@ export function topicOf(i: Item): Topic {
 }
 
 // ——— Repères du moment (Actualité) : faits stables du présent, pas de « dernières nouvelles ».
-// Year / month / season are computed from today's date. To update when office holders change.
+// Facts tied to a past date stay true after elections — never "who is president today?".
 const MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
-function reperes(now = new Date()): Item[] {
+const R = { topic: "actualite" as Topic };
+export const REPERES: Item[] = [
+  mcq("rp-fr-pres", "avis", "information", "Qui a été élu président de la République en 2017 ?", "président", o("Emmanuel Macron"), [o("François Hollande"), o("Nicolas Sarkozy")], R),
+  mcq("rp-us-pres", "avis", "information", "Qui a été élu président des États-Unis en 2024 ?", "États-Unis", o("Donald Trump"), [o("Joe Biden"), o("Barack Obama")], R),
+  mcq("rp-euro", "avis", "information", "Avec quelle monnaie paie-t-on en France ?", "monnaie", o("l'euro"), [o("le dollar"), o("le franc")], R),
+  mcq("rp-jo", "avis", "information", "Quelle ville a accueilli les Jeux olympiques de 2024 ?", "Jeux olympiques", o("Paris", "paris"), [o("Londres", "london"), o("Rome", "rome")], R),
+];
+
+/**
+ * Date-based conversation starters: the date is GIVEN, then talked about — never asked
+ * (year/month/season questions feel like a memory test).
+ * Always built at session time with the real date — never at module load (server clocks read 1970 there).
+ */
+export function datedReperes(now: Date): Item[] {
   const y = now.getFullYear();
+  if (y < 2020) return []; // clock not available: say nothing rather than a wrong date
   const m = now.getMonth();
   const seasons = [o("l'hiver", "winter"), o("le printemps", "spring"), o("l'été", "summer"), o("l'automne", "autumn")];
   const si = m === 11 || m < 2 ? 0 : m < 5 ? 1 : m < 8 ? 2 : 3;
-  const R = { topic: "actualite" as Topic };
+  const month = MONTHS[m] ?? "janvier";
   return [
-    // Facts tied to a past date stay true after elections — never "who is president today?".
-    mcq("rp-fr-pres", "avis", "information", "Qui a été élu président de la République en 2017 ?", "président", o("Emmanuel Macron"), [o("François Hollande"), o("Nicolas Sarkozy")], R),
-    mcq("rp-us-pres", "avis", "information", "Qui a été élu président des États-Unis en 2024 ?", "États-Unis", o("Donald Trump"), [o("Joe Biden"), o("Barack Obama")], R),
-    // The date is GIVEN, then talked about — never asked (year/month/season questions feel like a memory test).
     oral("rp-year", "expliquer", [`Nous sommes en ${y}. Qu'attendez-vous de cette année ?`], { ...R, image: "calendar", hint: "Un projet, un voyage, un moment en famille.", model: "J'aimerais profiter de ma famille et faire de belles promenades." }),
-    oral("rp-month", "expliquer", [`Nous sommes au mois ${/^[aeiouy]/.test(MONTHS[m] ?? "") ? "d'" : "de "}${MONTHS[m] ?? "janvier"}. Que fait-on souvent à cette période ?`], { ...R, image: "calendar", hint: "Une fête, une récolte, une habitude de saison.", model: "À cette période, on prépare souvent les fêtes et on profite des produits de saison." }),
-    mcq("rp-euro", "avis", "information", "Avec quelle monnaie paie-t-on en France ?", "monnaie", o("l'euro"), [o("le dollar"), o("le franc")], R),
-    mcq("rp-jo", "avis", "information", "Quelle ville a accueilli les Jeux olympiques de 2024 ?", "Jeux olympiques", o("Paris", "paris"), [o("Londres", "london"), o("Rome", "rome")], R),
+    oral("rp-month", "expliquer", [`Nous sommes au mois ${/^[aeiouy]/.test(month) ? "d'" : "de "}${month}. Que fait-on souvent à cette période ?`], { ...R, image: "calendar", hint: "Une fête, une récolte, une habitude de saison.", model: "À cette période, on prépare souvent les fêtes et on profite des produits de saison." }),
     oral("rp-ex-season", "expliquer", [`C'est ${seasons[si]?.label ?? "l'automne"}. Qu'aimez-vous faire en cette saison ?`], { ...R, image: seasons[si]?.image ?? "calendar", hint: "Une promenade, un plat de saison ou un moment chez soi.", model: "J'aime me promener et profiter des produits de saison." }),
   ];
 }
-export const REPERES = reperes();
 
 export const BANK: Item[] = [...CORE, ...TOPIC_BANK, ...REPERES];
 export const BY_ID = new Map(BANK.map((i) => [i.id, i]));

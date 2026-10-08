@@ -81,7 +81,7 @@ export const completeSession = createServerFn({ method: "POST" })
  * Only sentences the app itself can say are synthesised (isVoiceText), for everyone — signed in or not —
  * so a missing clip never falls back to a robotic device voice, and the cost stays bounded to the bank.
  */
-async function voiceAudio(text: string): Promise<{ audio: string | null }> {
+async function voiceAudio(text: string): Promise<{ audio: string | null; reason?: string }> {
   const name = await voiceFileName(text);
   // Privileged client: the voice bucket is a shared, server-only cache.
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -91,14 +91,21 @@ async function voiceAudio(text: string): Promise<{ audio: string | null }> {
   const { isVoiceText } = await import("./voice-texts");
   if (!isVoiceText(text)) {
     console.warn("voice: sentence not in the bank, not synthesised:", text.slice(0, 80));
-    return { audio: null };
+    return { audio: null, reason: "Phrase inconnue de la banque." };
   }
   const { synthesizeSpeech } = await import("./gateway.server");
   let buf: ArrayBuffer;
   try {
-    buf = await synthesizeSpeech(text);
-  } catch {
-    buf = await synthesizeSpeech(text); // one retry: a transient gateway error should not cost the natural voice
+    try {
+      buf = await synthesizeSpeech(text);
+    } catch {
+      buf = await synthesizeSpeech(text); // one retry: a transient gateway error should not cost the natural voice
+    }
+  } catch (e) {
+    const status = (e as { status?: number }).status;
+    const reason = status === 402 ? "Crédits IA Lovable épuisés." : status === 429 ? "Trop de demandes en même temps, réessayez dans un instant." : (e as Error).message || "Erreur du service de voix.";
+    console.error("voice synthesis failed:", status, reason);
+    return { audio: null, reason };
   }
   // upsert:false — if another request stored it meanwhile, keep that file.
   const up = await bucket.upload(name, new Blob([buf], { type: "audio/wav" }), { contentType: "audio/wav", upsert: false });

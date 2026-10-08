@@ -3,6 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { INTERESTS } from "@/lib/interests";
 import { topicOfId } from "@/lib/builder";
 import { QUESTIONS, deriveParams, summariseSignals, turnInfo, type ProfileAnswers } from "@/lib/adaptive-profile";
+import { useServerFn } from "@tanstack/react-start";
+import { speak } from "@/lib/session.functions";
+import { VOICE_TEST } from "@/lib/voice-texts";
 
 type Row = { item_id: string | null; session_id: string | null; kind: string | null; option_count: number; word_count: number; created_at: string; outcome?: string | null };
 type Session = { started_at: string; completed_at: string | null };
@@ -80,6 +83,22 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
 
   const p = deriveParams(answers);
 
+  // Voice check for the caregiver: plays the natural voice, or says exactly why it can't be produced.
+  const speakFn = useServerFn(speak);
+  const [voiceCheck, setVoiceCheck] = useState<string | null>(null);
+  async function testVoice() {
+    setVoiceCheck("Test en cours…");
+    try {
+      const r = await speakFn({ data: { text: VOICE_TEST } });
+      if (!r.audio) return setVoiceCheck(`La voix naturelle ne peut pas être produite : ${r.reason ?? "raison inconnue"}`);
+      const bytes = Uint8Array.from(atob(r.audio), (c) => c.charCodeAt(0));
+      await new Audio(URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }))).play();
+      setVoiceCheck("La voix naturelle fonctionne.");
+    } catch (e) {
+      setVoiceCheck(`Le test a échoué : ${(e as Error).message}`);
+    }
+  }
+
   return (
     <>
       <section className="mt-10 rounded-3xl border bg-card p-7">
@@ -124,6 +143,13 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
             </div>
           </>
         )}
+      </section>
+
+      <section className="mt-5 rounded-3xl border bg-card p-7">
+        <h2 className="text-2xl">Voix</h2>
+        <p className="mt-1 text-muted-foreground">Vérifiez que la voix naturelle fonctionne sur cet appareil.</p>
+        <button onClick={testVoice} className="mt-4 rounded-full border px-6 py-2">Tester la voix</button>
+        {voiceCheck && <p role="status" className="mt-3 text-lg">{voiceCheck}</p>}
       </section>
 
       <section className="mt-5 rounded-3xl border bg-card p-7">
