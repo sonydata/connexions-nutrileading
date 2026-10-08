@@ -63,7 +63,25 @@ export function GuidedSession() {
   function stopAudio() {
     playId.current++;
     audio.current?.pause();
+    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     setSpeaking(false);
+  }
+  /** Device French voice (free, offline). Resolves false if unavailable. */
+  function speakDevice(text: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      const s = typeof window !== "undefined" ? window.speechSynthesis : undefined;
+      if (!s) return resolve(false);
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "fr-FR";
+      u.rate = 0.9;
+      const frs = s.getVoices().filter((v) => v.lang?.toLowerCase().startsWith("fr"));
+      const fem = /am[ée]lie|audrey|aur[ée]lie|marie|virginie|julie|denise|hortense|c[ée]line|eloise|vivienne|google fran/i;
+      const v = frs.find((x) => fem.test(x.name)) ?? frs[0];
+      if (v) u.voice = v;
+      u.onend = () => resolve(true);
+      u.onerror = () => resolve(true);
+      s.speak(u);
+    });
   }
   async function read(texts: (string | null)[]) {
     stopAudio();
@@ -82,20 +100,29 @@ export function GuidedSession() {
         if (id !== playId.current) return;
         let url = clips.current.get(text);
         if (!url) {
-          const result = signedIn.current ? await synth({ data: { text } }) : await cached({ data: { text } });
+          const result = await (signedIn.current ? synth({ data: { text } }) : cached({ data: { text } })).catch(() => ({ audio: null }));
           if (id !== playId.current) return;
-          if (!result.audio) {
-            setAudioUnavailable(true);
-            continue;
+          if (result.audio) {
+            const bytes = Uint8Array.from(atob(result.audio), (c) => c.charCodeAt(0));
+            url = URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
+            clips.current.set(text, url);
           }
-          const bytes = Uint8Array.from(atob(result.audio), (c) => c.charCodeAt(0));
-          url = URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
-          clips.current.set(text, url);
+        }
+        if (!url) {
+          // Missing clip: free device voice instead of silence.
+          if (!(await speakDevice(text))) setAudioUnavailable(true);
+          continue;
         }
         const element = audio.current ?? new Audio();
         audio.current = element;
         element.src = url;
-        await element.play();
+        try {
+          await element.play();
+        } catch (e) {
+          // Browser blocked autoplay before any tap: wait for the speaker button, no error.
+          if ((e as Error)?.name === "NotAllowedError") return;
+          throw e;
+        }
         await new Promise<void>((resolve) => {
           element.onended = () => resolve();
           element.onerror = () => resolve();
