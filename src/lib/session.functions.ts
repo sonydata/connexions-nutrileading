@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildPlan } from "./builder";
 import { voiceFileName } from "./voice-key";
 import { deriveParams, isSignal, summariseSignals, type ProfileAnswers } from "./adaptive-profile";
+import { cleanTargets, pickTarget, targetVoiceTexts } from "./spaced-retrieval";
 
 export type { PlayItem } from "./builder";
 
@@ -23,10 +24,12 @@ export const startSession = createServerFn({ method: "POST" })
     const rows = past ?? [];
     const base = settings?.difficulty ?? 1;
     const params = deriveParams((profile?.answers ?? {}) as ProfileAnswers, summariseSignals(rows), base);
-    const { items, teaser } = buildPlan(rows.filter((r) => !isSignal(r.kind)), settings?.topics ?? [], base, data?.focus ?? null);
+    const { items, teaser } = buildPlan(rows.filter((r) => !isSignal(r.kind) && r.kind !== "srt"), settings?.topics ?? [], base, data?.focus ?? null);
+    // Today's personal target (spaced retrieval), if the caregiver entered some.
+    const srt = pickTarget(cleanTargets((profile?.answers as ProfileAnswers | null)?.personal), rows);
     const { data: session, error } = await supabase.from("practice_sessions").insert({ user_id: userId }).select("id").single();
     if (error) throw new Error(error.message);
-    return { sessionId: session.id, items, teaser, params };
+    return { sessionId: session.id, items, teaser, params, srt };
   });
 
 export const recordAttempt = createServerFn({ method: "POST" })
@@ -81,7 +84,7 @@ export const completeSession = createServerFn({ method: "POST" })
  * Only sentences the app itself can say are synthesised (isVoiceText), for everyone — signed in or not —
  * so a missing clip never falls back to a robotic device voice, and the cost stays bounded to the bank.
  */
-async function voiceAudio(text: string): Promise<{ audio: string | null; reason?: string }> {
+async function voiceAudio(text: string, extraAllowed?: () => Promise<boolean>): Promise<{ audio: string | null; reason?: string }> {
   const name = await voiceFileName(text);
   // Privileged client: the voice bucket is a shared, server-only cache.
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -89,7 +92,7 @@ async function voiceAudio(text: string): Promise<{ audio: string | null; reason?
   const cached = await bucket.download(name);
   if (cached.data && cached.data.size > 0) return { audio: Buffer.from(await cached.data.arrayBuffer()).toString("base64") };
   const { isVoiceText } = await import("./voice-texts");
-  if (!isVoiceText(text)) {
+  if (!isVoiceText(text) && !(extraAllowed && (await extraAllowed()))) {
     console.warn("voice: sentence not in the bank, not synthesised:", text.slice(0, 80));
     return { audio: null, reason: "Phrase inconnue de la banque." };
   }
@@ -116,7 +119,13 @@ async function voiceAudio(text: string): Promise<{ audio: string | null; reason?
 export const speak = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ text: z.string().trim().min(1).max(400) }).parse(d))
-  .handler(async ({ data }) => voiceAudio(data.text));
+  .handler(async ({ data, context }) =>
+    // Besides the bank: the sentences of this person's own targets, entered by their caregiver.
+    voiceAudio(data.text, async () => {
+      const { data: profile } = await context.supabase.from("adaptive_profiles").select("answers").eq("user_id", context.userId).maybeSingle();
+      return cleanTargets((profile?.answers as ProfileAnswers | null)?.personal).some((t) => targetVoiceTexts(t).includes(data.text.trim()));
+    }),
+  );
 
 /** Discovery mode (no account): same natural voice, same bank-only rule. */
 export const speakCached = createServerFn({ method: "POST" })

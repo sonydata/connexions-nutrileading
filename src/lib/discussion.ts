@@ -15,6 +15,8 @@ export type DiscussionTurn = {
   followUp: string;
   /** Expected answer of a knowledge turn (choice, word to find); null for opinions. Always said aloud at the end. */
   answer: string | null;
+  /** Spaced-retrieval trial on a personal target: its step (0 = first ask) and whether it is weekly upkeep. */
+  srt?: { step: number; maintenance: boolean };
 };
 export const OPENINGS: Record<string, string> = {
   art: "Qu'est-ce qui vous plaît dans cette œuvre ?",

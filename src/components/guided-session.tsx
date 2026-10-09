@@ -13,6 +13,7 @@ import { visualHintFor } from "@/lib/visual-hints";
 import { imageSrc } from "@/lib/library";
 import { heardWord, useVoiceInput, wordCount } from "@/lib/voice-input";
 import { accentOf } from "@/lib/accents";
+import { MAX_EXTRA_TRIALS, SRT_KIND, insertAt, nextTrial, srtTurn, type PersonalTarget } from "@/lib/spaced-retrieval";
 
 type Outcome = "spontaneous" | "after_repeat" | "after_cue" | "revealed";
 /** Simple mode (accompagnement renforcé): what the screen is waiting for. One thing at a time. */
@@ -85,6 +86,8 @@ export function GuidedSession() {
   const started = useRef(false);
   const lastHeard = useRef({ text: "", at: 0 });
   const listening = useRef(false);
+  /** Today's personal target (spaced retrieval): misses in a row and trials added so far. */
+  const srt = useRef<{ target: PersonalTarget; maintenance: boolean; misses: number; extra: number } | null>(null);
   const turn = turns[index];
 
   function stopAudio() {
@@ -225,7 +228,8 @@ export function GuidedSession() {
   useEffect(() => {
     if (!simple || simpleStep !== "after" || state !== "play") return;
     const run = turnRun.current;
-    const t = setTimeout(() => run === turnRun.current && next(), 1800 + params.pauseMs);
+    const revealed = !!turn?.answer && !turn.options.length && answerLine === revealText(turn.answer);
+    const t = setTimeout(() => run === turnRun.current && next(), (revealed ? 4000 : 1800) + params.pauseMs);
     return () => clearTimeout(t);
   }, [simple, simpleStep, state]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -283,6 +287,12 @@ export function GuidedSession() {
             : t,
         );
       if (!list.length) throw new Error("empty");
+      // Personal target: first asked after one warm-up activity, then again at growing intervals.
+      const pick = ("srt" in result ? result.srt : null) as { target: PersonalTarget; maintenance: boolean } | null;
+      if (pick) {
+        srt.current = { target: pick.target, maintenance: pick.maintenance, misses: 0, extra: 0 };
+        list.splice(Math.min(1, list.length), 0, srtTurn(pick.target, 0, pick.maintenance));
+      }
       setTurns(list);
       // Start the first sentences now, so the voice is ready when the person taps "Commencer".
       for (const t of list.slice(0, 2)) for (const x of partsOf([t.item.recall, t.intro, t.prompt])) clip(x);
@@ -327,15 +337,17 @@ export function GuidedSession() {
     participated.current = true;
     words.current += wordCount(text);
     if (view === "develop" || view === "model" || turn?.phase === "repeat") return showModel();
-    setView("develop");
     if (turn?.answer && !answerLine) {
       // Speech recognition is only a hint: a match confirms; anything else simply gives the answer, never "wrong".
       const found = !!text && heardWord(text, turn.answer);
       if (found) settle(supportUsed.current ? "after_cue" : "spontaneous");
       else if (text) settle("after_repeat");
+      if (turn.srt) return void closeKnowledge(found);
+      setView("develop");
       closeKnowledge(found, [turn.followUp, OPINION]);
       return;
     }
+    setView("develop");
     read([turn?.followUp ?? null, OPINION]);
   }
   async function choose(n: number) {
@@ -411,6 +423,21 @@ export function GuidedSession() {
     setView("model");
     read(["Voici une formulation possible.", turn?.model ?? null]);
   }
+  /** The person helping heard the right answer (speech recognition often misses names or slow speech). */
+  function markCorrect() {
+    if (!turn?.answer) return;
+    const run = turnRun.current;
+    if (listening.current) {
+      listening.current = false;
+      voice.stop();
+    }
+    outcome.current = "spontaneous";
+    responseMs.current = null;
+    const line = confirmText(turn.answer);
+    setAnswerLine(line);
+    setSimpleStep("speaking");
+    read([line]).then(() => run === turnRun.current && simple && setSimpleStep("after"));
+  }
   function save(t: DiscussionTurn) {
     if (!sessionId.current) return;
     const id = sessionId.current;
@@ -420,11 +447,11 @@ export function GuidedSession() {
       ? {
           sessionId: id,
           itemId: t.item.id,
-          kind: t.item.kind === "oral" ? (t.item.mode ?? "oral") : t.item.kind,
+          kind: t.srt ? SRT_KIND : t.item.kind === "oral" ? (t.item.mode ?? "oral") : t.item.kind,
           category: t.item.theme,
           skill: t.item.skill,
           prompt: t.prompt,
-          optionCount: selected !== null ? t.options.length : words.current,
+          optionCount: t.srt ? t.srt.step : selected !== null ? t.options.length : words.current,
           outcome: outcome.current!,
           responseMs: responseMs.current,
           repeated: false,
@@ -458,7 +485,21 @@ export function GuidedSession() {
     voice.clear();
     save(turn);
     if (participated.current) participationCount.current++;
-    const last = index + 1 >= turns.length;
+    // Spaced retrieval: schedule the next ask of today's target (longer after success, back after a miss).
+    let list = turns;
+    const s = srt.current;
+    if (turn.srt && s && !s.maintenance && outcome.current) {
+      const success = outcome.current === "spontaneous";
+      s.misses = success ? 0 : s.misses + 1;
+      const plan = nextTrial(turn.srt.step, success, s.misses);
+      const pos = plan && s.extra < MAX_EXTRA_TRIALS ? insertAt(index, plan.gap, turns.length) : null;
+      if (plan && pos !== null) {
+        s.extra++;
+        list = [...turns.slice(0, pos), srtTurn(s.target, plan.step), ...turns.slice(pos)];
+        setTurns(list);
+      }
+    }
+    const last = index + 1 >= list.length;
     if (last && sessionId.current) complete({ data: { sessionId: sessionId.current } }).catch(() => {});
     participated.current = false;
     supportUsed.current = false;
@@ -605,6 +646,11 @@ export function GuidedSession() {
                 J'ai fini
               </button>
             )}
+            {turn.answer && !turn.options.length && outcome.current !== "spontaneous" && (simpleStep === "listen" || (answerLine && answerLine !== confirmText(turn.answer))) && (
+              <button onClick={markCorrect} className="rounded-full px-4 py-2 hover:bg-muted">
+                C'était juste
+              </button>
+            )}
             <button onClick={() => next()} className="flex items-center gap-1 rounded-full px-4 py-2 hover:bg-muted">
               Passer <ArrowRight className="size-4" />
             </button>
@@ -655,6 +701,24 @@ export function GuidedSession() {
               {answerLine}
             </p>
           )}
+          {turn.answer && !turn.options.length && answerLine === revealText(turn.answer) && (
+            <Button variant="link" onClick={markCorrect} className="text-base text-muted-foreground">
+              C'était juste
+            </Button>
+          )}
+          {turn.srt && !answerLine && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                settle("revealed");
+                closeKnowledge(false);
+              }}
+              className="mt-4 h-12 text-lg text-primary"
+            >
+              <Lightbulb />
+              Entendre la réponse
+            </Button>
+          )}
           <p className="mt-4 text-xl text-primary">{view === "model" ? "Une formulation possible" : view === "develop" ? OPINION : instr(turn)}</p>
           {voice.listening && (
             <p className="mt-3 text-lg text-primary" role="status">
@@ -662,7 +726,7 @@ export function GuidedSession() {
             </p>
           )}
           {(voice.transcript || heard) && <p className="mt-3 max-w-2xl text-lg italic text-muted-foreground">« {voice.transcript || heard} »</p>}
-          {view !== "model" && !answerLine && (
+          {view !== "model" && !answerLine && !turn.srt && (
             <Button
               variant="ghost"
               onClick={() => {

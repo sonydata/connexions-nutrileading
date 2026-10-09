@@ -16,6 +16,7 @@ export type ProfileAnswers = {
   vision?: boolean;
   fatigue?: number; // 1 = tolerant … 3 = tires / frustrates quickly
   knowledge?: number; // 1 … 5 general knowledge / reasoning retained (5 = high)
+  personal?: { id: string; sentence: string; question: string; answer: string }[] | undefined; // personal targets (text only)
   reinforced?: boolean | undefined; // "Accompagnement renforcé", set by the caregiver (saved with the profile)
 };
 

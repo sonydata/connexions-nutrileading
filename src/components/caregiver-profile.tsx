@@ -6,6 +6,7 @@ import { QUESTIONS, deriveParams, summariseSignals, turnInfo, type ProfileAnswer
 import { useServerFn } from "@tanstack/react-start";
 import { speak } from "@/lib/session.functions";
 import { VOICE_TEST } from "@/lib/voice-texts";
+import { MAX_TARGETS, cleanTargets, targetProgress, type PersonalTarget } from "@/lib/spaced-retrieval";
 
 type Row = { item_id: string | null; session_id: string | null; kind: string | null; option_count: number; word_count: number; created_at: string; outcome?: string | null };
 type Session = { started_at: string; completed_at: string | null };
@@ -31,11 +32,25 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
     });
   }, [userId]);
 
-  async function save() {
-    await supabase.from("adaptive_profiles").upsert({ user_id: userId, answers, expertise: expertise.trim(), diagnosis: diagnosis.trim() || null, updated_at: new Date().toISOString() });
+  async function save(next: ProfileAnswers = answers) {
+    await supabase.from("adaptive_profiles").upsert({ user_id: userId, answers: next, expertise: expertise.trim(), diagnosis: diagnosis.trim() || null, updated_at: new Date().toISOString() });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
+
+  // Personal targets (spaced retrieval) — text only, no photos.
+  const targets: PersonalTarget[] = answers.personal ?? [];
+  const [targetsSaved, setTargetsSaved] = useState(false);
+  const setTargets = (list: PersonalTarget[]) => setAnswers({ ...answers, personal: list });
+  const editTarget = (id: string, patch: Partial<PersonalTarget>) => setTargets(targets.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+  async function saveTargets() {
+    const next = { ...answers, personal: cleanTargets(targets) };
+    setAnswers(next);
+    await save(next);
+    setTargetsSaved(true);
+    setTimeout(() => setTargetsSaved(false), 2000);
+  }
+  const STATUS: Record<string, string> = { new: "Pas encore travaillé", learning: "En cours", paused: "En pause quelques jours", known: "Retenu · revu chaque semaine" };
 
   const monday = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d; })();
   async function sendFeedback(answer: string, text?: string) {
@@ -146,6 +161,46 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
       </section>
 
       <section className="mt-5 rounded-3xl border bg-card p-7">
+        <h2 className="text-2xl">Ses repères personnels</h2>
+        <p className="mt-1 max-w-3xl text-muted-foreground">
+          Quelques informations de sa vie à retrouver : prénoms de la famille, sa rue, son médecin, un objet de la maison. Choisissez ce qu'il connaît encore un peu ; 5 à 10 suffisent. Chaque séance en travaille une : la phrase est dite, puis la question revient de plus en plus espacée. S'il ne trouve pas, la réponse est donnée tout de suite. Texte seulement, aucune photo.
+        </p>
+        <div className="mt-5 space-y-4">
+          {targets.map((t) => {
+            const pr = targetProgress(t, attempts.map((a) => ({ ...a, outcome: a.outcome ?? "" })));
+            return (
+              <div key={t.id} className="grid gap-2 rounded-2xl border bg-background p-4 md:grid-cols-[1.4fr_1.2fr_0.7fr_auto] md:items-end">
+                <label className="block text-sm text-muted-foreground">
+                  Phrase à retenir
+                  <input value={t.sentence} maxLength={160} onChange={(e) => editTarget(t.id, { sentence: e.target.value })} placeholder="Votre petite-fille s'appelle Léa." className="mt-1 w-full rounded-xl border bg-card px-3 py-2 text-base text-foreground" />
+                </label>
+                <label className="block text-sm text-muted-foreground">
+                  Question
+                  <input value={t.question} maxLength={160} onChange={(e) => editTarget(t.id, { question: e.target.value })} placeholder="Comment s'appelle votre petite-fille ?" className="mt-1 w-full rounded-xl border bg-card px-3 py-2 text-base text-foreground" />
+                </label>
+                <label className="block text-sm text-muted-foreground">
+                  Réponse
+                  <input value={t.answer} maxLength={60} onChange={(e) => editTarget(t.id, { answer: e.target.value })} placeholder="Léa" className="mt-1 w-full rounded-xl border bg-card px-3 py-2 text-base text-foreground" />
+                </label>
+                <div className="flex items-center gap-3 md:flex-col md:items-end">
+                  <span className="text-sm text-muted-foreground">{STATUS[pr.status]}{pr.status === "learning" ? ` (${pr.sessions} séance${pr.sessions > 1 ? "s" : ""})` : ""}</span>
+                  <button onClick={() => setTargets(targets.filter((x) => x.id !== t.id))} className="text-sm text-muted-foreground underline underline-offset-4">Retirer</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          {targets.length < MAX_TARGETS && (
+            <button onClick={() => setTargets([...targets, { id: Math.random().toString(36).slice(2, 10), sentence: "", question: "", answer: "" }])} className="rounded-full border px-6 py-2">
+              Ajouter un repère
+            </button>
+          )}
+          <button onClick={saveTargets} className="rounded-full bg-primary px-8 py-2 text-primary-foreground">{targetsSaved ? "Enregistré" : "Enregistrer"}</button>
+        </div>
+      </section>
+
+      <section className="mt-5 rounded-3xl border bg-card p-7">
         <h2 className="text-2xl">Voix</h2>
         <p className="mt-1 text-muted-foreground">Vérifiez que la voix naturelle fonctionne sur cet appareil.</p>
         <button onClick={testVoice} className="mt-4 rounded-full border px-6 py-2">Tester la voix</button>
@@ -207,7 +262,7 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
               <span className="text-sm text-muted-foreground">Diagnostic, si connu (facultatif — ne règle pas la difficulté)</span>
               <input value={diagnosis} onChange={(e) => setDiagnosis(e.target.value)} maxLength={120} className="mt-2 w-full rounded-xl border bg-background px-4 py-3" />
             </label>
-            <button onClick={save} className="rounded-full bg-primary px-10 py-3 text-primary-foreground">{saved ? "Enregistré" : "Enregistrer"}</button>
+            <button onClick={() => save()} className="rounded-full bg-primary px-10 py-3 text-primary-foreground">{saved ? "Enregistré" : "Enregistrer"}</button>
           </div>
         )}
       </section>
