@@ -401,21 +401,24 @@ export const SCENE: Record<string, string> = {
   "cat-lentils": "lentils", "cat-salmon": "salmon", "cat-yogurt": "yogurt", "cat-almonds": "almonds",
   "n-lentils": "lentils",
   "m-glyc": "consultation", "m-vitd": "summer", "m-bone": "consultation", "m-anemia": "consultation", "m-b12": "consultation", "m-heart": "consultation",
-  "cu-joconde": "mona_lisa", "cu-monet": "monet", "cu-rome": "rome", "cu-thames": "london", "cu-gaudi": "barcelona", "cu-pasteur": "book",
-  "cu-fleming": "book", "cu-curie": "book", "cu-mercury": "astronomy", "cu-hippo": "book", "cu-eiffel": "paris",
+  "cu-joconde": "mona_lisa", "cu-monet": "monet", "cu-rome": "rome", "cu-thames": "london", "cu-gaudi": "barcelona", "cu-pasteur": "",
+  "cu-fleming": "", "cu-curie": "", "cu-mercury": "astronomy", "cu-hippo": "", "cu-eiffel": "paris",
   "t-twice": "calendar", "t-15h": "calendar", "t-bilan": "consultation", "t-meal": "plate", "t-week": "calendar", "t-evening": "evening",
   "t-season": "calendar", "t-2h": "plate", "t-dinner": "evening", "t-sequence": "consultation", "t-3x": "calendar", "t-kine": "calendar",
   "tf-olive": "olive_oil", "tf-salmon": "salmon", "tf-lentils": "lentils", "tf-vitc": "orange", "tf-water": "water", "tf-soda": "soda",
   "tf-insulin": "consultation", "tf-calcium": "yogurt", "tf-walnuts": "walnuts", "tf-transit": "vegetables", "tf-protage": "elderly_meal",
-  "rp-fr-pres": "elysee", "rp-us-pres": "white_house", "rp-king": "london", "rp-notredame": "", "rp-mondial": "football", "rp-tf-euro": "market", "rp-tf-notredame": "", "rp-year": "calendar", "rp-month": "calendar", "rp-euro": "market", "rp-jo": "paris",
+  "rp-fr-pres": "elysee", "rp-us-pres": "white_house", "rp-notredame": "", "rp-mondial": "football", "rp-tf-euro": "", "rp-tf-notredame": "", "rp-year": "calendar", "rp-month": "calendar", "rp-jo": "",
   "tf-vitdsun": "summer", "tf-saltbp": "salt",
   "sq-mediterranee-r": "legumes", "v-legum": "legumes",
   // New paths (15 Oct): a photo of the situation on every step that has one, never of the answer.
   ...Object.fromEntries(
-    ([["sq-pain", "bread"], ["sq-paris2024", "paris"], ["sq-arbres", "autumn"], ["sq-fontaine", "book"], ["sq-telephone", "phone"],
+    ([["sq-pain", "bread"], ["sq-arbres", "autumn"], ["sq-fontaine", "book"], ["sq-telephone", "phone"],
       ["sq-alpes", "winter"], ["sq-coeur", "consultation"], ["sq-lune", "night"], ["sq-hydratation", "water"]] as const)
       .flatMap(([id, img]) => ["c", "e", "f"].map((k) => [`${id}-${k}`, img])),
   ),
   "sq-notredame-c": "", "sq-notredame-e": "", "sq-notredame-f": "",
+  // No photo rather than a loose one (feedback 15 Oct): add <id>.jpg to the library to give one.
+  "sq-paris2024-c": "", "sq-paris2024-e": "", "sq-paris2024-f": "", "sq-tour-c": "", "sq-tour-e": "", "sq-tour-f": "",
+  "rp-euro": "", "rp-king": "", "n-sardines": "", "cui-steam": "",
   "sq-arbres-r": "forest", "sq-lune-r": "night", "sq-coeur-e": "walk", "sq-coeur-f": "walk",
 };

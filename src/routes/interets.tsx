@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Preview } from "@/components/memory-games";
 import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, PREFIX, interestsOf, otherInterest } from "@/lib/interests";
 
 export const Route = createFileRoute("/interets")({
@@ -96,6 +97,13 @@ function Interets() {
             );
           })}
         </div>
+        <Link to="/memoire" search={{ jeu: undefined }} className="mt-4 flex items-center justify-between gap-4 rounded-2xl border-2 border-u-retrouver/50 bg-u-retrouver-soft px-6 py-5 text-left text-xl transition hover:border-u-retrouver">
+          <span>
+            <span aria-hidden>🧠</span> <span className="font-semibold">Jeux de mémoire</span>
+            <span className="block text-base text-muted-foreground">Paires, objet disparu, liste de courses : à faire quand on veut.</span>
+          </span>
+          <Preview ids={["keys", "?", "keys"]} size="size-14" />
+        </Link>
         <label className="mt-8 block max-w-md">
           <span className="text-lg">Autre</span>
           <input value={other} onChange={(e) => setOther(e.target.value)} placeholder="Par exemple : architecture" className="mt-2 w-full rounded-xl border bg-card px-5 py-4 text-lg outline-none focus:ring-2 focus:ring-ring" />

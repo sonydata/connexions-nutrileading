@@ -36,7 +36,13 @@
 - [ ] Ajouter les portraits libres de droits (p-macron, p-trump… dans src/assets/library) pour activer les réponses en photo
 - [x] Onglet « Jeux de mémoire » (paires, objet disparu, liste de courses)
 - [x] Chaque activité correspond aux centres d'intérêt choisis (plus de Renaissance avec Actualité) — vérifié par test
-- [ ] Plus d'aide visuelle : photos à ajouter pour les nouveaux parcours sans image (Notre-Dame, Tour de France, Versailles, IA)
+- [x] Indices qui ne donnent jamais la réponse (sens du mot, premier son, un mauvais choix retiré) ; aucune photo principale ne montre la réponse
+- [x] Voix : consignes reprises des phrases déjà enregistrées ; félicitation dite à voix haute ; choix lus ; « Écoutez, puis répétez la phrase » avant la phrase, « Répétez la phrase à voix haute » après
+- [x] Jeux de mémoire visibles (accueil, écran des centres d'intérêt), images d'aperçu, onglets pour changer de jeu
+- [ ] Photos représentatives à ajouter dans src/assets/library (le nom du fichier suffit, rien d'autre à changer) :
+  rp-jo.jpg (Jeux olympiques), sq-paris2024.jpg (épreuve olympique à Paris), sq-tour.jpg (coureurs du Tour de France), sq-notredame.jpg (Notre-Dame restaurée),
+  sq-versailles.jpg (château / galerie des Glaces), sq-ia.jpg (personne parlant à une tablette), rp-pope.jpg (place Saint-Pierre), rp-king.jpg (couronne britannique),
+  rp-euro.jpg (pièces et billets en euros), rp-notredame.jpg, cu-pasteur.jpg (laboratoire ancien), cu-curie.jpg, cu-hippo.jpg, cu-fleming.jpg (boîte de Petri)
 
 - [x] Une seule voix féminine (pas de bascule vers la voix du navigateur)
 - [x] Retirer les questions trop évidentes/enfantines de la banque

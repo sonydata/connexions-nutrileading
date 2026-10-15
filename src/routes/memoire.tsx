@@ -1,13 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Check, Eye, LayoutGrid, ShoppingBasket } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import { imageSrc, LIBRARY } from "@/lib/library";
+import { GAMES, Preview, type Game } from "@/components/memory-games";
 
 // Small, gentle memory games. No timer, no score, nothing saved: the pleasure of finding comes first.
 // Pictures come only from the curated library, always with their name written underneath.
 
 export const Route = createFileRoute("/memoire")({
   ssr: false,
+  validateSearch: (s: Record<string, unknown>) => ({ jeu: ["paires", "disparu", "courses"].includes(s["jeu"] as string) ? (s["jeu"] as Game) : undefined }),
   head: () => ({
     meta: [
       { title: "Jeux de mémoire — Connexions" },
@@ -34,37 +36,46 @@ const shuffle = <T,>(a: T[]) => {
 };
 const pick = <T,>(a: T[], n: number) => shuffle(a).slice(0, n);
 
-type Game = "paires" | "disparu" | "courses";
-const GAMES: { id: Game; title: string; text: string; Icon: typeof Eye }[] = [
-  { id: "paires", title: "Les paires", text: "Retournez les cartes deux par deux pour retrouver les images identiques.", Icon: LayoutGrid },
-  { id: "disparu", title: "L'objet disparu", text: "Regardez quelques objets. L'un d'eux disparaît : lequel ?", Icon: Eye },
-  { id: "courses", title: "La liste de courses", text: "Retenez trois produits, puis retrouvez-les parmi d'autres.", Icon: ShoppingBasket },
-];
-
 function Memoire() {
-  const [game, setGame] = useState<Game | null>(null);
+  const { jeu } = Route.useSearch();
+  const [game, setGame] = useState<Game | null>(jeu ?? null);
   return (
     <main className="paper-grain min-h-screen px-6 py-8 md:px-12">
       <header className="mx-auto flex max-w-5xl items-center justify-between">
         <Link to="/" className="font-serif text-2xl">Connexions</Link>
-        {game && (
-          <button onClick={() => setGame(null)} className="flex items-center gap-2 rounded-full px-4 py-2 text-lg text-muted-foreground hover:bg-muted">
-            <ArrowLeft className="size-5" /> Les jeux
-          </button>
-        )}
+        <Link to="/" className="flex items-center gap-2 rounded-full px-4 py-2 text-lg text-muted-foreground hover:bg-muted">
+          <ArrowLeft className="size-5" /> Accueil
+        </Link>
       </header>
-      <section className="mx-auto mt-10 max-w-5xl animate-rise">
+      {/* Inside a game, the other games stay one tap away. */}
+      {game && (
+        <nav className="mx-auto mt-6 grid max-w-5xl grid-cols-3 gap-3" aria-label="Changer de jeu">
+          {GAMES.map((g) => (
+            <button
+              key={g.id}
+              onClick={() => setGame(g.id)}
+              aria-current={game === g.id}
+              className={`flex items-center justify-center gap-2 rounded-2xl border-2 px-3 py-3 text-lg font-medium transition md:text-xl ${game === g.id ? `${g.tone} border-primary` : "border-border bg-card text-muted-foreground hover:border-primary"}`}
+            >
+              <span className="text-2xl" aria-hidden>{g.emoji}</span>
+              <span className="hidden sm:inline">{g.title}</span>
+            </button>
+          ))}
+        </nav>
+      )}
+      <section className="mx-auto mt-8 max-w-5xl animate-rise">
         {!game && (
           <>
             <p className="text-sm font-medium uppercase tracking-[0.25em] text-brand">Stimulation de la mémoire</p>
             <h1 className="mt-4 text-5xl leading-tight md:text-6xl">Jeux de mémoire</h1>
             <p className="mt-5 max-w-2xl text-xl text-muted-foreground">Quelques minutes, à son rythme. Pas de chronomètre, pas de score.</p>
             <div className="mt-10 grid gap-5 md:grid-cols-3">
-              {GAMES.map(({ id, title, text, Icon }) => (
-                <button key={id} onClick={() => setGame(id)} className="flex flex-col items-start gap-4 rounded-3xl border-2 border-border bg-card p-7 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary">
-                  <span className="grid size-14 place-items-center rounded-2xl bg-sage-soft text-primary"><Icon className="size-7" /></span>
-                  <span className="font-serif text-3xl">{title}</span>
+              {GAMES.map(({ id, title, text, emoji, preview, tone }) => (
+                <button key={id} onClick={() => setGame(id)} className={`flex flex-col items-start gap-4 rounded-3xl border-2 p-7 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary ${tone}`}>
+                  <Preview ids={preview} size="size-20" />
+                  <span className="font-serif text-3xl"><span aria-hidden>{emoji}</span> {title}</span>
                   <span className="text-lg text-muted-foreground">{text}</span>
+                  <span className="mt-auto rounded-full bg-primary px-6 py-2 text-lg text-primary-foreground">Jouer</span>
                 </button>
               ))}
             </div>

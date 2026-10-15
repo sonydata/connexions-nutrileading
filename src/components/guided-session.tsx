@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Check, Lightbulb, Mic, Play, Square, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { buildPlan } from "@/lib/builder";
-import { INSTRUCTIONS, confirmText, discussionTurns, revealText, type DiscussionTurn } from "@/lib/discussion";
+import { INSTRUCTIONS, PRAISE, closing, discussionTurns, hintFor, revealsAnswer, type DiscussionTurn } from "@/lib/discussion";
 import { completeSession, recordAttempt, speak, speakCached, startSession } from "@/lib/session.functions";
 import { deriveParams, type SessionParams } from "@/lib/adaptive-profile";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,6 +57,8 @@ export function GuidedSession() {
   const [view, setView] = useState<"prompt" | "develop" | "model">("prompt");
   const [simpleStep, setSimpleStep] = useState<SimpleStep>("speaking");
   const [hintVisible, setHintVisible] = useState(false);
+  /** null while unanswered; true = found, false = the answer was given. */
+  const [answerFound, setAnswerFound] = useState<boolean | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [speaking, setSpeaking] = useState(false);
   const [heard, setHeard] = useState("");
@@ -66,6 +68,12 @@ export function GuidedSession() {
   const [answerLine, setAnswerLine] = useState<string | null>(null);
   // Set by the caregiver in the profile (or automatically when comprehension is difficult) — never toggled from the session.
   const simple = params.reinforced;
+  /** What is said for a turn, in order. A sentence to repeat: the instruction BEFORE it, "Répétez" right after.
+   * Choices are read aloud (no numbers, no announcement), except Vrai/Faux which the instruction already names. */
+  const spoken = (t: DiscussionTurn) =>
+    t.phase === "repeat"
+      ? [t.item.recall, INSTRUCTIONS.repeat, t.prompt, INSTRUCTIONS.repeatNow]
+      : [t.item.recall, t.intro, t.prompt, instr(t), ...(t.item.kind === "tf" ? [] : t.options.map((o) => o.label))];
   const instr = (t: DiscussionTurn) =>
     simple ? (t.options.length ? "Touchez votre réponse." : t.phase === "repeat" ? INSTRUCTIONS.repeat : "À vous de parler.") : t.instruction;
   const sessionId = useRef("");
@@ -183,15 +191,15 @@ export function GuidedSession() {
     const run = ++turnRun.current;
     // Prepare the next turn's voice while this one plays, so it starts without waiting.
     const nextTurn = turns[index + 1];
-    if (nextTurn) for (const t of partsOf([nextTurn.item.recall, nextTurn.intro, nextTurn.prompt, instr(nextTurn)])) clip(t);
+    if (nextTurn) for (const t of partsOf(spoken(nextTurn))) clip(t);
     if (!simple) {
-      read([turn.item.recall, turn.intro, turn.prompt, instr(turn)]);
+      read(spoken(turn));
       return;
     }
     // Simple mode: the screen leads, one step at a time — the person never has to find a button.
     (async () => {
       setSimpleStep("speaking");
-      const ok = await read([turn.item.recall, turn.intro, turn.prompt, instr(turn)]);
+      const ok = await read(spoken(turn));
       if (run !== turnRun.current) return;
       if (!ok && !audioUnavailable) return; // interrupted (Réécouter / Passer): that action takes over
       if (turn.options.length) setSimpleStep("choose");
@@ -226,7 +234,7 @@ export function GuidedSession() {
   useEffect(() => {
     if (!simple || simpleStep !== "after" || state !== "play") return;
     const run = turnRun.current;
-    const revealed = !!turn?.answer && !turn.options.length && answerLine === revealText(turn.answer);
+    const revealed = answerFound === false;
     const t = setTimeout(() => run === turnRun.current && next(), (revealed ? 4000 : 1800) + params.pauseMs);
     return () => clearTimeout(t);
   }, [simple, simpleStep, state]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -320,11 +328,13 @@ export function GuidedSession() {
     if (o === "spontaneous") responseMs.current = Math.max(0, Date.now() - readyAt.current);
   }
   /** Close a knowledge turn: the answer is always heard and shown. */
-  function closeKnowledge(found: boolean, andThen: (string | null)[] = []) {
+  function closeKnowledge(found: boolean) {
     if (!turn?.answer) return Promise.resolve(false);
-    const line = found ? confirmText(turn.answer) : revealText(turn.answer);
-    setAnswerLine(line);
-    return read([line, ...andThen]);
+    // A right answer is praised aloud ("Très juste."), then the answer is said; otherwise the answer is simply given.
+    const { say, show } = closing(turn.answer, found, PRAISE[index % PRAISE.length]);
+    setAnswerLine(show);
+    setAnswerFound(found);
+    return read(say);
   }
 
   async function answer() {
@@ -395,7 +405,7 @@ export function GuidedSession() {
       const run = turnRun.current;
       listening.current = false;
       setSimpleStep("speaking");
-      read(answerLine ? [answerLine] : [turn.prompt, instr(turn)]).then(() => {
+      read(answerLine && turn.answer ? closing(turn.answer, !!answerFound).say : spoken(turn).slice(1)).then(() => {
         if (run !== turnRun.current) return;
         if (answerLine) setSimpleStep("after");
         else if (turn.options.length) setSimpleStep("choose");
@@ -406,9 +416,9 @@ export function GuidedSession() {
     read(
       view === "model"
         ? [turn.model]
-        : answerLine
-          ? [answerLine]
-          : [turn.intro, turn.prompt, instr(turn)],
+        : answerLine && turn.answer
+          ? closing(turn.answer, !!answerFound).say
+          : spoken(turn).slice(1),
     );
   }
   function showModel() {
@@ -427,10 +437,11 @@ export function GuidedSession() {
     }
     outcome.current = "spontaneous";
     responseMs.current = null;
-    const line = confirmText(turn.answer);
-    setAnswerLine(line);
+    const { say, show } = closing(turn.answer, true, PRAISE[index % PRAISE.length]);
+    setAnswerLine(show);
+    setAnswerFound(true);
     setSimpleStep("speaking");
-    read([line]).then(() => run === turnRun.current && simple && setSimpleStep("after"));
+    read(say).then(() => run === turnRun.current && simple && setSimpleStep("after"));
   }
   function save(t: DiscussionTurn) {
     if (!sessionId.current) return;
@@ -506,6 +517,7 @@ export function GuidedSession() {
     setHintVisible(false);
     setSelected(null);
     setAnswerLine(null);
+    setAnswerFound(null);
     if (last) setState("done");
     else setIndex((n) => n + 1);
   }
@@ -570,7 +582,7 @@ export function GuidedSession() {
   function renderSimple() {
     if (!turn) return null;
     const hint = visualHintFor(turn.item);
-    const picture = src ?? (hint.image ? imageSrc(hint.image) : null);
+    const picture = src ?? (hint.image && !revealsAnswer(hint.alt, turn.answer) ? imageSrc(hint.image) : null);
     const withImages = turn.options.every((o) => o.image && imageSrc(o.image));
     return (
       <main className="paper-grain flex min-h-screen flex-col px-5 py-5 md:px-10">
@@ -639,7 +651,7 @@ export function GuidedSession() {
                 J'ai fini
               </button>
             )}
-            {turn.answer && !turn.options.length && outcome.current !== "spontaneous" && (simpleStep === "listen" || (answerLine && answerLine !== confirmText(turn.answer))) && (
+            {turn.answer && !turn.options.length && outcome.current !== "spontaneous" && (simpleStep === "listen" || answerFound === false) && (
               <button onClick={markCorrect} className="rounded-full px-4 py-2 hover:bg-muted">
                 C'était juste
               </button>
@@ -657,8 +669,8 @@ export function GuidedSession() {
   // Knowledge turns are answered by touching a choice; speaking stays possible but is never required.
   function renderStandard() {
     if (!turn) return null;
-    const hint = visualHintFor(turn.item);
-    const showHint = hintVisible && view !== "model" && !answerLine;
+    const hint = hintFor(turn);
+    const showHint = !!hint && hintVisible && view !== "model" && !answerLine;
     const answered = !!answerLine || view !== "prompt";
     const hasChoices = turn.options.length > 0 && view !== "model";
     const withImages = turn.options.every((o) => o.image && imageSrc(o.image));
@@ -704,15 +716,16 @@ export function GuidedSession() {
               {turn.options.map((option, n) => {
                 const isRight = !!answerLine && option.label === correct;
                 const picked = selected === n;
+                const removed = !answerLine && hintVisible && hint?.remove === n;
                 return (
                   <button
                     key={option.label}
                     onClick={() => choose(n)}
-                    disabled={!!answerLine}
+                    disabled={!!answerLine || removed}
                     aria-pressed={picked}
                     className={`flex min-h-20 items-center gap-4 rounded-2xl border-2 bg-card px-5 py-4 text-left text-xl transition ${
                       isRight ? "border-calm bg-calm-soft font-semibold" : answerLine ? "border-border opacity-60" : picked ? "border-primary" : "border-border hover:border-primary"
-                    } ${withImages ? "flex-col text-center" : ""}`}
+                    } ${removed ? "opacity-30 line-through" : ""} ${withImages ? "flex-col text-center" : ""}`}
                   >
                     {withImages && option.image && <img src={imageSrc(option.image) ?? ""} alt="" className="h-32 w-full rounded-lg object-cover" />}
                     {/* Only the right answer gets a tick; a different choice is simply dimmed, never marked wrong. */}
@@ -731,7 +744,7 @@ export function GuidedSession() {
               {answerLine}
             </p>
           )}
-          {turn.answer && selected === null && answerLine === revealText(turn.answer) && (
+          {turn.answer && selected === null && answerFound === false && (
             <Button variant="link" onClick={markCorrect} className="text-base text-muted-foreground">
               C'était juste
             </Button>
@@ -756,25 +769,26 @@ export function GuidedSession() {
           )}
           {(voice.transcript || heard) && <p className="mt-3 max-w-2xl text-lg italic text-muted-foreground">« {voice.transcript || heard} »</p>}
 
-          {!answered && !turn.srt && turn.phase !== "repeat" && (hint.image || hint.caption) && (
+          {!answered && !turn.srt && hint && !hintVisible && (
             <Button
               variant="ghost"
               onClick={() => {
                 supportUsed.current = true;
-                setHintVisible(!hintVisible);
+                setHintVisible(true);
+                read(["Voici un indice."]);
               }}
               aria-expanded={hintVisible}
               aria-controls="discussion-hint"
               className="mt-4 h-12 text-lg text-primary"
             >
               <Lightbulb />
-              {hintVisible ? "Masquer l'indice" : "Un indice ?"}
+              Un indice ?
             </Button>
           )}
-          {showHint && (
-            <figure id="discussion-hint" className="mt-3 max-w-72" aria-live="polite">
-              {hint.image && <img src={imageSrc(hint.image) ?? ""} alt={hint.alt} className="max-h-52 w-full rounded-lg object-contain" />}
-              <figcaption className="mt-3 text-lg">{hint.caption}</figcaption>
+          {showHint && (hint.caption || hint.image) && (
+            <figure id="discussion-hint" className="mt-4 max-w-md rounded-2xl bg-sage-soft px-5 py-4" aria-live="polite">
+              {hint.image && <img src={imageSrc(hint.image) ?? ""} alt="" className="mx-auto mb-3 max-h-44 rounded-lg object-contain" />}
+              {hint.caption && <figcaption className="text-lg"><Lightbulb className="mr-2 inline size-5 text-primary" />{hint.caption}</figcaption>}
             </figure>
           )}
           {turn.phase === "exchange" && view !== "model" && (

@@ -70,14 +70,17 @@ export function skillLevels(past: PastAttempt[], base: number): Record<string, n
 
 // Illustration for every question: curated scene → photo whose subject is named in the
 // situation (never in the answers) . No generic fallback: no photo rather than an ambiguous one. Never shows the answer.
-const STOP = new Set(["les", "des", "une", "verre", "tasse", "pain", "soleil", "lever", "coucher", "haut", "peut", "paris"]);
+const STOP = new Set(["les", "des", "une", "verre", "tasse", "pain", "soleil", "lever", "coucher", "haut", "peut", "paris", "tour", "poisson"]);
 const norm = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 // Hint photos and portraits are only used where explicitly assigned, never matched on a word.
 const KEYS = LIBRARY.filter((l) => l.group !== "indices" && l.group !== "people").flatMap((l) => norm(l.label).split(/[^a-z]+/).filter((w) => w.length >= 4 && !STOP.has(w)).map((w) => [w, l.id] as const));
 function illustrate(item: Item, text: string, answer?: string): string | null {
+  // A photo made for this very question (src/assets/library/<question id>.jpg) always wins,
+  // then one made for its theme (sq-….jpg), then the curated scene.
+  if (imageSrc(item.id)) return item.id;
+  const seq = item.id.match(/^(sq-[a-z0-9]+)-[cref]$/)?.[1];
+  if (seq && imageSrc(seq) && !SCENE[item.id]) return seq;
   if (item.id in SCENE) return SCENE[item.id] || null; // "" = deliberately no photo (none fits)
-  const seq = item.id.match(/^(sq-[a-z]+)-[cref]$/)?.[1];
-  if (seq && imageSrc(seq)) return seq;
   const t = norm(text);
   const bad = answer ? norm(answer) : "";
   const hit = KEYS.find(([w, id]) => new RegExp(`\\b${w}s?\\b`).test(t) && !(bad && bad.includes(w)) && imageSrc(id));
@@ -103,6 +106,15 @@ function wordChoices(item: Item, answer: string, level: number): Opt[] {
   return shuffle([answer, ...pool.slice(0, n)]).map((label) => ({ label }));
 }
 
+/** A photo whose subject is the answer (the Colosseum for "Rome") would give it away: no photo then. */
+function notTheAnswer(image: string | null, answer: string): string | null {
+  if (!image) return null;
+  const lab = norm(LIBRARY.find((l) => l.id === image)?.label ?? image);
+  const ans = norm(answer).replace(/^(l'|le |la |les |de |du |des |un |une )/, "").trim();
+  const words = ans.split(/[^a-z0-9]+/).filter((w) => w.length >= 4);
+  return words.some((w) => lab.includes(w)) || image === "paris" && /paris/.test(ans) ? null : image;
+}
+
 export function toPlay(item: Item, level: number): PlayItem {
   const base = { id: item.id, kind: item.kind, theme: item.theme, topic: topicOf(item), skill: item.skill, level, question: null, keyword: null, hint: null, answerText: null, image: null, model: null, syllable: null, options: [] as Opt[], correctIndex: -1, stage: STAGE_OF.get(item.id) ?? null, seqTitle: SEQ_TITLE.get(item.id) ?? (item.id.startsWith("pv-") ? "Un proverbe" : null), recall: null as string | null, drop: 0 };
   if (item.kind === "mcq") {
@@ -119,7 +131,7 @@ export function toPlay(item: Item, level: number): PlayItem {
       keyword: item.keyword,
       options: opts,
       correctIndex: opts.indexOf(answer),
-      image: opts.every((o) => o.image && imageSrc(o.image)) ? null : illustrate(item, `${item.audio} ${item.question ?? ""}`, item.answer.label),
+      image: opts.every((o) => o.image && imageSrc(o.image)) ? null : notTheAnswer(illustrate(item, `${item.audio} ${item.question ?? ""}`, item.answer.label), item.answer.label),
     };
   }
   if (item.kind === "tf") {

@@ -57,7 +57,7 @@ describe("Simple screen (accompagnement renforcé)", () => {
     await act(async () => fireEvent.click(choice));
 
     // The answer is always said and shown, then the next question comes by itself.
-    await screen.findByText(/^(Oui, c'est|La réponse : |En fait, c'est)/);
+    await screen.findByText(/^(Très juste|Tout à fait|C'est cela|La réponse : |Voici la réponse)/);
     await waitFor(() => expect(screen.getByLabelText(/^2 sur/)).toBeTruthy(), { timeout: 5000 });
     expect(["mcq", "tf"]).toContain(recorded[0]!.kind);
     // Touching is the normal way to answer: a right tap without help counts as found alone.
@@ -76,7 +76,7 @@ describe("Simple screen (accompagnement renforcé)", () => {
     await screen.findByText("Comment s'appelle votre petite-fille ?");
     const ok = await screen.findByRole("button", { name: "C'était juste" }, { timeout: 4000 });
     await act(async () => fireEvent.click(ok));
-    await screen.findByText("Oui, c'est bien cela : Léa.");
+    await screen.findByText(/Oui, c'est bien cela : Léa\./);
 
     // Moves on alone; the target comes back later in the session (one more activity in the list).
     await waitFor(() => expect(screen.getByLabelText(/^3 sur 6$/)).toBeTruthy(), { timeout: 5000 });

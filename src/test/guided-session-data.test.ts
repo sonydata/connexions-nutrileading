@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildPlan, skillLevels } from "../lib/builder";
 import { REPERES, datedReperes } from "../lib/content";
 import { toPlay } from "../lib/builder";
-import { confirmText, discussionTurns, revealText, REINFORCED_INSTRUCTIONS } from "../lib/discussion";
+import { closing, discussionTurns, hintFor, revealsAnswer, REINFORCED_INSTRUCTIONS } from "../lib/discussion";
 import { deriveParams, summariseSignals } from "../lib/adaptive-profile";
 import { isVoiceText } from "../lib/voice-texts";
 
@@ -19,7 +19,7 @@ describe("Guided session data", () => {
       const plan = buildPlan([], [TOPICS[n % TOPICS.length]!, TOPICS[(n + 3) % TOPICS.length]!, "i:actualite"], 1 + (n % 3));
       for (const turn of discussionTurns(plan.items, "regard")) {
         [turn.item.recall, turn.intro, turn.prompt, turn.instruction, turn.followUp, turn.model, ...turn.options.map((o) => o.label)].forEach(check);
-        if (turn.answer) [confirmText(turn.answer), revealText(turn.answer)].forEach(check);
+        if (turn.answer) [...closing(turn.answer, true).say, ...closing(turn.answer, false).say].forEach(check);
       }
     }
     ["Donnez votre avis à voix haute.", "Voici une formulation possible.", "Très bien dit.", ...REINFORCED_INSTRUCTIONS].forEach(check);
@@ -122,5 +122,23 @@ describe("Sonia's feedback (15 Oct)", () => {
     const second = buildPlan(past, ["i:sante", "i:medecine", "i:sciences", "i:actualite", "i:art"], 1).items;
     const repeated = second.filter((i) => first.some((j) => j.id === i.id) && !i.recall);
     expect(repeated.length).toBeLessThanOrEqual(1);
+  });
+});
+
+describe("Feedback 15 Oct (2)", () => {
+  const ALL = ["i:sante", "i:medecine", "i:sciences", "i:actualite", "i:art", "i:histoire", "i:geographie", "i:nature", "i:litterature", "i:technologie", "i:cuisine", "i:sport"];
+  it("never gives the answer away in a hint", () => {
+    for (let n = 0; n < 60; n++)
+      for (const turn of discussionTurns(buildPlan([], [ALL[n % ALL.length]!, ALL[(n + 5) % ALL.length]!], 1 + (n % 3)).items, "regard")) {
+        const h = hintFor(turn);
+        if (!h || !turn.answer) continue;
+        expect(revealsAnswer(h.caption, turn.answer), `${turn.item.id}: ${h.caption}`).toBe(false);
+        if (h.remove !== null) expect(turn.options[h.remove]!.label).not.toBe(turn.answer);
+        if (h.remove !== null) expect(turn.options.length).toBeGreaterThanOrEqual(3);
+      }
+  });
+  it("praises a right answer aloud, then says it", () => {
+    expect(closing("le Louvre", true, "Très juste.").say).toEqual(["Très juste.", "Oui, c'est bien cela : le Louvre."]);
+    expect(closing("Vrai", false).say).toEqual(["Voici la réponse.", "Vrai"]);
   });
 });

@@ -10,6 +10,7 @@ import litteratureImg from "@/assets/home/litterature.jpg";
 import artImg from "@/assets/home/art.jpg";
 import santeImg from "@/assets/home/sante.jpg";
 import { ArrowRight, Ear, MessageCircle, Search } from "lucide-react";
+import { GAMES, Preview } from "@/components/memory-games";
 import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, interestsOf } from "@/lib/interests";
 
 export const Route = createFileRoute("/")({
@@ -75,7 +76,7 @@ function Index() {
           )}
           {[
             { to: "/interets" as const, label: "Mes centres d'intérêt", search: { next: undefined } },
-            { to: "/memoire" as const, label: "Jeux de mémoire", search: undefined },
+            { to: "/memoire" as const, label: "🧠 Jeux de mémoire", search: { jeu: undefined } },
             // Progress lives in the caregiver space (footer link), never on the person's own screen.
             ...(state === "in" ? [] : [{ to: "/auth" as const, label: "Mon espace", search: undefined }]),
           ].map((l) => (
@@ -176,6 +177,26 @@ function Index() {
               </li>
             ))}
           </ul>
+        </div>
+      </section>
+
+      {/* JEUX DE MÉMOIRE — bien visibles, couleur et images propres */}
+      <section className="mx-auto w-full max-w-6xl px-6 pt-10 md:px-8">
+        <div className="grid items-center gap-6 rounded-3xl border-2 border-u-retrouver/40 bg-u-retrouver-soft p-6 md:grid-cols-[1fr_auto] md:p-8">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-u-retrouver">Stimulation de la mémoire</p>
+            <p className="mt-2 font-serif text-3xl md:text-4xl"><span aria-hidden>🧠</span> Jeux de mémoire</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {GAMES.map((g) => (
+                <Link key={g.id} to="/memoire" search={{ jeu: g.id }} className="flex items-center gap-3 rounded-2xl border bg-card px-4 py-2.5 text-lg shadow-sm transition hover:-translate-y-0.5 hover:border-primary">
+                  <span aria-hidden className="text-2xl">{g.emoji}</span> {g.title}
+                </Link>
+              ))}
+            </div>
+          </div>
+          <Link to="/memoire" search={{ jeu: undefined }} className="hidden md:block" aria-label="Jeux de mémoire">
+            <Preview ids={["keys", "?", "keys"]} size="size-24" />
+          </Link>
         </div>
       </section>
 
