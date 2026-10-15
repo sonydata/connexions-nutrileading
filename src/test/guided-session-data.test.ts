@@ -160,8 +160,10 @@ describe("Voice (15 Oct, 3)", () => {
       const again = discussionTurns([{ ...t.item }], "regard")[0]!;
       expect(again.options.map((o) => o.label)).toEqual(t.options.map((o) => o.label));
     }
-    expect(choicesSentence(["de l'oxygène", "du gaz carbonique"])).toBe("De l'oxygène ou du gaz carbonique ?");
-    expect(isVoiceText("Paris, Londres ou Rome ?")).toBe(true);
-    expect(isVoiceText("Bonjour, au revoir ou merci ?")).toBe(false);
+    expect(choicesSentence(["la banane", "la pomme"])).toBe("La banane… ou… la pomme ?");
+    expect(choicesSentence(["Paris", "Londres", "Rome"])).toBe("Paris… Londres… ou… Rome ?");
+    expect(isVoiceText("Paris… Londres… ou… Rome ?")).toBe(true);
+    expect(isVoiceText("Vrai… ou… Faux ?")).toBe(true);
+    expect(isVoiceText("Bonjour… au revoir… ou… merci ?")).toBe(false);
   });
 });

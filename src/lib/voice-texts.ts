@@ -3,7 +3,7 @@
 import { BANK, BY_ID, completeModel, datedReperes, type Item } from "./content";
 import { SEQ_ITEMS, SEQUENCES } from "./sequences";
 import { RESPONSE_INSTRUCTIONS } from "./response-guidance";
-import { discussionVoiceTexts } from "./discussion";
+import { CHOICE_OR, CHOICE_SEP, discussionVoiceTexts } from "./discussion";
 import { toPlay } from "./builder";
 
 export const VOICE_TEST = "Bonjour, je suis la voix de Connexions.";
@@ -80,9 +80,9 @@ function isChoicesSentence(text: string): boolean {
     labels = out;
   }
   const body = t.slice(0, -2);
-  const last = body.lastIndexOf(" ou ");
+  const last = body.lastIndexOf(CHOICE_OR);
   if (last < 0) return false;
-  const parts = [...body.slice(0, last).split(", "), body.slice(last + 4)].map((p) => p.toLowerCase());
+  const parts = [...body.slice(0, last).split(CHOICE_SEP), body.slice(last + CHOICE_OR.length)].map((p) => p.toLowerCase());
   return parts.length >= 2 && parts.length <= 4 && parts.every((p) => labels!.has(p));
 }
 /** Only sentences the app can actually say may be voiced — nobody can make the server pay for arbitrary text. */

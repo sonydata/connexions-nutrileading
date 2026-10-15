@@ -38,10 +38,10 @@ export const DISCUSSION_INSTRUCTION = "Donnez votre avis à voix haute.";
 /** One short, concrete action per kind of turn (shown and said). Wherever possible these are sentences
  * already recorded in the natural voice, so they never fall back to the device voice. */
 export const INSTRUCTIONS = {
-  choice: "Touchez la réponse de votre choix.",
-  truth: "Vrai ou faux ?",
-  word: "Touchez votre réponse.",
-  missing: "Touchez votre réponse.",
+  choice: "Cliquez sur la bonne réponse.",
+  truth: "Cliquez sur la bonne réponse.",
+  word: "Cliquez sur la bonne réponse.",
+  missing: "Cliquez sur la bonne réponse.",
   /** Said BEFORE the sentence to repeat… */
   repeat: "Écoutez, puis répétez la phrase.",
   /** …and this one right after it. */
@@ -59,11 +59,14 @@ export function gameTurn(game: "paires" | "disparu" | "courses"): DiscussionTurn
   };
   return { item, intro: null, prompt: GAME_INTRO, model: null, image: null, options: [], phase: "game", game, instruction: GAME_INTRO, followUp: "", answer: null };
 }
-/** The choices said as ONE natural sentence ("De l'oxygène ou du gaz carbonique ?"): one recording, no gaps. */
+/** The choices said as ONE sentence with a pause between them ("La banane… ou… la pomme ?"):
+ * one recording, then the instruction. */
+export const CHOICE_SEP = "… ";
+export const CHOICE_OR = "… ou… ";
 export function choicesSentence(labels: string[]): string | null {
   if (labels.length < 2) return null;
   const xs = labels.map((l) => l.trim());
-  const text = `${xs.slice(0, -1).join(", ")} ou ${xs[xs.length - 1]} ?`;
+  const text = `${xs.slice(0, -1).join(CHOICE_SEP)}${CHOICE_OR}${xs[xs.length - 1]} ?`;
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 /** Fewer choices when the profile asks for it — always keeping the answer, in a stable order. */
@@ -179,7 +182,7 @@ export function discussionVoiceTexts(items: PlayItem[]): string[] {
         if (text) out.add(text);
       if (turn.answer) for (const f of [true, false]) for (const t of closing(turn.answer, f).say) out.add(t);
       for (const o of turn.options) out.add(o.label);
-      if (turn.item.kind !== "tf") for (const n of [2, 3]) { const c = choicesSentence(trimOptions(turn.options, turn.answer, n).map((o) => o.label)); if (c) out.add(c); }
+      for (const n of [2, 3]) { const c = choicesSentence(trimOptions(turn.options, turn.answer, n).map((o) => o.label)); if (c) out.add(c); }
     }
   return [...out];
 }

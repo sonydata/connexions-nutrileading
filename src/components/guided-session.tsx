@@ -62,9 +62,9 @@ export function GuidedSession() {
       ? [GAME_INTRO]
       : t.phase === "repeat"
       ? [t.item.recall, INSTRUCTIONS.repeat, t.prompt, INSTRUCTIONS.repeatNow]
-      : [t.item.recall, t.intro, t.prompt, instr(t), t.item.kind === "tf" ? null : choicesSentence(t.options.map((o) => o.label))];
+      : [t.item.recall, t.intro, t.prompt, choicesSentence(t.options.map((o) => o.label)), instr(t)];
   const instr = (t: DiscussionTurn) =>
-    simple ? (t.options.length ? "Touchez votre réponse." : t.phase === "repeat" ? INSTRUCTIONS.repeat : "À vous de parler.") : t.instruction;
+    simple ? (t.options.length ? INSTRUCTIONS.choice : t.phase === "repeat" ? INSTRUCTIONS.repeat : "À vous de parler.") : t.instruction;
   const sessionId = useRef("");
   const audio = useRef<HTMLAudioElement | null>(null);
   const playId = useRef(0);
