@@ -169,3 +169,39 @@ export const prepareVoice = createServerFn({ method: "POST" })
     }
     return { total: all.length, next: reason ? data.offset : data.offset + slice.length, made, reason };
   });
+
+/**
+ * "Préparer les images" (caregiver): generates, a few at a time, one picture per question/theme from its
+ * own text (see pictures.ts), and keeps it in the public "pictures" bucket. Made once; skips existing ones.
+ * Stops at the first service error and says why.
+ */
+export const preparePictures = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ offset: z.number().int().min(0), redo: z.string().max(80).optional() }).parse(d))
+  .handler(async ({ data }) => {
+    const { pictureJobs, picturePrompt, PICTURES_BUCKET } = await import("./pictures");
+    const { generatePicture } = await import("./gateway.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // The bucket is created (public, images only) the first time.
+    const has = await supabaseAdmin.storage.getBucket(PICTURES_BUCKET);
+    if (has.error) await supabaseAdmin.storage.createBucket(PICTURES_BUCKET, { public: true, allowedMimeTypes: ["image/png", "image/jpeg", "image/webp"] });
+    const bucket = supabaseAdmin.storage.from(PICTURES_BUCKET);
+    const all = pictureJobs();
+    const slice = data.redo ? all.filter((j) => j.key === data.redo) : all.slice(data.offset, data.offset + 2);
+    let made = 0;
+    let reason: string | null = null;
+    for (const job of slice) {
+      if (!data.redo && (await bucket.exists(job.key)).data) continue;
+      try {
+        const { bytes, type } = await generatePicture(picturePrompt(job));
+        const up = await bucket.upload(job.key, new Blob([bytes as Uint8Array<ArrayBuffer>], { type }), { contentType: type, upsert: !!data.redo, cacheControl: "604800" });
+        if (up.error && !/exists|duplicate/i.test(up.error.message)) reason = up.error.message;
+        else made++;
+      } catch (e) {
+        const status = (e as { status?: number }).status;
+        reason = status === 402 ? "Crédits IA Lovable épuisés." : status === 429 ? "Service d'images saturé, réessayez dans un moment." : (e as Error).message || "Erreur du service d'images.";
+        break;
+      }
+    }
+    return { total: all.length, next: reason ? data.offset : data.offset + slice.length, made, reason };
+  });

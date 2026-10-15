@@ -57,3 +57,28 @@ export async function synthesizeSpeech(text: string): Promise<ArrayBuffer> {
   if (!res.ok) await failure(res);
   return res.arrayBuffer();
 }
+
+// Pictures: one per question, made once and kept (see preparePictures). Fast, low-cost image model.
+const IMAGE_MODEL = "google/gemini-3.1-flash-lite-image";
+
+/** Returns the bytes and type of one generated picture for the given description. */
+export async function generatePicture(prompt: string): Promise<{ bytes: Uint8Array; type: string }> {
+  const key = apiKey();
+  const res = await fetch(`${BASE}/v1/images/generations`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Lovable-API-Key": key, "Content-Type": "application/json" },
+    body: JSON.stringify({ model: IMAGE_MODEL, prompt, n: 1 }),
+  });
+  if (!res.ok) await failure(res);
+  const json = (await res.json()) as { data?: { b64_json?: string | null; url?: string | null }[] };
+  const item = json.data?.[0];
+  let bytes: Uint8Array;
+  if (item?.b64_json) bytes = Uint8Array.from(Buffer.from(item.b64_json, "base64"));
+  else if (item?.url) {
+    const img = await fetch(item.url);
+    if (!img.ok) throw new GatewayError(img.status, "Image introuvable.");
+    bytes = new Uint8Array(await img.arrayBuffer());
+  } else throw new GatewayError(500, "Aucune image reçue.");
+  const type = bytes[0] === 0x89 ? "image/png" : bytes[0] === 0xff ? "image/jpeg" : bytes[0] === 0x52 ? "image/webp" : "image/png";
+  return { bytes, type };
+}

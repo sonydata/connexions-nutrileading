@@ -4,7 +4,8 @@ import { INTERESTS } from "@/lib/interests";
 import { topicOfId } from "@/lib/builder";
 import { QUESTIONS, deriveParams, summariseSignals, turnInfo, type ProfileAnswers } from "@/lib/adaptive-profile";
 import { useServerFn } from "@tanstack/react-start";
-import { prepareVoice, speak } from "@/lib/session.functions";
+import { preparePictures, prepareVoice, speak } from "@/lib/session.functions";
+import { GAME_INTRO } from "@/lib/discussion";
 import { VOICE_TEST } from "@/lib/voice-texts";
 import { MAX_TARGETS, cleanTargets, targetProgress, type PersonalTarget } from "@/lib/spaced-retrieval";
 
@@ -120,11 +121,33 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
       setPrep((x) => ({ running: false, done: x?.done ?? 0, total: x?.total ?? 0, made, reason: (e as Error).message }));
     }
   }
+  const picturesFn = useServerFn(preparePictures);
+  const [pics, setPics] = useState<{ running: boolean; done: number; total: number; made: number; reason: string | null } | null>(null);
+  async function preparePics() {
+    let offset = 0;
+    let made = 0;
+    setPics({ running: true, done: 0, total: 0, made: 0, reason: null });
+    try {
+      for (;;) {
+        const r = await picturesFn({ data: { offset } });
+        made += r.made;
+        if (r.reason) return setPics({ running: false, done: offset, total: r.total, made, reason: r.reason });
+        offset = r.next;
+        setPics({ running: offset < r.total, done: offset, total: r.total, made, reason: null });
+        if (offset >= r.total) return;
+      }
+    } catch (e) {
+      setPics((x) => ({ running: false, done: x?.done ?? 0, total: x?.total ?? 0, made, reason: (e as Error).message }));
+    }
+  }
   async function testVoice() {
     setVoiceCheck("Test en cours…");
     try {
       const r = await speakFn({ data: { text: VOICE_TEST } });
       if (!r.audio) return setVoiceCheck(`La voix naturelle ne peut pas être produite : ${r.reason ?? "raison inconnue"}`);
+      // The test sentence is already recorded: also try a newer one, which needs the voice service.
+      const fresh = await speakFn({ data: { text: GAME_INTRO } });
+      if (!fresh.audio) return setVoiceCheck(`Les phrases déjà enregistrées marchent, mais les nouvelles ne peuvent pas être créées : ${fresh.reason ?? "raison inconnue"}`);
       const bytes = Uint8Array.from(atob(r.audio), (c) => c.charCodeAt(0));
       await new Audio(URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }))).play();
       setVoiceCheck("La voix naturelle fonctionne.");
@@ -237,12 +260,20 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
             <button onClick={prepare} disabled={!!prep?.running} className="rounded-full bg-primary px-5 py-2 text-primary-foreground disabled:opacity-60">
               {prep?.running ? "Préparation en cours…" : "Préparer la voix"}
             </button>
+            <button onClick={preparePics} disabled={!!pics?.running} className="rounded-full bg-primary px-5 py-2 text-primary-foreground disabled:opacity-60">
+              {pics?.running ? "Images en cours…" : "Préparer les images"}
+            </button>
             <button onClick={testVoice} className="rounded-full border px-4 py-1.5">Tester la voix</button>
             {voiceCheck && <span role="status" className="text-muted-foreground">{voiceCheck}</span>}
           </div>
           <p className="mt-2 text-muted-foreground">
-            Enregistre à l'avance toutes les phrases des séances avec la voix naturelle (une seule fois ; utilise des crédits IA Lovable pour les phrases nouvelles).
+            « Préparer la voix » enregistre à l'avance toutes les phrases avec la voix naturelle. « Préparer les images » crée une photo propre à chaque question, sans jamais montrer la réponse. Chaque phrase et chaque image ne sont faites qu'une fois ; cela utilise des crédits IA Lovable. Vous pouvez arrêter et reprendre : ce qui est fait est gardé.
           </p>
+          {pics && (
+            <p role="status" className="mt-2 text-base">
+              {pics.reason ? `Images — arrêt : ${pics.reason}` : pics.running ? `Images vérifiées : ${pics.done} / ${pics.total} · nouvelles : ${pics.made}` : `Images prêtes : ${pics.total} (${pics.made} nouvelles).`}
+            </p>
+          )}
           {prep && (
             <p role="status" className="mt-2 text-base">
               {prep.reason ? `Arrêt : ${prep.reason}` : prep.running ? `Phrases vérifiées : ${prep.done} / ${prep.total} · nouvelles : ${prep.made}` : `Voix prête : ${prep.total} phrases (${prep.made} nouvelles).`}

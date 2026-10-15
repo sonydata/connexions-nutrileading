@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { buildPlan } from "@/lib/builder";
 import { GAME_INTRO, INSTRUCTIONS, PRAISE, choicesSentence, closing, discussionTurns, gameTurn, hintFor, revealsAnswer, trimOptions, type DiscussionTurn } from "@/lib/discussion";
 import { MemoryGame } from "@/components/memory-games";
+import { pictureKey, pictureUrl } from "@/lib/pictures";
 import { completeSession, recordAttempt, speak, speakCached, startSession } from "@/lib/session.functions";
 import { deriveParams, type SessionParams } from "@/lib/adaptive-profile";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,6 +50,7 @@ export function GuidedSession() {
   const [audioUnavailable, setAudioUnavailable] = useState(false);
   /** Some sentence had no natural voice yet (not recorded, or the voice service is unavailable). */
   const [voiceMissing, setVoiceMissing] = useState(false);
+  const [voiceReason, setVoiceReason] = useState<string | null>(null);
   /** The expected answer once it has been said (confirmed or revealed) — a knowledge turn always ends with it. */
   const [answerLine, setAnswerLine] = useState<string | null>(null);
   // Set by the caregiver in the profile (or automatically when comprehension is difficult) — never toggled from the session.
@@ -90,28 +92,19 @@ export function GuidedSession() {
     setSpeaking(false);
   }
 
-  /** At most 2 voice requests at once: generating many sentences in parallel hits the service's rate limit. */
-  const slots = useRef({ busy: 0, queue: [] as (() => void)[] });
-  function limited<T>(job: () => Promise<T>): Promise<T> {
-    const q = slots.current;
-    const run = (): Promise<T> => {
-      q.busy++;
-      return job().finally(() => {
-        q.busy--;
-        q.queue.shift()?.();
-      });
-    };
-    return q.busy < 2 ? run() : new Promise<T>((resolve, reject) => q.queue.push(() => run().then(resolve, reject)));
-  }
   /** The natural voice: fetched (generated once if needed), with one retry. */
   function clip(text: string): Promise<string | null> {
     let p = clips.current.get(text);
     if (!p) {
-      const fetchOnce = () => limited(() => (signedIn.current ? synth({ data: { text } }) : cached({ data: { text } })));
+      const fetchOnce = () => (signedIn.current ? synth({ data: { text } }) : cached({ data: { text } }));
       p = fetchOnce()
         .catch(() => fetchOnce())
         .then((r) => {
-          if (!r.audio) return null;
+          if (!r.audio) {
+            // Remember why (e.g. Lovable AI credits used up) to show it to the person helping.
+            if (r.reason) setVoiceReason(r.reason);
+            return null;
+          }
           const bytes = Uint8Array.from(atob(r.audio), (c) => c.charCodeAt(0));
           return URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
         })
@@ -195,15 +188,18 @@ export function GuidedSession() {
     const run = ++turnRun.current;
     // Prepare the next turn's voice while this one plays, so it starts without waiting.
     const nextTurn = turns[index + 1];
-    if (nextTurn) for (const t of partsOf(spoken(nextTurn))) clip(t);
+    // The current turn is requested first; the next one only once this one has been read,
+    // so preparing ahead never delays what is being said now.
+    const ahead = () => run === turnRun.current && nextTurn && partsOf(spoken(nextTurn)).forEach((t) => clip(t));
     if (!simple) {
-      read(spoken(turn));
+      read(spoken(turn)).finally(ahead);
       return;
     }
     // Simple mode: the screen leads, one step at a time — the person never has to find a button.
     (async () => {
       setSimpleStep("speaking");
       const ok = await read(spoken(turn));
+      ahead();
       if (run !== turnRun.current) return;
       if (!ok && !audioUnavailable) return; // interrupted (Réécouter / Passer): that action takes over
       if (turn.phase === "game") return; // the game itself is the activity; "Passer" moves on
@@ -615,7 +611,7 @@ export function GuidedSession() {
     return (
       <main className="paper-grain flex min-h-screen flex-col px-5 py-5 md:px-10">
         <section key={index} className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center gap-6 text-center">
-          {picture && <img src={picture} alt="" className="max-h-[32vh] w-auto max-w-full rounded-2xl object-contain shadow-md" />}
+          <QuestionPicture key={turn.item.id} id={turn.item.id} fallback={picture} className="max-h-[32vh] w-auto max-w-full rounded-2xl object-contain shadow-md" />
           {turn.intro && simpleStep === "speaking" && !answerLine && <p className="max-w-3xl font-serif text-3xl leading-snug md:text-4xl">{turn.intro}</p>}
           <h1 className="max-w-3xl font-serif text-4xl leading-snug md:text-5xl">{turn.prompt}</h1>
 
@@ -715,7 +711,7 @@ export function GuidedSession() {
         </header>
         <section key={index} className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center py-8 text-center">
           <p className={`mb-4 text-sm font-semibold uppercase ${accent.text}`}>{title}</p>
-          {src && <img src={src} alt={title} className="mb-5 max-h-72 w-auto max-w-full rounded-xl object-contain shadow-sm" />}
+          <QuestionPicture key={turn.item.id} id={turn.item.id} fallback={src} alt={title} className="mb-5 max-h-72 w-auto max-w-full rounded-xl object-contain shadow-sm" />
           <div className="mb-3 flex items-center gap-3">
             <Button variant="default" size="icon" aria-label="Réécouter" onClick={relisten} className="size-14 rounded-full">
               <Volume2 className="size-7" />
@@ -732,7 +728,9 @@ export function GuidedSession() {
             </p>
           )}
           {voiceMissing && !audioUnavailable && (
-            <p role="status" className="mb-3 text-sm text-muted-foreground">Certaines phrases n'ont pas encore leur voix (Espace aidant › Préparer la voix).</p>
+            <p role="status" className="mb-3 text-sm text-muted-foreground">
+              Voix naturelle indisponible{voiceReason ? ` : ${voiceReason}` : " pour certaines phrases"} (Espace aidant › Préparer la voix).
+            </p>
           )}
           {view === "prompt" && turn.intro && <p className="mb-4 max-w-2xl font-serif text-2xl leading-snug">{turn.intro}</p>}
           <h1 className={`max-w-2xl font-serif leading-snug ${params.largeText || turn.phase === "repeat" ? "text-3xl md:text-4xl" : "text-2xl md:text-3xl"}`}>
@@ -857,6 +855,16 @@ export function GuidedSession() {
       </main>
     );
   }
+}
+
+/** The question's own generated picture when it exists, else the library photo, else nothing. */
+function QuestionPicture({ id, fallback, alt = "", className }: { id: string; fallback: string | null; alt?: string; className: string }) {
+  const key = pictureKey(id);
+  const own = key ? pictureUrl(key) : null;
+  const [step, setStep] = useState<0 | 1 | 2>(own ? 0 : 1);
+  const url = step === 0 ? own : step === 1 ? fallback : null;
+  if (!url) return null;
+  return <img src={url} alt={alt} className={className} onError={() => setStep((n) => (n === 0 && fallback ? 1 : 2))} />;
 }
 
 function Frame({ children }: { children: React.ReactNode }) {
