@@ -131,3 +131,41 @@ export const speak = createServerFn({ method: "POST" })
 export const speakCached = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ text: z.string().trim().min(1).max(400) }).parse(d))
   .handler(async ({ data }) => voiceAudio(data.text));
+
+/**
+ * "Préparer la voix" (caregiver): records in advance, a few at a time, every sentence the sessions can say,
+ * so nothing is generated (or missing) during a session. Each sentence is made once, ever.
+ * Stops at the first service error and says why (e.g. Lovable AI credits used up).
+ */
+export const prepareVoice = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ offset: z.number().int().min(0) }).parse(d))
+  .handler(async ({ data }) => {
+    const { allVoiceTexts } = await import("./voice-texts");
+    const { synthesizeSpeech } = await import("./gateway.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const bucket = supabaseAdmin.storage.from("voice");
+    const all = allVoiceTexts();
+    const slice = all.slice(data.offset, data.offset + 6);
+    let made = 0;
+    let reason: string | null = null;
+    // Two at a time: the voice service limits parallel requests.
+    for (let k = 0; k < slice.length && !reason; k += 2) {
+      await Promise.all(
+        slice.slice(k, k + 2).map(async (text) => {
+          const name = await voiceFileName(text);
+          const has = await bucket.exists(name);
+          if (has.data) return;
+          try {
+            const buf = await synthesizeSpeech(text);
+            const up = await bucket.upload(name, new Blob([buf], { type: "audio/wav" }), { contentType: "audio/wav", upsert: false });
+            if (!up.error || /exists|duplicate/i.test(up.error.message)) made++;
+          } catch (e) {
+            const status = (e as { status?: number }).status;
+            reason = status === 402 ? "Crédits IA Lovable épuisés." : status === 429 ? "Service de voix saturé, réessayez dans un moment." : (e as Error).message || "Erreur du service de voix.";
+          }
+        }),
+      );
+    }
+    return { total: all.length, next: reason ? data.offset : data.offset + slice.length, made, reason };
+  });

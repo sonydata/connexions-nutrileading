@@ -42,11 +42,11 @@ export const TOPIC_BANK = [
   q("sci-dna", "sciences", "Que contient l'ADN ?", "l'information génétique", ["l'énergie du muscle", "les vitamines", "le calcium des os"]),
   q("sci-moon", "sciences", "Qu'est-ce qui provoque les marées ?", "l'attraction de la Lune", ["le vent du large", "la chaleur du Soleil", "la rotation des nuages"]),
   q("sci-light", "sciences", "Qu'est-ce qui voyage le plus vite ?", "la lumière", ["le son", "le vent", "un avion"]),
-  q("sci-water", "sciences", "À quelle température l'eau bout-elle au niveau de la mer ?", "cent degrés", ["cinquante degrés", "zéro degré", "trente-sept degrés"]),
+  q("sci-water", "sciences", "À quelle température l'eau bout-elle au niveau de la mer ?", "100 degrés", ["50 degrés", "0 degré", "37 degrés"]),
   t("sci-tf-sun", "sciences", "Le Soleil est une étoile.", true, "étoile"),
   ex("sci-ex-method", "sciences", "Pourquoi vérifier une découverte scientifique ?", "Une découverte doit être vérifiée pour s'assurer qu'elle est juste et reproductible."),
   ex("sci-ex-climate", "sciences", "Pourquoi les forêts sont-elles importantes pour la planète ?", "Les forêts produisent de l'oxygène et stockent du carbone."),
-  rd("sci-rd-light", "sciences", ["La lumière voyage très vite.", "La lumière du Soleil met huit minutes à nous parvenir.", "La lumière du Soleil met environ huit minutes pour parvenir jusqu'à la Terre."]),
+  rd("sci-rd-light", "sciences", ["La lumière voyage très vite.", "La lumière du Soleil met 8 minutes à nous parvenir.", "La lumière du Soleil met environ 8 minutes pour parvenir jusqu'à la Terre."]),
   ev("sci-ev-gravity", "sciences", "Quelle force fait tomber les objets vers le sol ?", "gravité", "Newton l'a décrite.", "gra…", "La gravité attire les objets vers le sol."),
 
   // ——— Histoire ———
@@ -106,17 +106,17 @@ export const TOPIC_BANK = [
   ex("lit-ex-reading", "litterature", "Qu'apporte la lecture d'un grand roman ?", "Un grand roman fait découvrir d'autres vies et enrichit la réflexion."),
   ex("lit-ex-fable", "litterature", "À quoi sert la morale d'une fable ?", "La morale transmet une leçon de vie de façon simple."),
   rd("lit-rd-hugo", "litterature", ["Victor Hugo était écrivain.", "Victor Hugo a écrit Les Misérables.", "Victor Hugo a écrit Les Misérables, un roman sur la justice et la misère."]),
-  ev("lit-ev-alexandrin", "litterature", "Comment se nomme un vers de douze syllabes ?", "alexandrin", "Racine l'utilisait dans ses tragédies.", "a…", "L'alexandrin est un vers de douze syllabes."),
+  ev("lit-ev-alexandrin", "litterature", "Comment se nomme un vers de 12 syllabes ?", "alexandrin", "Racine l'utilisait dans ses tragédies.", "a…", "L'alexandrin est un vers de 12 syllabes."),
 
   // ——— Technologie ———
   q("tec-internet", "technologie", "À quoi sert Internet ?", "à relier des ordinateurs du monde entier", ["à produire de l'électricité", "à fabriquer des médicaments", "à prévoir les marées"]),
   q("tec-steam", "technologie", "Quelle invention a lancé la révolution industrielle ?", "la machine à vapeur", ["le téléphone portable", "l'ordinateur", "le laser"]),
   q("tec-gps", "technologie", "Sur quoi repose le GPS ?", "des satellites", ["des phares", "des boussoles", "des câbles sous-marins"]),
   q("tec-xray", "technologie", "Qu'ont permis les rayons X en médecine ?", "voir l'intérieur du corps", ["mesurer la tension", "remplacer les vaccins", "analyser l'odorat"]),
-  t("tec-tf-phone", "technologie", "Le téléphone a été inventé au dix-neuvième siècle.", true, "téléphone"),
+  t("tec-tf-phone", "technologie", "Le téléphone a été inventé au 19e siècle.", true, "téléphone"),
   ex("tec-ex-internet", "technologie", "Internet nous aide-t-il à nous informer ?", "Internet permet d'accéder très vite à une quantité immense d'informations."),
   ex("tec-ex-medtech", "technologie", "Comment la technologie aide-t-elle la médecine ?", "La technologie aide à mieux diagnostiquer et à mieux soigner."),
-  rd("tec-rd-steam", "technologie", ["La vapeur a changé l'industrie.", "La machine à vapeur a transformé l'industrie.", "Au dix-neuvième siècle, la machine à vapeur a transformé l'industrie et les transports."]),
+  rd("tec-rd-steam", "technologie", ["La vapeur a changé l'industrie.", "La machine à vapeur a transformé l'industrie.", "Au 19e siècle, la machine à vapeur a transformé l'industrie et les transports."]),
   ev("tec-ev-satellite", "technologie", "Comment se nomme un engin en orbite autour de la Terre ?", "satellite", "Il sert au GPS et à la météo.", "sa…", "Un satellite tourne autour de la Terre."),
 
   // ——— Cuisine ———
@@ -131,7 +131,7 @@ export const TOPIC_BANK = [
   ev("cui-ev-mijoter", "cuisine", "Comment dit-on cuire lentement à petit feu ?", "mijoter", "On le fait pour un bœuf bourguignon.", "mi…", "Mijoter, c'est cuire lentement à petit feu."),
 
   // ——— Sport ———
-  q("spo-marathon", "sport", "Quelle distance parcourt un marathon ?", "environ quarante-deux kilomètres", ["dix kilomètres", "cent kilomètres", "cinq kilomètres"]),
+  q("spo-marathon", "sport", "Quelle distance parcourt un marathon ?", "environ 42 kilomètres", ["10 kilomètres", "100 kilomètres", "5 kilomètres"]),
   q("spo-tour", "sport", "Quelle course cycliste traverse la France en été ?", "le Tour de France", ["Roland-Garros", "les Vingt-Quatre Heures du Mans", "le Vendée Globe"]),
   q("spo-olympic", "sport", "D'où viennent les Jeux olympiques ?", "de la Grèce antique", ["de l'Égypte", "de la Chine", "de Rome"]),
   q("spo-benefit", "sport", "Que renforce l'endurance ?", "elle renforce le cœur", ["elle affaiblit les os", "elle réduit le sommeil", "elle augmente la tension"]),

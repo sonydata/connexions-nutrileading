@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Check, Lightbulb, Mic, Play, Square, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { buildPlan } from "@/lib/builder";
-import { GAME_INTRO, INSTRUCTIONS, PRAISE, closing, discussionTurns, gameTurn, hintFor, revealsAnswer, type DiscussionTurn } from "@/lib/discussion";
+import { GAME_INTRO, INSTRUCTIONS, PRAISE, choicesSentence, closing, discussionTurns, gameTurn, hintFor, revealsAnswer, trimOptions, type DiscussionTurn } from "@/lib/discussion";
 import { MemoryGame } from "@/components/memory-games";
 import { completeSession, recordAttempt, speak, speakCached, startSession } from "@/lib/session.functions";
 import { deriveParams, type SessionParams } from "@/lib/adaptive-profile";
@@ -23,24 +23,6 @@ const WELL_SAID = "Très bien dit.";
 const hasSpeechRecognition = () =>
   typeof window !== "undefined" && !!((window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition); // eslint-disable-line @typescript-eslint/no-explicit-any
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-/** Device French voice — last resort only, when the natural voice cannot be produced (better than silence). */
-function speakDevice(text: string, rate: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const s = typeof window !== "undefined" ? window.speechSynthesis : undefined;
-    if (!s) return resolve(false);
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "fr-FR";
-    u.rate = 0.9 * rate;
-    const frs = s.getVoices().filter((v) => v.lang?.toLowerCase().startsWith("fr"));
-    const fem = /am[ée]lie|audrey|aur[ée]lie|marie|virginie|julie|denise|hortense|c[ée]line|eloise|vivienne|google fran/i;
-    const v = frs.find((x) => fem.test(x.name)) ?? frs[0];
-    if (v) u.voice = v;
-    u.onend = () => resolve(true);
-    u.onerror = () => resolve(true);
-    s.speak(u);
-  });
-}
 
 export function GuidedSession() {
   const start = useServerFn(startSession);
@@ -65,6 +47,8 @@ export function GuidedSession() {
   const [heard, setHeard] = useState("");
   const [teaser, setTeaser] = useState("");
   const [audioUnavailable, setAudioUnavailable] = useState(false);
+  /** Some sentence had no natural voice yet (not recorded, or the voice service is unavailable). */
+  const [voiceMissing, setVoiceMissing] = useState(false);
   /** The expected answer once it has been said (confirmed or revealed) — a knowledge turn always ends with it. */
   const [answerLine, setAnswerLine] = useState<string | null>(null);
   // Set by the caregiver in the profile (or automatically when comprehension is difficult) — never toggled from the session.
@@ -76,7 +60,7 @@ export function GuidedSession() {
       ? [GAME_INTRO]
       : t.phase === "repeat"
       ? [t.item.recall, INSTRUCTIONS.repeat, t.prompt, INSTRUCTIONS.repeatNow]
-      : [t.item.recall, t.intro, t.prompt, instr(t), ...(t.item.kind === "tf" ? [] : t.options.map((o) => o.label))];
+      : [t.item.recall, t.intro, t.prompt, instr(t), t.item.kind === "tf" ? null : choicesSentence(t.options.map((o) => o.label))];
   const instr = (t: DiscussionTurn) =>
     simple ? (t.options.length ? "Touchez votre réponse." : t.phase === "repeat" ? INSTRUCTIONS.repeat : "À vous de parler.") : t.instruction;
   const sessionId = useRef("");
@@ -106,11 +90,24 @@ export function GuidedSession() {
     setSpeaking(false);
   }
 
+  /** At most 2 voice requests at once: generating many sentences in parallel hits the service's rate limit. */
+  const slots = useRef({ busy: 0, queue: [] as (() => void)[] });
+  function limited<T>(job: () => Promise<T>): Promise<T> {
+    const q = slots.current;
+    const run = (): Promise<T> => {
+      q.busy++;
+      return job().finally(() => {
+        q.busy--;
+        q.queue.shift()?.();
+      });
+    };
+    return q.busy < 2 ? run() : new Promise<T>((resolve, reject) => q.queue.push(() => run().then(resolve, reject)));
+  }
   /** The natural voice: fetched (generated once if needed), with one retry. */
   function clip(text: string): Promise<string | null> {
     let p = clips.current.get(text);
     if (!p) {
-      const fetchOnce = () => (signedIn.current ? synth({ data: { text } }) : cached({ data: { text } }));
+      const fetchOnce = () => limited(() => (signedIn.current ? synth({ data: { text } }) : cached({ data: { text } })));
       p = fetchOnce()
         .catch(() => fetchOnce())
         .then((r) => {
@@ -137,15 +134,19 @@ export function GuidedSession() {
     setSpeaking(true);
     setAudioUnavailable(false);
     try {
-      for (const [n, text] of partsOf(texts).entries()) {
+      const list = partsOf(texts);
+      // All sentences of the turn are requested at once, so there is no wait between context, question and choices.
+      const urls = list.map((t) => clip(t));
+      for (const n of list.keys()) {
         if (id !== playId.current) return false;
         if (n > 0 && p.pauseMs) await wait(p.pauseMs);
         if (id !== playId.current) return false;
-        const url = await clip(text);
+        const url = await urls[n]!;
         if (id !== playId.current) return false;
         if (!url) {
-          // Natural voice unavailable for this sentence: device voice rather than silence.
-          if (!(await speakDevice(text, p.voiceRate))) setAudioUnavailable(true);
+          // Never mix in the robotic device voice (feedback 15 Oct): the sentence stays on screen,
+          // and its natural voice is requested again next time.
+          setVoiceMissing(true);
           continue;
         }
         const element = audio.current ?? new Audio();
@@ -289,13 +290,8 @@ export function GuidedSession() {
       setParams(result.params);
       const list = discussionTurns(result.items, "regard", result.params.maxTurns)
         .slice(0, result.params.maxTurns)
-        .map((t) => ({ ...t, options: t.options.slice(0, result.params.optionCount) }))
-        // Keep the expected answer among the choices when options are trimmed.
-        .map((t) =>
-          t.answer && t.options.length && !t.options.some((o) => o.label === t.answer)
-            ? { ...t, options: [...t.options.slice(0, -1), t.item.options.find((o) => o.label === t.answer) ?? { label: t.answer }].sort(() => Math.random() - 0.5) }
-            : t,
-        );
+        // Fewer choices when the profile asks for it, keeping the answer, in a stable order.
+        .map((t) => ({ ...t, options: trimOptions(t.options, t.answer, result.params.optionCount) }));
       if (!list.length) throw new Error("empty");
       // Personal target: first asked after one warm-up activity, then again at growing intervals.
       // "Jeux de mémoire" ticked: one short game in the middle of the session.
@@ -638,7 +634,7 @@ export function GuidedSession() {
                   className="flex min-h-28 flex-col items-center justify-center gap-3 rounded-3xl border-4 border-primary/60 bg-card px-5 py-6 text-3xl font-medium shadow-lg transition animate-pulse hover:scale-[1.02] hover:border-primary hover:animate-none focus:animate-none"
                 >
                   {withImages && option.image && <img src={imageSrc(option.image) ?? ""} alt="" className="h-36 w-full object-contain" />}
-                  {option.label}
+                  <span className={/^\d/.test(option.label) ? "font-serif text-5xl font-semibold" : ""}>{option.label}</span>
                 </button>
               ))}
             </div>
@@ -735,6 +731,9 @@ export function GuidedSession() {
               Le son n'a pas pu être lu. Touchez le haut-parleur pour réessayer.
             </p>
           )}
+          {voiceMissing && !audioUnavailable && (
+            <p role="status" className="mb-3 text-sm text-muted-foreground">Certaines phrases n'ont pas encore leur voix (Espace aidant › Préparer la voix).</p>
+          )}
           {view === "prompt" && turn.intro && <p className="mb-4 max-w-2xl font-serif text-2xl leading-snug">{turn.intro}</p>}
           <h1 className={`max-w-2xl font-serif leading-snug ${params.largeText || turn.phase === "repeat" ? "text-3xl md:text-4xl" : "text-2xl md:text-3xl"}`}>
             {view === "model" ? turn.model : turn.prompt}
@@ -764,7 +763,8 @@ export function GuidedSession() {
                     <span className={`flex size-8 shrink-0 items-center justify-center rounded-md border-2 ${isRight ? "border-calm bg-calm text-primary-foreground" : picked && !answerLine ? "border-primary bg-primary/15" : "border-muted-foreground/40"}`}>
                       {isRight && <Check className="size-5" />}
                     </span>
-                    <span className="flex-1">{option.label}</span>
+                    {/* Numbers are shown as digits, big. */}
+                    <span className={`flex-1 ${/^\d/.test(option.label) ? "font-serif text-4xl font-semibold" : ""}`}>{option.label}</span>
                   </button>
                 );
               })}

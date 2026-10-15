@@ -59,6 +59,20 @@ export function gameTurn(game: "paires" | "disparu" | "courses"): DiscussionTurn
   };
   return { item, intro: null, prompt: GAME_INTRO, model: null, image: null, options: [], phase: "game", game, instruction: GAME_INTRO, followUp: "", answer: null };
 }
+/** The choices said as ONE natural sentence ("De l'oxygène ou du gaz carbonique ?"): one recording, no gaps. */
+export function choicesSentence(labels: string[]): string | null {
+  if (labels.length < 2) return null;
+  const xs = labels.map((l) => l.trim());
+  const text = `${xs.slice(0, -1).join(", ")} ou ${xs[xs.length - 1]} ?`;
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+/** Fewer choices when the profile asks for it — always keeping the answer, in a stable order. */
+export function trimOptions<T extends { label: string }>(options: T[], answer: string | null, n: number): T[] {
+  if (options.length <= n) return options;
+  const kept = options.slice(0, n);
+  if (answer && !kept.some((o) => o.label === answer)) kept[n - 1] = options.find((o) => o.label === answer)!;
+  return kept;
+}
 /** Praise said aloud after a right answer (pre-recorded sentences). */
 export const PRAISE = ["Très juste.", "Tout à fait.", "C'est cela."];
 /** How a knowledge turn ends: what is said (each a whole recorded-friendly sentence) and what is shown. */
@@ -165,6 +179,7 @@ export function discussionVoiceTexts(items: PlayItem[]): string[] {
         if (text) out.add(text);
       if (turn.answer) for (const f of [true, false]) for (const t of closing(turn.answer, f).say) out.add(t);
       for (const o of turn.options) out.add(o.label);
+      if (turn.item.kind !== "tf") for (const n of [2, 3]) { const c = choicesSentence(trimOptions(turn.options, turn.answer, n).map((o) => o.label)); if (c) out.add(c); }
     }
   return [...out];
 }

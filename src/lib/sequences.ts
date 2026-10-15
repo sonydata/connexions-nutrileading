@@ -86,14 +86,14 @@ export const SEQUENCES: Sequence[] = [
   }),
   // ——— Médecine ———
   seq("sq-diabete", "medecine", "Un cas de diabète", {
-    info: "Un homme de soixante ans a soif en permanence et urine souvent. Sa glycémie à jeun est élevée.",
+    info: "Un homme de 60 ans a soif en permanence et urine souvent. Sa glycémie à jeun est élevée.",
     q: "Quelle hypothèse vient en premier ?", a: "un diabète", d: ["une anémie", "une hypothyroïdie", "une simple fatigue"],
     find: "Quelle hormone fait baisser la glycémie ?", word: "insuline", hint: "Elle est produite par le pancréas.", syl: "in…", wordModel: "C'est l'insuline qui fait baisser la glycémie.",
     ask: "Quels premiers conseils alimentaires lui donneriez-vous ?", askModel: "Limiter les sucres rapides, privilégier les fibres et répartir les repas dans la journée.",
     say: "L'activité physique améliore la sensibilité à l'insuline.", sayModel: "Bouger aide le corps à mieux utiliser l'insuline.",
   }),
   seq("sq-tension", "medecine", "La tension artérielle", {
-    info: "Une femme a souvent mal à la tête le matin. Sa tension est mesurée à seize sur dix.",
+    info: "Une femme a souvent mal à la tête le matin. Sa tension est mesurée à 16 sur 10.",
     q: "Que suggère cette mesure ?", a: "une hypertension", d: ["une hypotension", "une tension normale", "une déshydratation"],
     find: "Quel appareil sert à mesurer la tension ?", word: "tensiomètre", hint: "On le place autour du bras.", syl: "ten…", wordModel: "On mesure la tension avec un tensiomètre.",
     ask: "Comment faire baisser la tension ?", askModel: "Moins de sel, plus de légumes, une activité régulière et un bon sommeil.",
@@ -124,7 +124,7 @@ export const SEQUENCES: Sequence[] = [
   }),
   seq("sq-rome", "histoire", "Rome antique", {
     info: "Les Romains construisaient des aqueducs pour amener l'eau dans les villes, parfois sur des dizaines de kilomètres.",
-    q: "À quoi servaient les aqueducs ?", a: "amener l'eau en ville", d: ["défendre les frontières", "stocker le blé", "relier deux ports"],
+    q: "À quoi servaient les aqueducs ?", a: "amener l'eau en ville", d: ["défendre les frontières", "stocker le blé", "relier 2 ports"],
     find: "Quel célèbre aqueduc romain se trouve près de Nîmes ?", word: "pont du Gard", hint: "Il enjambe une rivière, le Gardon.", syl: "pont…", wordModel: "Près de Nîmes se trouve le pont du Gard.",
     ask: "Qu'est-ce qui vous impressionne le plus chez les Romains ?", askModel: "Leur sens de l'organisation et leurs constructions, encore debout aujourd'hui.",
     say: "Beaucoup de routes françaises suivent d'anciennes voies romaines.", sayModel: "Nos routes reprennent souvent le tracé des voies romaines.",
@@ -171,9 +171,9 @@ export const SEQUENCES: Sequence[] = [
   }),
   // ——— Sport ———
   seq("sq-marathon", "sport", "Le marathon", {
-    info: "Le marathon mesure un peu plus de quarante-deux kilomètres. Son nom vient d'une ville de la Grèce antique.",
+    info: "Le marathon mesure un peu plus de 42 kilomètres. Son nom vient d'une ville de la Grèce antique.",
     q: "D'où vient le nom du marathon ?", a: "d'une ville grecque", d: ["d'un athlète romain", "d'un dieu égyptien", "d'une montagne"],
-    find: "Quelle compétition sportive revient tous les quatre ans ?", word: "Jeux olympiques", hint: "Ils sont nés en Grèce antique.", syl: "Jeux…", wordModel: "Ce sont les Jeux olympiques.",
+    find: "Quelle compétition sportive revient tous les 4 ans ?", word: "Jeux olympiques", hint: "Ils sont nés en Grèce antique.", syl: "Jeux…", wordModel: "Ce sont les Jeux olympiques.",
     ask: "Le sport aide-t-il aussi l'esprit, selon vous ?", askModel: "Il réduit le stress, améliore le sommeil et donne confiance en soi.",
     say: "L'endurance se construit progressivement.", sayModel: "On gagne en endurance petit à petit.",
   }),
@@ -228,7 +228,7 @@ export const SEQUENCES: Sequence[] = [
     say: "Naples est la ville natale de la pizza.", sayModel: "La pizza est née à Naples.",
   }, NEW),
   seq("sq-cubisme", "art", "Le cubisme", {
-    info: "Au début du vingtième siècle, Picasso et Braque montrent un même objet sous plusieurs angles à la fois.",
+    info: "Au début du 20e siècle, Picasso et Braque montrent un même objet sous plusieurs angles à la fois.",
     q: "Que cherchaient-ils à montrer ?", a: "un objet sous plusieurs angles", d: ["un paysage au coucher du soleil", "un portrait très réaliste", "une scène de bataille"],
     find: "Comment s'appelle ce mouvement ?", word: "cubisme", hint: "Son nom évoque une forme géométrique.", syl: "cu…", wordModel: "Ce mouvement s'appelle le cubisme.",
     ask: "Un tableau doit-il être réaliste ?", askModel: "Pas forcément : il peut aussi exprimer une idée ou une manière de voir.",
@@ -244,7 +244,7 @@ export const SEQUENCES: Sequence[] = [
   // ——— Ajouts du 15 octobre : sujets moins fournis + Actualité (faits datés, stables) ———
   seq("sq-notredame", "actualite", "Notre-Dame de Paris", {
     info: "En 2019, un incendie a détruit la toiture et la flèche de Notre-Dame de Paris. La cathédrale a rouvert en décembre 2024.",
-    q: "Combien de temps a duré la restauration ?", a: "environ cinq ans", d: ["environ six mois", "environ vingt ans", "environ cinquante ans"],
+    q: "Combien de temps a duré la restauration ?", a: "environ 5 ans", d: ["environ 6 mois", "environ 20 ans", "environ 50 ans"],
     find: "Quelle partie pointue, au sommet de la cathédrale, a été reconstruite ?", word: "flèche", hint: "Elle s'élève très haut au-dessus du toit.", syl: "flè…", wordModel: "La flèche de Notre-Dame a été reconstruite.", wd: ["cloche", "porte"],
     ask: "Que ressentez-vous devant un monument restauré ?", askModel: "Je suis ému de voir le travail des artisans redonner vie au monument.",
     say: "Des centaines d'artisans ont travaillé sur le chantier.", sayModel: "Des centaines d'artisans ont travaillé sur le chantier.",
@@ -292,15 +292,15 @@ export const SEQUENCES: Sequence[] = [
     say: "La cigale ayant chanté tout l'été.", sayModel: "La cigale ayant chanté tout l'été.",
   }, NEW2),
   seq("sq-telephone", "technologie", "Le téléphone", {
-    info: "Le téléphone a été inventé à la fin du dix-neuvième siècle. Aujourd'hui, le smartphone tient dans la poche.",
+    info: "Le téléphone a été inventé à la fin du 19e siècle. Aujourd'hui, le smartphone tient dans la poche.",
     q: "Que permet le smartphone ?", a: "téléphoner, photographier et s'informer", d: ["seulement téléphoner", "seulement écouter la radio", "imprimer des lettres"],
     find: "Comment appelle-t-on un court message écrit envoyé par téléphone ?", word: "SMS", hint: "On l'écrit avec les doigts sur l'écran.", syl: "S…", wordModel: "C'est un SMS, qu'on appelle aussi un texto.", wd: ["fax", "télégramme"],
     ask: "Le téléphone rapproche-t-il les familles ?", askModel: "Oui, on peut voir et entendre ses proches, même de loin.",
     say: "Un appel vidéo permet de voir ses proches.", sayModel: "Un appel vidéo permet de voir ses proches.",
   }, NEW2),
   seq("sq-alpes", "geographie", "Les Alpes", {
-    info: "Le mont Blanc est le plus haut sommet des Alpes. Il mesure environ quatre mille huit cents mètres.",
-    q: "Quelle est sa hauteur ?", a: "environ quatre mille huit cents mètres", d: ["environ mille mètres", "environ huit mille mètres", "environ deux cents mètres"],
+    info: "Le mont Blanc est le plus haut sommet des Alpes. Il mesure environ 4 800 mètres.",
+    q: "Quelle est sa hauteur ?", a: "environ 4 800 mètres", d: ["environ 1 000 mètres", "environ 8 000 mètres", "environ 200 mètres"],
     find: "Quelle ville, au pied du mont Blanc, a accueilli les premiers Jeux d'hiver ?", word: "Chamonix", hint: "Elle se trouve en Haute-Savoie.", syl: "Cha…", wordModel: "Les premiers Jeux d'hiver ont eu lieu à Chamonix.", wd: ["Grenoble", "Annecy"],
     ask: "Préférez-vous la mer ou la montagne ?", askModel: "J'aime la montagne pour l'air pur et le calme.",
     say: "En altitude, l'air devient plus frais.", sayModel: "En altitude, l'air devient plus frais.",
@@ -313,7 +313,7 @@ export const SEQUENCES: Sequence[] = [
     say: "Les jardins de Versailles sont immenses.", sayModel: "Les jardins de Versailles sont immenses.",
   }, NEW2),
   seq("sq-coeur", "medecine", "Le cœur", {
-    info: "Le cœur bat environ cent mille fois par jour. Il fait circuler le sang dans tout le corps.",
+    info: "Le cœur bat environ 100 000 fois par jour. Il fait circuler le sang dans tout le corps.",
     q: "À quoi sert le cœur ?", a: "faire circuler le sang", d: ["digérer les aliments", "filtrer l'air", "fabriquer les os"],
     find: "Avec quel instrument le médecin écoute-t-il le cœur ?", word: "stéthoscope", hint: "Il le porte autour du cou.", syl: "sté…", wordModel: "Le médecin écoute le cœur avec un stéthoscope.", wd: ["thermomètre", "tensiomètre"],
     ask: "Comment prenez-vous soin de votre cœur ?", askModel: "Je marche, je mange peu salé et je dors bien.",

@@ -53,7 +53,7 @@ export function voiceTextsFor(ids: string[]): string[] {
 export function allVoiceTexts(): string[] {
   const out = new Set<string>(FIXED);
   for (const i of [...BANK, ...SEQ_ITEMS]) for (const t of textsOf(i)) if (t && t.trim()) out.add(t.trim());
-  const items = [...BANK, ...SEQ_ITEMS].map((item) => toPlay(item, 1));
+  const items = [1, 2, 3].flatMap((level) => [...BANK, ...SEQ_ITEMS].map((item) => toPlay(item, level)));
   for (let n = 0; n < items.length; n += 12) for (const text of discussionVoiceTexts(items.slice(n, n + 12))) out.add(text);
   // "We talked about this before" lines read before a reactivated word.
   for (const q of SEQUENCES) for (const w of ["Il y a quelques jours", "La semaine dernière"]) out.add(`${w}, nous avions parlé de ce sujet : ${q.title}.`);
@@ -69,8 +69,25 @@ export function allVoiceTexts(): string[] {
 }
 
 let allowed: Set<string> | null = null;
+let labels: Set<string> | null = null;
+/** "A, B ou C ?" made only of answer choices the app knows (any order the profile produces). */
+function isChoicesSentence(text: string): boolean {
+  const t = text.trim();
+  if (!t.endsWith(" ?")) return false;
+  if (!labels) {
+    const out = new Set<string>();
+    for (const level of [1, 2, 3]) for (const i of [...BANK, ...SEQ_ITEMS]) for (const o of toPlay(i, level).options) out.add(o.label.toLowerCase());
+    labels = out;
+  }
+  const body = t.slice(0, -2);
+  const last = body.lastIndexOf(" ou ");
+  if (last < 0) return false;
+  const parts = [...body.slice(0, last).split(", "), body.slice(last + 4)].map((p) => p.toLowerCase());
+  return parts.length >= 2 && parts.length <= 4 && parts.every((p) => labels!.has(p));
+}
 /** Only sentences the app can actually say may be voiced — nobody can make the server pay for arbitrary text. */
 export function isVoiceText(text: string): boolean {
+  if (isChoicesSentence(text)) return true;
   if (allowed) return allowed.has(text.trim());
   const set = new Set(allVoiceTexts());
   if (new Date().getFullYear() >= 2020) allowed = set; // never keep a list built without a real clock

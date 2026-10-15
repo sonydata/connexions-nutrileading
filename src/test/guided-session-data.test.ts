@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildPlan, skillLevels } from "../lib/builder";
 import { REPERES, datedReperes } from "../lib/content";
 import { toPlay } from "../lib/builder";
-import { closing, discussionTurns, hintFor, revealsAnswer, REINFORCED_INSTRUCTIONS } from "../lib/discussion";
+import { choicesSentence, closing, discussionTurns, hintFor, revealsAnswer, trimOptions, REINFORCED_INSTRUCTIONS } from "../lib/discussion";
 import { deriveParams, summariseSignals } from "../lib/adaptive-profile";
 import { isVoiceText } from "../lib/voice-texts";
 
@@ -19,6 +19,7 @@ describe("Guided session data", () => {
       const plan = buildPlan([], [TOPICS[n % TOPICS.length]!, TOPICS[(n + 3) % TOPICS.length]!, "i:actualite"], 1 + (n % 3));
       for (const turn of discussionTurns(plan.items, "regard")) {
         [turn.item.recall, turn.intro, turn.prompt, turn.instruction, turn.followUp, turn.model, ...turn.options.map((o) => o.label)].forEach(check);
+        for (const k of [2, 3]) check(choicesSentence(trimOptions(turn.options, turn.answer, k).map((o) => o.label)));
         if (turn.answer) [...closing(turn.answer, true).say, ...closing(turn.answer, false).say].forEach(check);
       }
     }
@@ -149,5 +150,18 @@ describe("Jeux de mémoire as an interest", () => {
     const plan = buildPlan([], ["i:art", "i:memoire"], 1);
     expect(["paires", "disparu", "courses"]).toContain(plan.game);
     for (const i of plan.items) expect(["art", "general"]).toContain(i.topic);
+  });
+});
+
+describe("Voice (15 Oct, 3)", () => {
+  it("says the same choices sentence every time for the same question", () => {
+    const a = discussionTurns(buildPlan([], ["i:sciences"], 2).items, "regard");
+    for (const t of a) {
+      const again = discussionTurns([{ ...t.item }], "regard")[0]!;
+      expect(again.options.map((o) => o.label)).toEqual(t.options.map((o) => o.label));
+    }
+    expect(choicesSentence(["de l'oxygène", "du gaz carbonique"])).toBe("De l'oxygène ou du gaz carbonique ?");
+    expect(isVoiceText("Paris, Londres ou Rome ?")).toBe(true);
+    expect(isVoiceText("Bonjour, au revoir ou merci ?")).toBe(false);
   });
 });

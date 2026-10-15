@@ -4,7 +4,7 @@ import { INTERESTS } from "@/lib/interests";
 import { topicOfId } from "@/lib/builder";
 import { QUESTIONS, deriveParams, summariseSignals, turnInfo, type ProfileAnswers } from "@/lib/adaptive-profile";
 import { useServerFn } from "@tanstack/react-start";
-import { speak } from "@/lib/session.functions";
+import { prepareVoice, speak } from "@/lib/session.functions";
 import { VOICE_TEST } from "@/lib/voice-texts";
 import { MAX_TARGETS, cleanTargets, targetProgress, type PersonalTarget } from "@/lib/spaced-retrieval";
 
@@ -101,6 +101,25 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
   // Voice check for the caregiver: plays the natural voice, or says exactly why it can't be produced.
   const speakFn = useServerFn(speak);
   const [voiceCheck, setVoiceCheck] = useState<string | null>(null);
+  const prepareFn = useServerFn(prepareVoice);
+  const [prep, setPrep] = useState<{ running: boolean; done: number; total: number; made: number; reason: string | null } | null>(null);
+  async function prepare() {
+    let offset = 0;
+    let made = 0;
+    setPrep({ running: true, done: 0, total: 0, made: 0, reason: null });
+    try {
+      for (;;) {
+        const r = await prepareFn({ data: { offset } });
+        made += r.made;
+        if (r.reason) return setPrep({ running: false, done: offset, total: r.total, made, reason: r.reason });
+        offset = r.next;
+        setPrep({ running: offset < r.total, done: offset, total: r.total, made, reason: null });
+        if (offset >= r.total) return;
+      }
+    } catch (e) {
+      setPrep((x) => ({ running: false, done: x?.done ?? 0, total: x?.total ?? 0, made, reason: (e as Error).message }));
+    }
+  }
   async function testVoice() {
     setVoiceCheck("Test en cours…");
     try {
@@ -213,9 +232,22 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
             Séances d'environ {p.sessionMinutes} min · {p.ideasPerUtterance === 1 ? "une idée à la fois" : "phrases naturelles"} · {p.optionCount} pistes{p.repetition >= 2 ? " · question répétée" : ""}{p.reinforced ? " · accompagnement renforcé" : ""}
           </p>
         )}
-        <div className="mt-5 flex flex-wrap items-center gap-3 border-t pt-4 text-sm">
-          <button onClick={testVoice} className="rounded-full border px-4 py-1.5">Tester la voix</button>
-          {voiceCheck && <span role="status" className="text-muted-foreground">{voiceCheck}</span>}
+        <div className="mt-5 border-t pt-4 text-sm">
+          <div className="flex flex-wrap items-center gap-3">
+            <button onClick={prepare} disabled={!!prep?.running} className="rounded-full bg-primary px-5 py-2 text-primary-foreground disabled:opacity-60">
+              {prep?.running ? "Préparation en cours…" : "Préparer la voix"}
+            </button>
+            <button onClick={testVoice} className="rounded-full border px-4 py-1.5">Tester la voix</button>
+            {voiceCheck && <span role="status" className="text-muted-foreground">{voiceCheck}</span>}
+          </div>
+          <p className="mt-2 text-muted-foreground">
+            Enregistre à l'avance toutes les phrases des séances avec la voix naturelle (une seule fois ; utilise des crédits IA Lovable pour les phrases nouvelles).
+          </p>
+          {prep && (
+            <p role="status" className="mt-2 text-base">
+              {prep.reason ? `Arrêt : ${prep.reason}` : prep.running ? `Phrases vérifiées : ${prep.done} / ${prep.total} · nouvelles : ${prep.made}` : `Voix prête : ${prep.total} phrases (${prep.made} nouvelles).`}
+            </p>
+          )}
         </div>
         {open && (
           <div className="mt-6 space-y-7">

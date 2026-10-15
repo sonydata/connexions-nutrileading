@@ -39,6 +39,19 @@ const shuffle = <T,>(a: T[]) => {
   return b;
 };
 
+/** Same order every time for the same seed: the choices sentence stays identical, so it is recorded once. */
+export function seededShuffle<T>(a: T[], seed: string): T[] {
+  let h = 2166136261;
+  for (const c of seed) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  const rnd = () => ((h = Math.imul(h ^ (h >>> 15), 2246822507) ^ Math.imul(h ^ (h >>> 13), 3266489909)) >>> 0) / 4294967296;
+  const b = [...a];
+  for (let i = b.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [b[i], b[j]] = [b[j]!, b[i]!];
+  }
+  return b;
+}
+
 const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 /** "sarcopénie" → "sar…" : roughly the first syllable. */
 export function firstSound(w: string) {
@@ -100,10 +113,10 @@ function wordChoices(item: Item, answer: string, level: number): Opt[] {
   const same = (w: { word: string }) => norm(w.word) !== norm(answer) && !explicit.includes(w.word);
   const pool = [
     ...explicit,
-    ...shuffle(WORD_POOL.filter((w) => w.kind === kind && w.topic === topicOf(item) && same(w)).map((w) => w.word)),
-    ...shuffle(WORD_POOL.filter((w) => w.kind === kind && same(w)).map((w) => w.word)),
+    ...seededShuffle(WORD_POOL.filter((w) => w.kind === kind && w.topic === topicOf(item) && same(w)).map((w) => w.word), item.id),
+    ...seededShuffle(WORD_POOL.filter((w) => w.kind === kind && same(w)).map((w) => w.word), item.id),
   ].filter((w, k, a) => a.indexOf(w) === k);
-  return shuffle([answer, ...pool.slice(0, n)]).map((label) => ({ label }));
+  return seededShuffle([answer, ...pool.slice(0, n)], `${item.id}:${n}`).map((label) => ({ label }));
 }
 
 /** A photo whose subject is the answer (the Colosseum for "Rome") would give it away: no photo then. */
@@ -118,7 +131,7 @@ function notTheAnswer(image: string | null, answer: string): string | null {
 export function toPlay(item: Item, level: number): PlayItem {
   const base = { id: item.id, kind: item.kind, theme: item.theme, topic: topicOf(item), skill: item.skill, level, question: null, keyword: null, hint: null, answerText: null, image: null, model: null, syllable: null, options: [] as Opt[], correctIndex: -1, stage: STAGE_OF.get(item.id) ?? null, seqTitle: SEQ_TITLE.get(item.id) ?? (item.id.startsWith("pv-") ? "Un proverbe" : null), recall: null as string | null, drop: 0 };
   if (item.kind === "mcq") {
-    let opts = shuffle([item.answer, ...item.distractors.slice(0, level)]);
+    let opts = seededShuffle([item.answer, ...item.distractors.slice(0, level)], `${item.id}:${level}`);
     // Photos only when every option has one, and never for advice/actions
     // (a salt photo next to "réduire le sel" would say the opposite).
     // A photo key without its file (e.g. a portrait not added yet) counts as no photo.

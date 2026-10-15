@@ -76,7 +76,7 @@ const CORE: Item[] = [
   mcq("c-elderly-protein", "avis", "conseil", "Une personne âgée perd de la masse musculaire.", "muscle", o("augmenter les protéines", "eggs"), [o("les fibres"), o("les glucides"), o("la vitamine C")], { question: "Quel apport faut-il surveiller ?" }),
   mcq("c-appetite", "avis", "conseil", "Un patient âgé a perdu l'appétit.", "appétit", o("petits repas enrichis"), [o("des compléments seuls"), o("un seul gros repas"), o("un régime sans sel")], { question: "Quelle stratégie proposeriez-vous ?" }),
   mcq("c-veg", "avis", "conseil", "Une personne mange très peu de légumes.", "légumes", o("en ajouter à chaque repas", "vegetables"), [o("un jus de fruits"), o("manger plus de pain", "bread"), o("des compléments vitaminiques")], { question: "Quel conseil donneriez-vous ?" }),
-  mcq("c-cardio", "avis", "conseil", "Un patient veut protéger son cœur.", "cœur", o("poisson gras deux fois par semaine", "salmon"), [o("supprimer toutes les graisses"), o("des jus de fruits"), o("un régime hyperprotéiné")], { question: "Que recommanderiez-vous ?" }),
+  mcq("c-cardio", "avis", "conseil", "Un patient veut protéger son cœur.", "cœur", o("poisson gras 2 fois par semaine", "salmon"), [o("supprimer toutes les graisses"), o("des jus de fruits"), o("un régime hyperprotéiné")], { question: "Que recommanderiez-vous ?" }),
 
   // ——— 4. Comparaisons ———
   mcq("cmp-fibres", "nutrition", "lexique", "Lequel contient le plus de fibres ?", "fibres", o("lentilles", "lentils"), [o("poulet", "chicken"), o("pain blanc", "bread")]),
@@ -122,11 +122,11 @@ const CORE: Item[] = [
   mcq("a-fastfood", "avis", "conseil", "Un patient déjeune souvent burger, frites et soda.", "déjeuner", o("poisson, légumes, riz", "balanced_meal"), [o("supprimer les féculents"), o("une salade composée sans protéines"), o("un sandwich jambon-beurre")], { question: "Quelle alternative suggéreriez-vous ?" }),
 
   // ——— 14. Temps, situations adultes ———
-  mcq("t-twice", "temps", "temps", "Un patient prend un comprimé le matin et un autre au coucher.", "coucher", o("deux prises"), [o("une prise"), o("trois prises"), o("quatre prises")], { question: "Combien de prises dans la journée ?" }),
+  mcq("t-twice", "temps", "temps", "Un patient prend un comprimé le matin et un autre au coucher.", "coucher", o("2 prises"), [o("1 prise"), o("3 prises"), o("4 prises")], { question: "Combien de prises dans la journée ?" }),
   mcq("t-15h", "temps", "temps", "Le rendez-vous est à 15 heures, le déjeuner à midi.", "15 heures", o("après le déjeuner"), [o("avant le déjeuner"), o("pendant le déjeuner")], { question: "Le rendez-vous est-il avant ou après le déjeuner ?" }),
   mcq("t-bilan", "temps", "temps", "Le bilan sanguin se fait avant le déjeuner.", "avant", o("le matin, à jeun", "morning"), [o("la nuit", "night"), o("après le repas"), o("après le dîner")], { question: "Quand doit-il être réalisé ?" }),
   mcq("t-meal", "temps", "temps", "Le comprimé se prend au milieu du repas, jamais à jeun.", "pendant", o("pendant le repas", "plate"), [o("une heure avant le repas"), o("au réveil, avant de manger"), o("une heure après le dîner")], { question: "À quel moment faut-il le prendre ?" }),
-  mcq("t-week", "temps", "temps", "Le contrôle a lieu une fois par semaine.", "semaine", o("sept jours"), [o("un an"), o("un jour"), o("un mois")], { question: "Combien de jours entre deux contrôles ?" }),
+  mcq("t-week", "temps", "temps", "Le contrôle a lieu une fois par semaine.", "semaine", o("7 jours"), [o("1 an"), o("1 jour"), o("1 mois")], { question: "Combien de jours entre 2 contrôles ?" }),
   mcq("t-evening", "temps", "temps", "La consultation est à 19 heures, le dîner à 20 heures.", "19 heures", o("avant le dîner"), [o("après le dîner"), o("pendant le dîner")], { question: "La consultation a-t-elle lieu avant ou après le dîner ?" }),
   mcq("t-season", "temps", "temps", "Les fraises françaises mûrent en juin et en juillet.", "juin", o("l'été", "summer"), [o("le printemps", "spring"), o("l'automne", "autumn"), o("l'hiver", "winter")], { question: "De quelle saison parle-t-on ?" }),
 
@@ -167,7 +167,7 @@ const CORE: Item[] = [
   // ——— 17. Reformulation ———
   oral("f-fish", "reformuler", ["Le poisson gras apporte des oméga-3."], { model: "Le saumon ou la sardine sont riches en oméga-3." }),
   oral("f-olive", "reformuler", ["L'huile d'olive protège le cœur."], { model: "L'huile d'olive est bénéfique pour la santé cardiovasculaire." }),
-  oral("f-protein", "reformuler", ["Après soixante-dix ans, les besoins en protéines augmentent."], { model: "Avec l'âge, il faut davantage de protéines." }),
+  oral("f-protein", "reformuler", ["Après 70 ans, les besoins en protéines augmentent."], { model: "Avec l'âge, il faut davantage de protéines." }),
 
   // ——— 9. Évocation lexicale + intérêt nutritionnel ———
   oral("l-olive", "nommer", ["Quel est cet aliment ?"], { image: "olive_oil", answer: "huile d'olive", hint: "La base du régime méditerranéen.", follow: "lf-olive" }),
@@ -216,7 +216,7 @@ const CORE: Item[] = [
 
   // ——— Mini-informations ———
   mcq("i-sleep", "sciences", "information", "Un bon sommeil aide la mémoire à se consolider.", "sommeil", o("des oublis plus fréquents"), [o("une tension trop basse"), o("une perte de poids"), o("des muscles plus faibles")], { question: "Que risque une personne qui dort très peu ?" }),
-  mcq("i-walk", "sciences", "information", "Marcher trente minutes par jour aide le cœur.", "marcher", o("la natation"), [o("la lecture", "book"), o("regarder la télévision"), o("rester au repos")], { question: "Sans marcher, quelle activité aide le cœur ?" }),
+  mcq("i-walk", "sciences", "information", "Marcher 30 minutes par jour aide le cœur.", "marcher", o("la natation"), [o("la lecture", "book"), o("regarder la télévision"), o("rester au repos")], { question: "Sans marcher, quelle activité aide le cœur ?" }),
   mcq("i-thirst", "sciences", "information", "Avec l'âge, la sensation de soif diminue.", "soif", o("proposer de l'eau régulièrement"), [o("attendre qu'elle demande à boire"), o("donner surtout du café"), o("limiter les boissons")], { question: "Que proposer dans la journée ?" }),
   mcq("i-combine", "sciences", "information", "Associer céréales et légumineuses améliore l'apport en protéines.", "protéines", o("riz et lentilles", "lentils"), [o("pain et beurre", "butter"), o("pomme et fromage", "cheese"), o("café et sucre")], { question: "Quel duo d'aliments permet cela ?" }),
   mcq("i-microb", "sciences", "information", "Les fibres nourrissent les bactéries de l'intestin.", "bactéries", o("des légumes et des légumineuses", "vegetables"), [o("du sel", "salt"), o("des sucres rapides"), o("des graisses saturées")], { question: "Quels aliments les nourrissent ?" }),
@@ -229,16 +229,16 @@ const CORE: Item[] = [
   mcq("cu-gaudi", "sciences", "information", "Gaudí a conçu la Sagrada Família.", "Gaudí", o("Barcelone", "barcelona"), [o("Londres", "london"), o("Paris", "paris"), o("Rome", "rome")], { question: "Dans quelle ville se trouve-t-elle ?" }),
   mcq("cu-pasteur", "sciences", "information", "Quel savant a mis au point le vaccin contre la rage ?", "rage", o("Louis Pasteur"), [o("Isaac Newton"), o("Charles Darwin"), o("Marie Curie")]),
   mcq("cu-fleming", "sciences", "information", "Alexander Fleming a découvert la pénicilline.", "pénicilline", o("un antibiotique"), [o("une vitamine"), o("un vaccin"), o("un antalgique")], { question: "De quel type de médicament s'agit-il ?" }),
-  mcq("cu-curie", "sciences", "information", "Marie Curie a reçu deux prix Nobel.", "Nobel", o("la physique et la chimie"), [o("la médecine et la physique"), o("la chimie et les mathématiques"), o("la biologie et la chimie")], { question: "Dans quels domaines travaillait-elle ?" }),
+  mcq("cu-curie", "sciences", "information", "Marie Curie a reçu 2 prix Nobel.", "Nobel", o("la physique et la chimie"), [o("la médecine et la physique"), o("la chimie et les mathématiques"), o("la biologie et la chimie")], { question: "Dans quels domaines travaillait-elle ?" }),
   mcq("cu-mercury", "sciences", "information", "Quelle planète est la plus proche du Soleil ?", "Soleil", o("Mercure", "astronomy"), [o("Jupiter"), o("Mars"), o("Vénus")]),
   mcq("cu-hippo", "sciences", "information", "Quel médecin grec est associé au serment médical ?", "serment", o("Hippocrate"), [o("Homère"), o("Platon"), o("Aristote")]),
-  mcq("cu-eiffel", "sciences", "information", "La tour Eiffel a été construite pour l'Exposition universelle de 1889.", "1889", o("le dix-neuvième siècle"), [o("le dix-huitième siècle"), o("le vingtième siècle"), o("le dix-septième siècle")], { question: "Dans quel siècle s'inscrit-elle ?" }),
+  mcq("cu-eiffel", "sciences", "information", "La tour Eiffel a été construite pour l'Exposition universelle de 1889.", "1889", o("le 19e siècle"), [o("le 18e siècle"), o("le 20e siècle"), o("le 17e siècle")], { question: "Dans quel siècle s'inscrit-elle ?" }),
 
   // ——— Temps, situations adultes (suite) ———
-  mcq("t-2h", "temps", "temps", "Il est 10 h 30. Le repas est prévu à 12 h 30.", "deux heures", o("deux heures"), [o("trente minutes"), o("cinq heures")], { question: "Dans combien de temps va-t-on manger ?" }),
+  mcq("t-2h", "temps", "temps", "Il est 10 h 30. Le repas est prévu à 12 h 30.", "2 heures", o("2 heures"), [o("30 minutes"), o("5 heures")], { question: "Dans combien de temps va-t-on manger ?" }),
   mcq("t-dinner", "temps", "temps", "Le traitement se prend après le petit-déjeuner et avant le dîner.", "deuxième dose", o("le soir", "evening"), [o("le matin", "breakfast_sweet"), o("au milieu de la nuit", "night")], { question: "À quel moment faut-il prendre la deuxième dose ?" }),
   mcq("t-sequence", "temps", "temps", "La prise de sang doit être faite à jeun, avant le petit-déjeuner.", "à jeun", o("la prise de sang"), [o("le petit-déjeuner", "breakfast_sweet"), o("la promenade")], { question: "Que fait-on en premier ?" }),
-  mcq("t-3x", "temps", "temps", "Le sirop se prend toutes les huit heures.", "huit heures", o("trois"), [o("deux"), o("six"), o("quatre")], { question: "Combien de prises par jour ?" }),
+  mcq("t-3x", "temps", "temps", "Le sirop se prend toutes les 8 heures.", "8 heures", o("3"), [o("2"), o("6"), o("4")], { question: "Combien de prises par jour ?" }),
   mcq("t-kine", "temps", "temps", "Le médecin passe demain matin et le kinésithérapeute en fin d'après-midi.", "en premier", o("le médecin"), [o("le kinésithérapeute"), o("ils passent en même temps")], { question: "Qui passe en premier ?" }),
 
   // ——— Vrai / faux (suite) ———
@@ -407,7 +407,7 @@ export const SCENE: Record<string, string> = {
   "t-season": "calendar", "t-2h": "plate", "t-dinner": "evening", "t-sequence": "consultation", "t-3x": "calendar", "t-kine": "calendar",
   "tf-olive": "olive_oil", "tf-salmon": "salmon", "tf-lentils": "lentils", "tf-vitc": "orange", "tf-water": "water", "tf-soda": "soda",
   "tf-insulin": "consultation", "tf-calcium": "yogurt", "tf-walnuts": "walnuts", "tf-transit": "vegetables", "tf-protage": "elderly_meal",
-  "rp-fr-pres": "elysee", "rp-us-pres": "white_house", "rp-notredame": "", "rp-mondial": "football", "rp-tf-euro": "", "rp-tf-notredame": "", "rp-year": "calendar", "rp-month": "calendar", "rp-jo": "",
+  "rp-fr-pres": "elysee", "rp-us-pres": "white_house", "rp-mondial": "football", "rp-year": "calendar", "rp-month": "calendar",
   "tf-vitdsun": "summer", "tf-saltbp": "salt",
   "sq-mediterranee-r": "legumes", "v-legum": "legumes",
   // New paths (15 Oct): a photo of the situation on every step that has one, never of the answer.
@@ -416,9 +416,15 @@ export const SCENE: Record<string, string> = {
       ["sq-alpes", "winter"], ["sq-coeur", "consultation"], ["sq-lune", "night"], ["sq-hydratation", "water"]] as const)
       .flatMap(([id, img]) => ["c", "e", "f"].map((k) => [`${id}-${k}`, img])),
   ),
-  "sq-notredame-c": "", "sq-notredame-e": "", "sq-notredame-f": "",
-  // No photo rather than a loose one (feedback 15 Oct): add <id>.jpg to the library to give one.
-  "sq-paris2024-c": "", "sq-paris2024-e": "", "sq-paris2024-f": "", "sq-tour-c": "", "sq-tour-e": "", "sq-tour-f": "",
-  "rp-euro": "", "rp-king": "", "n-sardines": "", "cui-steam": "",
+  // No loose photo (feedback 15 Oct): add <id>.jpg to the library to give one. Actualité without its own
+  // photo shows the newspaper — it says "news", never the answer.
+  "sq-tour-c": "", "sq-tour-e": "", "sq-tour-f": "", "n-sardines": "", "cui-steam": "",
+  ...Object.fromEntries(["sq-notredame-c", "sq-notredame-r", "sq-notredame-e", "sq-notredame-f", "sq-paris2024-c", "sq-paris2024-r", "sq-paris2024-e", "sq-paris2024-f",
+    "rp-euro", "rp-tf-euro", "rp-king", "rp-pope", "rp-jo", "rp-notredame", "rp-tf-notredame", "rp-smartphone"].map((id) => [id, "newspaper"])),
+  "sci-moon": "night", "sci-light": "astronomy", "sci-tf-sun": "astronomy", "sci-rd-light": "summer", "sci-water": "water",
+  "geo-alps": "winter", "geo-nile": "hint-pyramids", "geo-rd-nile": "hint-pyramids", "his-egypt": "hint-pyramids", "his-rome": "rome",
+  "nat-tf-oak": "forest", "nat-roots": "forest", "lit-moliere": "hint-verse", "lit-tf-fables": "book", "spo-benefit": "walk", "r-fibres": "legumes",
+  "sq-ia-c": "phone", "sq-ia-r": "phone", "sq-ia-e": "phone", "sq-ia-f": "phone", "rp-ia": "phone",
+  "sq-pain-r": "bread", "sq-fontaine-r": "book", "sq-telephone-r": "phone", "sq-alpes-r": "winter", "sq-coeur-r": "consultation", "sq-hydratation-r": "elderly_meal",
   "sq-arbres-r": "forest", "sq-lune-r": "night", "sq-coeur-e": "walk", "sq-coeur-f": "walk",
 };
