@@ -7,6 +7,7 @@ import { buildPlan } from "@/lib/builder";
 import { GAME_INTRO, INSTRUCTIONS, PRAISE, choicesSentence, closing, discussionTurns, gameTurn, hintFor, revealsAnswer, trimOptions, type DiscussionTurn } from "@/lib/discussion";
 import { MemoryGame } from "@/components/memory-games";
 import { pictureKey, pictureUrl } from "@/lib/pictures";
+import { speakWithDevice, voicePrefs, whenVoicesReady } from "@/lib/device-voice";
 import { completeSession, recordAttempt, speak, speakCached, startSession } from "@/lib/session.functions";
 import { deriveParams, type SessionParams } from "@/lib/adaptive-profile";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,6 +52,9 @@ export function GuidedSession() {
   /** Some sentence had no natural voice yet (not recorded, or the voice service is unavailable). */
   const [voiceMissing, setVoiceMissing] = useState(false);
   const [voiceReason, setVoiceReason] = useState<string | null>(null);
+  /** One voice for the whole session: the device voice is used for every sentence when the caregiver chose it,
+   * or as soon as the recorded voice turns out to be unavailable (e.g. no credits) — never a mix. */
+  const deviceOnly = useRef(false);
   /** The expected answer once it has been said (confirmed or revealed) — a knowledge turn always ends with it. */
   const [answerLine, setAnswerLine] = useState<string | null>(null);
   // Set by the caregiver in the profile (or automatically when comprehension is difficult) — never toggled from the session.
@@ -87,6 +91,7 @@ export function GuidedSession() {
 
   function stopAudio() {
     playId.current++;
+    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     audio.current?.pause();
     if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     setSpeaking(false);
@@ -101,8 +106,9 @@ export function GuidedSession() {
         .catch(() => fetchOnce())
         .then((r) => {
           if (!r.audio) {
-            // Remember why (e.g. Lovable AI credits used up) to show it to the person helping.
+            // Remember why (e.g. Lovable AI credits used up) and switch the whole session to the device voice.
             if (r.reason) setVoiceReason(r.reason);
+            deviceOnly.current = true;
             return null;
           }
           const bytes = Uint8Array.from(atob(r.audio), (c) => c.charCodeAt(0));
@@ -128,6 +134,16 @@ export function GuidedSession() {
     setAudioUnavailable(false);
     try {
       const list = partsOf(texts);
+      if (deviceOnly.current) {
+        // Same free device voice for every sentence: no waiting, no credits, no mix of voices.
+        await whenVoicesReady();
+        for (const [n, text] of list.entries()) {
+          if (id !== playId.current) return false;
+          if (n > 0 && p.pauseMs) await wait(p.pauseMs);
+          if (!(await speakWithDevice(text, p.voiceRate))) setVoiceMissing(true);
+        }
+        return id === playId.current;
+      }
       // All sentences of the turn are requested at once, so there is no wait between context, question and choices.
       const urls = list.map((t) => clip(t));
       for (const n of list.keys()) {
@@ -137,10 +153,17 @@ export function GuidedSession() {
         const url = await urls[n]!;
         if (id !== playId.current) return false;
         if (!url) {
-          // Never mix in the robotic device voice (feedback 15 Oct): the sentence stays on screen,
-          // and its natural voice is requested again next time.
-          setVoiceMissing(true);
-          continue;
+          // The recorded voice is unavailable: from here on the whole session uses the device voice
+          // (this sentence included), so the voice never changes back and forth.
+          deviceOnly.current = true;
+          await whenVoicesReady();
+          if (!(await speakWithDevice(list[n]!, p.voiceRate))) setVoiceMissing(true);
+          for (const rest of list.slice(n + 1)) {
+            if (id !== playId.current) return false;
+            if (p.pauseMs) await wait(p.pauseMs);
+            await speakWithDevice(rest, p.voiceRate);
+          }
+          return id === playId.current;
         }
         const element = audio.current ?? new Audio();
         audio.current = element;
@@ -190,7 +213,7 @@ export function GuidedSession() {
     const nextTurn = turns[index + 1];
     // The current turn is requested first; the next one only once this one has been read,
     // so preparing ahead never delays what is being said now.
-    const ahead = () => run === turnRun.current && nextTurn && partsOf(spoken(nextTurn)).forEach((t) => clip(t));
+    const ahead = () => run === turnRun.current && nextTurn && !deviceOnly.current && partsOf(spoken(nextTurn)).forEach((t) => clip(t));
     if (!simple) {
       read(spoken(turn)).finally(ahead);
       return;
@@ -278,6 +301,7 @@ export function GuidedSession() {
         // no saved interests on this device
       }
       signedIn.current = !!data.session;
+      deviceOnly.current = voicePrefs().mode === "device";
       const local = () => ({ sessionId: "", ...buildPlan([], topics, 1), params: deriveParams({}) });
       // If the server is unreachable, the session still runs (nothing saved) rather than an error screen.
       const result = data.session ? await start({ data: {} }).catch(local) : local();
@@ -300,7 +324,7 @@ export function GuidedSession() {
       }
       setTurns(list);
       // Start the first sentences now, so the voice is ready when the person taps "Commencer".
-      for (const t of list.slice(0, 2)) for (const x of partsOf([t.item.recall, t.intro, t.prompt])) clip(x);
+      if (!deviceOnly.current) for (const t of list.slice(0, 2)) for (const x of partsOf([t.item.recall, t.intro, t.prompt])) clip(x);
       // A tap is needed before any sound in browsers: the start screen is that tap (skipped if one already happened).
       const activated = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive;
       setState(result.params.reinforced || activated === false ? "ready" : "play");
@@ -727,9 +751,9 @@ export function GuidedSession() {
               Le son n'a pas pu être lu. Touchez le haut-parleur pour réessayer.
             </p>
           )}
-          {voiceMissing && !audioUnavailable && (
+          {(voiceMissing || voiceReason) && !audioUnavailable && (
             <p role="status" className="mb-3 text-sm text-muted-foreground">
-              Voix naturelle indisponible{voiceReason ? ` : ${voiceReason}` : " pour certaines phrases"} (Espace aidant › Préparer la voix).
+              {voiceReason ? `Voix enregistrée indisponible (${voiceReason}) : voix de l'appareil utilisée.` : "Certaines phrases n'ont pas pu être lues."}
             </p>
           )}
           {view === "prompt" && turn.intro && <p className="mb-4 max-w-2xl font-serif text-2xl leading-snug">{turn.intro}</p>}

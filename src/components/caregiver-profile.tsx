@@ -6,6 +6,7 @@ import { QUESTIONS, deriveParams, summariseSignals, turnInfo, type ProfileAnswer
 import { useServerFn } from "@tanstack/react-start";
 import { preparePictures, prepareVoice, speak } from "@/lib/session.functions";
 import { GAME_INTRO } from "@/lib/discussion";
+import { VoicePicker } from "@/components/voice-picker";
 import { VOICE_TEST } from "@/lib/voice-texts";
 import { MAX_TARGETS, cleanTargets, targetProgress, type PersonalTarget } from "@/lib/spaced-retrieval";
 
@@ -269,6 +270,7 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
           <p className="mt-2 text-muted-foreground">
             « Préparer la voix » enregistre à l'avance toutes les phrases avec la voix naturelle. « Préparer les images » crée une photo propre à chaque question, sans jamais montrer la réponse. Chaque phrase et chaque image ne sont faites qu'une fois ; cela utilise des crédits IA Lovable. Vous pouvez arrêter et reprendre : ce qui est fait est gardé.
           </p>
+          <VoicePicker />
           {pics && (
             <p role="status" className="mt-2 text-base">
               {pics.reason ? `Images — arrêt : ${pics.reason}` : pics.running ? `Images vérifiées : ${pics.done} / ${pics.total} · nouvelles : ${pics.made}` : `Images prêtes : ${pics.total} (${pics.made} nouvelles).`}
