@@ -15,7 +15,10 @@ export const INTERESTS = [
   { id: "technologie", label: "Technologie" },
   { id: "cuisine", label: "Cuisine" },
   { id: "sport", label: "Sport" },
-] as { id: string; label: string; soon?: boolean }[];
+  // Not a subject: when ticked, a short memory game is added to each session.
+  { id: "memoire", label: "Jeux de mémoire", game: true },
+] as { id: string; label: string; soon?: boolean; game?: boolean }[];
+export const MEMORY_INTEREST = "memoire";
 
 /** Hafid's personal profile — the default, not a rule of the app. */
 export const DEFAULT_INTERESTS = ["sante", "medecine", "sciences", "actualite", "art"];

@@ -142,3 +142,12 @@ describe("Feedback 15 Oct (2)", () => {
     expect(closing("Vrai", false).say).toEqual(["Voici la réponse.", "Vrai"]);
   });
 });
+
+describe("Jeux de mémoire as an interest", () => {
+  it("adds a memory game to the session only when ticked, and never changes the subjects", () => {
+    expect(buildPlan([], ["i:art"], 1).game).toBeNull();
+    const plan = buildPlan([], ["i:art", "i:memoire"], 1);
+    expect(["paires", "disparu", "courses"]).toContain(plan.game);
+    for (const i of plan.items) expect(["art", "general"]).toContain(i.topic);
+  });
+});

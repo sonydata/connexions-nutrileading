@@ -9,7 +9,9 @@ export type DiscussionTurn = {
   model: string | null;
   image: string | null;
   options: PlayItem["options"];
-  phase: "exchange" | "knowledge" | "repeat";
+  phase: "exchange" | "knowledge" | "repeat" | "game";
+  /** Memory game played inside the session ("Jeux de mémoire" ticked). */
+  game?: "paires" | "disparu" | "courses";
   instruction: string;
   followUp: string;
   /** Expected answer of a knowledge turn (choice, word to find); null for opinions. Always said aloud at the end. */
@@ -46,6 +48,17 @@ export const INSTRUCTIONS = {
   repeatNow: "Répétez la phrase à voix haute.",
   opinion: DISCUSSION_INSTRUCTION,
 } as const;
+export const GAME_INTRO = "Place à un petit jeu de mémoire.";
+const GAME_TITLE = { paires: "Les paires", disparu: "L'objet disparu", courses: "La liste de courses" } as const;
+/** A memory-game step inside a session: no answer, nothing evaluated, Continuer when you like. */
+export function gameTurn(game: "paires" | "disparu" | "courses"): DiscussionTurn {
+  const item: PlayItem = {
+    id: `jeu-${game}`, kind: "oral", mode: "jeu", theme: "expression", topic: "general", skill: "expression", level: 1,
+    audio: GAME_INTRO, question: null, keyword: null, hint: null, answerText: null, image: null, model: null,
+    syllable: null, options: [], correctIndex: -1, stage: null, seqTitle: `Jeu de mémoire · ${GAME_TITLE[game]}`, recall: null, drop: 0,
+  };
+  return { item, intro: null, prompt: GAME_INTRO, model: null, image: null, options: [], phase: "game", game, instruction: GAME_INTRO, followUp: "", answer: null };
+}
 /** Praise said aloud after a right answer (pre-recorded sentences). */
 export const PRAISE = ["Très juste.", "Tout à fait.", "C'est cela."];
 /** How a knowledge turn ends: what is said (each a whole recorded-friendly sentence) and what is shown. */
@@ -145,7 +158,7 @@ const REF_FOLLOW_UPS: Record<string, string> = {
 };
 
 export function discussionVoiceTexts(items: PlayItem[]): string[] {
-  const out = new Set([DEVELOP, DISCUSSION_INSTRUCTION, ...REINFORCED_INSTRUCTIONS, ...Object.values(INSTRUCTIONS), ...PRAISE, "Oui, c'est bien cela.", "Voici la réponse.", "Voici un indice.", ...Object.values(OPENINGS)]);
+  const out = new Set([GAME_INTRO, DEVELOP, DISCUSSION_INSTRUCTION, ...REINFORCED_INSTRUCTIONS, ...Object.values(INSTRUCTIONS), ...PRAISE, "Oui, c'est bien cela.", "Voici la réponse.", "Voici un indice.", ...Object.values(OPENINGS)]);
   for (const mode of ["conversation", "regard"] as const)
     for (const turn of discussionTurns(items, mode)) {
       for (const text of [turn.intro, turn.prompt, turn.model, turn.instruction, turn.followUp])

@@ -52,7 +52,7 @@ function Index() {
 
   const today = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
-  const ids = interestsOf(topics).filter((x) => !x.startsWith("autre:"));
+  const ids = interestsOf(topics).filter((x) => !x.startsWith("autre:") && x !== "memoire");
   const myIds = ids.length ? ids : DEFAULT_INTERESTS;
   const label = (id: string) => INTERESTS.find((x) => x.id === id)?.label ?? id;
   const short = (id: string) => label(id).split(" &")[0]!;

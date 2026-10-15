@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Preview } from "@/components/memory-games";
 import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, PREFIX, interestsOf, otherInterest } from "@/lib/interests";
 
 export const Route = createFileRoute("/interets")({
@@ -84,10 +83,16 @@ function Interets() {
                 disabled={t.soon}
                 onClick={() => toggle(t.id)}
                 aria-pressed={on}
-                className={`flex items-center justify-between rounded-2xl border-2 px-6 py-5 text-left text-xl transition ${on ? "border-primary bg-accent" : "border-border bg-card hover:border-ring"} ${t.soon ? "opacity-50" : ""}`}
+                className={`flex items-center justify-between gap-3 rounded-2xl border-2 px-6 py-5 text-left text-xl transition ${
+                  t.game
+                    ? `bg-u-retrouver-soft ${on ? "border-primary" : "border-u-retrouver/50 hover:border-u-retrouver"}`
+                    : on ? "border-primary bg-accent" : "border-border bg-card hover:border-ring"
+                } ${t.soon ? "opacity-50" : ""}`}
               >
                 <span>
-                  {t.label}
+                  {t.game && <span aria-hidden className="mr-2">🧠</span>}
+                  <span className={t.game ? "font-semibold" : ""}>{t.label}</span>
+                  {t.game && <span className="block text-base text-muted-foreground">Un petit jeu pendant la séance</span>}
                   {t.soon && <span className="block text-sm text-muted-foreground">Bientôt disponible</span>}
                 </span>
                 <span className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${on ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
@@ -97,13 +102,6 @@ function Interets() {
             );
           })}
         </div>
-        <Link to="/memoire" search={{ jeu: undefined }} className="mt-4 flex items-center justify-between gap-4 rounded-2xl border-2 border-u-retrouver/50 bg-u-retrouver-soft px-6 py-5 text-left text-xl transition hover:border-u-retrouver">
-          <span>
-            <span aria-hidden>🧠</span> <span className="font-semibold">Jeux de mémoire</span>
-            <span className="block text-base text-muted-foreground">Paires, objet disparu, liste de courses : à faire quand on veut.</span>
-          </span>
-          <Preview ids={["keys", "?", "keys"]} size="size-14" />
-        </Link>
         <label className="mt-8 block max-w-md">
           <span className="text-lg">Autre</span>
           <input value={other} onChange={(e) => setOther(e.target.value)} placeholder="Par exemple : architecture" className="mt-2 w-full rounded-xl border bg-card px-5 py-4 text-lg outline-none focus:ring-2 focus:ring-ring" />

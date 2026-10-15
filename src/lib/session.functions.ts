@@ -24,12 +24,12 @@ export const startSession = createServerFn({ method: "POST" })
     const rows = past ?? [];
     const base = settings?.difficulty ?? 1;
     const params = deriveParams((profile?.answers ?? {}) as ProfileAnswers, summariseSignals(rows), base);
-    const { items, teaser } = buildPlan(rows.filter((r) => !isSignal(r.kind) && r.kind !== "srt"), settings?.topics ?? [], base, data?.focus ?? null);
+    const { items, teaser, game } = buildPlan(rows.filter((r) => !isSignal(r.kind) && r.kind !== "srt"), settings?.topics ?? [], base, data?.focus ?? null);
     // Today's personal target (spaced retrieval), if the caregiver entered some.
     const srt = pickTarget(cleanTargets((profile?.answers as ProfileAnswers | null)?.personal), rows);
     const { data: session, error } = await supabase.from("practice_sessions").insert({ user_id: userId }).select("id").single();
     if (error) throw new Error(error.message);
-    return { sessionId: session.id, items, teaser, params, srt };
+    return { sessionId: session.id, items, teaser, params, srt, game: game ?? null };
   });
 
 export const recordAttempt = createServerFn({ method: "POST" })

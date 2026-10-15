@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Check, Lightbulb, Mic, Play, Square, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { buildPlan } from "@/lib/builder";
-import { INSTRUCTIONS, PRAISE, closing, discussionTurns, hintFor, revealsAnswer, type DiscussionTurn } from "@/lib/discussion";
+import { GAME_INTRO, INSTRUCTIONS, PRAISE, closing, discussionTurns, gameTurn, hintFor, revealsAnswer, type DiscussionTurn } from "@/lib/discussion";
+import { MemoryGame } from "@/components/memory-games";
 import { completeSession, recordAttempt, speak, speakCached, startSession } from "@/lib/session.functions";
 import { deriveParams, type SessionParams } from "@/lib/adaptive-profile";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,7 +72,9 @@ export function GuidedSession() {
   /** What is said for a turn, in order. A sentence to repeat: the instruction BEFORE it, "Répétez" right after.
    * Choices are read aloud (no numbers, no announcement), except Vrai/Faux which the instruction already names. */
   const spoken = (t: DiscussionTurn) =>
-    t.phase === "repeat"
+    t.phase === "game"
+      ? [GAME_INTRO]
+      : t.phase === "repeat"
       ? [t.item.recall, INSTRUCTIONS.repeat, t.prompt, INSTRUCTIONS.repeatNow]
       : [t.item.recall, t.intro, t.prompt, instr(t), ...(t.item.kind === "tf" ? [] : t.options.map((o) => o.label))];
   const instr = (t: DiscussionTurn) =>
@@ -202,6 +205,7 @@ export function GuidedSession() {
       const ok = await read(spoken(turn));
       if (run !== turnRun.current) return;
       if (!ok && !audioUnavailable) return; // interrupted (Réécouter / Passer): that action takes over
+      if (turn.phase === "game") return; // the game itself is the activity; "Passer" moves on
       if (turn.options.length) setSimpleStep("choose");
       else startListening();
     })();
@@ -294,6 +298,9 @@ export function GuidedSession() {
         );
       if (!list.length) throw new Error("empty");
       // Personal target: first asked after one warm-up activity, then again at growing intervals.
+      // "Jeux de mémoire" ticked: one short game in the middle of the session.
+      const game = ("game" in result ? result.game : null) as "paires" | "disparu" | "courses" | null;
+      if (game) list.splice(Math.ceil(list.length / 2), 0, gameTurn(game));
       const pick = ("srt" in result ? result.srt : null) as { target: PersonalTarget; maintenance: boolean } | null;
       if (pick) {
         srt.current = { target: pick.target, maintenance: pick.maintenance, misses: 0, extra: 0 };
@@ -444,7 +451,7 @@ export function GuidedSession() {
     read(say).then(() => run === turnRun.current && simple && setSimpleStep("after"));
   }
   function save(t: DiscussionTurn) {
-    if (!sessionId.current) return;
+    if (!sessionId.current || t.phase === "game") return; // games are never recorded
     const id = sessionId.current;
     // Knowledge turns carry their real outcome (for adaptation and the caregiver); other turns stay neutral.
     const evaluated = t.answer && outcome.current;
@@ -576,7 +583,32 @@ export function GuidedSession() {
     "Un moment ensemble";
 
   // Plain render functions (not nested components), so the screen is never remounted on each update.
-  return simple ? renderSimple() : renderStandard();
+  return turn.phase === "game" ? renderGame() : simple ? renderSimple() : renderStandard();
+
+  // ——— A memory game inside the session: the game, and one button to go on ———
+  function renderGame() {
+    if (!turn?.game) return null;
+    return (
+      <main className="paper-grain flex min-h-screen flex-col px-6 py-6 md:px-12">
+        <header className="flex items-center justify-between gap-4">
+          <span className="font-serif text-2xl">Connexions</span>
+          <span className="text-lg text-muted-foreground" aria-label={`${index + 1} sur ${turns.length}`}>
+            {index + 1} / {turns.length}
+          </span>
+        </header>
+        <section key={index} className="mx-auto w-full max-w-4xl flex-1 py-6">
+          <p className="mb-4 text-center text-sm font-semibold uppercase text-u-retrouver"><span aria-hidden>🧠</span> {turn.item.seqTitle}</p>
+          <MemoryGame game={turn.game} />
+          <div className="mt-10 flex justify-center">
+            <Button onClick={() => next()} className="h-14 text-xl">
+              Continuer la séance
+              <ArrowRight />
+            </Button>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   // ——— Simple screen (accompagnement renforcé): picture, question, one obvious thing to do ———
   function renderSimple() {

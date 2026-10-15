@@ -265,7 +265,9 @@ export function topicAffinity(past: PastAttempt[]) {
   return out;
 }
 
-export type Plan = { items: PlayItem[]; teaser: string };
+/** `game`: the memory game of the day, when "Jeux de mémoire" is ticked among the interests. */
+export type Plan = { items: PlayItem[]; teaser: string; game?: "paires" | "disparu" | "courses" | null };
+const GAME_ROTATION = ["courses", "disparu", "paires"] as const;
 
 /**
  * Session (~10 steps, 8–12 min) = one familiar path (series continuation or a liked subject),
@@ -384,7 +386,8 @@ export function buildPlan(past: PastAttempt[], topics: string[], base: number, f
   const order = [...chosen.filter((t) => !today.has(t)), ...chosen.filter((t) => today.has(t))];
   const hints = order.map((t) => TEASE[t]).filter(Boolean).slice(0, 3) as string[];
   const teaser = nextSeries && Math.random() < 0.5 ? `À suivre : la suite de « ${nextSeries.title} ».` : hints.length ? `Demain : ${hints.join(", ")}.` : "";
-  return { items, teaser };
+  const game = interestsOf(topics).includes("memoire") ? GAME_ROTATION[Math.floor(now / 864e5) % GAME_ROTATION.length]! : null;
+  return { items, teaser, game };
 }
 
 export function buildSession(past: PastAttempt[], topics: string[], base: number): PlayItem[] {
