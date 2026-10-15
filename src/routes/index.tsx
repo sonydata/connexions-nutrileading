@@ -10,8 +10,8 @@ import { ACCENTS, COLLECTION_CYCLE, PILLARS } from "@/lib/accents";
 import litteratureImg from "@/assets/home/litterature.jpg";
 import artImg from "@/assets/home/art.jpg";
 import santeImg from "@/assets/home/sante.jpg";
-import { Apple, ArrowRight, BookOpen, ChefHat, Cpu, Ear, Landmark, Leaf, Map as MapIcon, MessageCircle, Microscope, Newspaper, Palette, Search, Stethoscope, Trophy } from "lucide-react";
-import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, PREFIX, hasInterests, interestsOf, otherInterest } from "@/lib/interests";
+import { ArrowRight, Ear, MessageCircle, Search } from "lucide-react";
+import { DEFAULT_INTERESTS, GUEST_KEY, INTERESTS, interestsOf } from "@/lib/interests";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,24 +32,18 @@ function Index() {
   const [name, setName] = useState("");
   const [week, setWeek] = useState<Week | null>(null);
   const [topics, setTopics] = useState<string[]>([]);
-  const [configured, setConfigured] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) {
-        const g = localStorage.getItem(GUEST_KEY);
-        setConfigured(!!g);
         try {
-          setTopics(JSON.parse(g ?? "[]"));
+          setTopics(JSON.parse(localStorage.getItem(GUEST_KEY) ?? "[]"));
         } catch {}
         return setState("out");
       }
-      setUserId(data.user.id);
       const { data: s } = await supabase.from("caregiver_settings").select("topics").eq("user_id", data.user.id).maybeSingle();
       const md = data.user.user_metadata ?? {};
       setName(md["full_name"] || md["name"] || data.user.email?.split("@")[0] || "");
-      setConfigured(hasInterests(s?.topics ?? []));
       setTopics(s?.topics ?? []);
       setState("in");
       weekSummary().then(setWeek).catch(() => {});
@@ -58,30 +52,13 @@ function Index() {
 
   const today = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
-  const ICON: Record<string, typeof Apple> = { sante: Apple, medecine: Stethoscope, sciences: Microscope, histoire: Landmark, art: Palette, geographie: MapIcon, actualite: Newspaper, nature: Leaf, litterature: BookOpen, technologie: Cpu, cuisine: ChefHat, sport: Trophy };
   const ids = interestsOf(topics).filter((x) => !x.startsWith("autre:"));
   const myIds = ids.length ? ids : DEFAULT_INTERESTS;
   const label = (id: string) => INTERESTS.find((x) => x.id === id)?.label ?? id;
   const short = (id: string) => label(id).split(" &")[0]!;
-  const other = otherInterest(topics);
   const img = (id: string) => imageSrc(id) ?? "";
-  const startLink = { to: configured ? "/seance" : "/interets", search: configured ? {} : { next: "seance" as const } } as const;
-
-  async function toggleInterest(id: string) {
-    const stored = interestsOf(topics);
-    const cur = stored.length ? stored : myIds;
-    const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
-    if (!next.length) return;
-    const mine = next.map((x) => PREFIX + x);
-    const updated = userId ? [...topics.filter((t) => !t.startsWith(PREFIX)), ...mine] : mine;
-    setTopics(updated);
-    setConfigured(true);
-    if (userId) {
-      await supabase.from("caregiver_settings").upsert({ user_id: userId, topics: updated, updated_at: new Date().toISOString() });
-    } else {
-      localStorage.setItem(GUEST_KEY, JSON.stringify(mine));
-    }
-  }
+  // Commencer always goes through the interests step: last choices are pre-ticked, one tap to confirm or change.
+  const startLink = { to: "/interets", search: { next: "seance" as const } } as const;
 
   return (
     <main className="relative flex min-h-screen flex-col bg-background">
@@ -200,32 +177,6 @@ function Index() {
             ))}
           </ul>
         </div>
-      </section>
-
-      {/* CENTRES D'INTÉRÊT — modification directe : chaque sujet se touche pour l'ajouter ou le retirer */}
-      <section className="mx-auto w-full max-w-6xl px-6 py-14 md:px-8">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-          <h2 className="font-serif text-3xl">Vos centres d'intérêt</h2>
-          <p className="text-sm text-muted-foreground">Touchez un sujet pour l'ajouter ou le retirer.</p>
-        </div>
-        <div className="mt-6 flex flex-wrap gap-3">
-          {INTERESTS.filter((t) => !t.soon).map((t) => {
-            const on = myIds.includes(t.id);
-            const I = ICON[t.id] ?? Leaf;
-            return (
-              <button
-                key={t.id}
-                onClick={() => toggleInterest(t.id)}
-                aria-pressed={on}
-                className={`inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-base transition ${on ? "border-primary bg-sage-soft font-semibold text-primary" : "border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground"}`}
-              >
-                <I className="h-4 w-4" /> {t.label}
-              </button>
-            );
-          })}
-        </div>
-        {other && <p className="mt-4 text-base text-muted-foreground">Votre sujet libre : <span className="font-semibold text-foreground">{other}</span></p>}
-        <Link to="/interets" search={{ next: undefined }} className="mt-5 inline-block text-base font-semibold text-primary underline underline-offset-4">Tous les sujets</Link>
       </section>
 
       {/* CETTE SEMAINE — chaleureux */}

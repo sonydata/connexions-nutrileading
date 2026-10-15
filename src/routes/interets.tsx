@@ -67,10 +67,12 @@ function Interets() {
         <Link to="/" className="font-serif text-2xl">Connexions</Link>
       </header>
       <section className="mx-auto mt-12 max-w-5xl animate-rise">
-        <p className="text-sm font-medium uppercase tracking-[0.25em] text-brand">Vos centres d'intérêt</p>
-        <h1 className="mt-4 text-5xl leading-tight md:text-6xl">Quels sujets aimez-vous ?</h1>
+        <p className="text-sm font-medium uppercase tracking-[0.25em] text-brand">{next === "seance" ? "Séance du jour" : "Vos centres d'intérêt"}</p>
+        <h1 className="mt-4 text-5xl leading-tight md:text-6xl">{next === "seance" ? "De quoi parle-t-on aujourd'hui ?" : "Quels sujets aimez-vous ?"}</h1>
         <p className="mt-5 max-w-2xl text-xl text-muted-foreground">
-          Choisissez les sujets que vous aimez. Vos séances seront adaptées à vos centres d'intérêt.
+          {next === "seance"
+            ? "Vos sujets habituels sont déjà cochés. Touchez un sujet pour l'ajouter ou le retirer, puis commencez."
+            : "Choisissez les sujets que vous aimez. Vos séances seront adaptées à vos centres d'intérêt."}
         </p>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {INTERESTS.map((t) => {
@@ -103,7 +105,7 @@ function Interets() {
           disabled={busy || !picked.length}
           className="mt-12 rounded-full bg-primary px-14 py-5 text-2xl font-medium text-primary-foreground shadow-lg transition hover:opacity-90 disabled:opacity-50"
         >
-          {next === "seance" ? "Commencer" : "Enregistrer"}
+          {next === "seance" ? "Commencer la séance" : "Enregistrer"}
         </button>
         {!userId && <p className="mt-4 text-base text-muted-foreground">Sans compte, ce choix est gardé sur cet appareil.</p>}
       </section>
