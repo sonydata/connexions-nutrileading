@@ -26,6 +26,18 @@
 - [x] Guidage oral : consigne concrète selon le mode, choix lus sans annonce ni numérotation, « Je vous écoute », tolérance aux pauses
 - [ ] Actualité : en attente d'une source fiable (affichée « Bientôt disponible »)
 
+### Retours Sonia du 15 octobre
+- [x] Réponses par cases à cocher pour toutes les questions de connaissance (l'oral reste possible, jamais obligatoire)
+- [x] Exercices de répétition « Écoutez, puis répétez la phrase » à chaque séance
+- [x] Consignes plus courtes et précises ; plus de question ouverte après chaque réponse
+- [x] Plus facile : choix au lieu de rappel libre, 2 à 3 choix
+- [x] Plus de questions : banque complète mêlée aux parcours, 13 nouveaux parcours, proverbes, nouveaux repères d'actualité
+- [x] Actualité : réponses photo + nom prêtes pour les personnalités
+- [ ] Ajouter les portraits libres de droits (p-macron, p-trump… dans src/assets/library) pour activer les réponses en photo
+- [x] Onglet « Jeux de mémoire » (paires, objet disparu, liste de courses)
+- [x] Chaque activité correspond aux centres d'intérêt choisis (plus de Renaissance avec Actualité) — vérifié par test
+- [ ] Plus d'aide visuelle : photos à ajouter pour les nouveaux parcours sans image (Notre-Dame, Tour de France, Versailles, IA)
+
 - [x] Une seule voix féminine (pas de bascule vers la voix du navigateur)
 - [x] Retirer les questions trop évidentes/enfantines de la banque
 - [x] Trois piliers Comprendre/Retrouver/S'exprimer harmonisés : poids égal, fond neutre identique, rose réservé au survol

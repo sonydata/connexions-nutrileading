@@ -1,6 +1,6 @@
 // Every sentence the session can read aloud — used once to pre-record the whole bank,
 // so the same natural voice is heard everywhere (guests included) with no live synthesis.
-import { BANK, BY_ID, datedReperes, type Item } from "./content";
+import { BANK, BY_ID, completeModel, datedReperes, type Item } from "./content";
 import { SEQ_ITEMS, SEQUENCES } from "./sequences";
 import { RESPONSE_INSTRUCTIONS } from "./response-guidance";
 import { discussionVoiceTexts } from "./discussion";
@@ -31,9 +31,9 @@ function textsOf(i: Item): (string | undefined)[] {
     case "tf":
       return [i.audio];
     case "complete":
-      return [i.audio, i.hint, i.answer, i.audio.replace(/…$/, i.answer + ".")];
+      return [i.audio, i.hint, i.answer, completeModel(i.audio, i.answer), ...(i.distractors ?? [])];
     case "evoke":
-      return [i.audio, i.hint, i.answer, i.model];
+      return [i.audio, i.hint, i.answer, i.model, ...(i.distractors ?? [])];
     case "oral":
       return [...i.steps, i.hint, i.model, i.answer, i.answer ? cap(i.answer) + "." : undefined];
   }

@@ -1,5 +1,4 @@
 import type { PlayItem } from "./builder";
-import { SEQ_BY_ID } from "./sequences";
 import { visualHintFor } from "./visual-hints";
 
 export type SessionMode = "conversation" | "regard";
@@ -33,72 +32,82 @@ export const OPENINGS: Record<string, string> = {
   actualite: "Qu'est-ce que ce repère vous évoque ?",
   general: "Qu'est-ce qui vous aide à organiser votre journée ?",
 };
-export const DISCUSSION_INSTRUCTION = "Donnez votre avis à voix haute.";
+export const DISCUSSION_INSTRUCTION = "Dites ce que vous en pensez.";
+/** One short, concrete action per kind of turn (shown and said). */
+export const INSTRUCTIONS = {
+  choice: "Touchez la bonne réponse.",
+  truth: "Touchez Vrai ou Faux.",
+  word: "Touchez le bon mot.",
+  missing: "Touchez le mot qui manque.",
+  repeat: "Écoutez, puis répétez la phrase.",
+  opinion: DISCUSSION_INSTRUCTION,
+} as const;
 export const DEVELOP = "Pourquoi, selon vous ?";
 /** Said after a knowledge turn — the target is always heard, gently, whatever happened. */
-export const confirmText = (answer: string) => `Oui, c'est bien cela : ${answer}.`;
-export const revealText = (answer: string) => `La réponse : ${answer}.`;
+export const confirmText = (answer: string) =>
+  answer === "Vrai" ? "Oui, c'est vrai." : answer === "Faux" ? "Oui, c'est faux." : `Oui, c'est bien cela : ${answer}.`;
+export const revealText = (answer: string) =>
+  answer === "Vrai" ? "En fait, c'est vrai." : answer === "Faux" ? "En fait, c'est faux." : `La réponse : ${answer}.`;
 /** Reinforced support: one short, concrete instruction. */
-export const REINFORCED_INSTRUCTIONS = ["Touchez votre réponse.", "À vous de parler."];
+export const REINFORCED_INSTRUCTIONS = ["Touchez votre réponse.", "À vous de parler.", "Écoutez, puis répétez la phrase."];
 
 /** Expected answer of an item, when it has one (choice question, word to find, name to say). */
 export function answerOf(item: PlayItem): string | null {
-  if (item.kind === "mcq") return item.options[item.correctIndex]?.label ?? null;
+  if (item.kind === "mcq" || item.kind === "tf") return item.options[item.correctIndex]?.label ?? null;
   if (item.kind === "evoke" || item.kind === "complete" || (item.kind === "oral" && item.mode === "nommer")) return item.answerText;
   return null;
 }
 
-/** Local presentation only: no interpretation of the person's answer. */
-export function discussionTurns(items: PlayItem[], mode: SessionMode): DiscussionTurn[] {
+/** Local presentation only: no interpretation of the person's answer.
+ * `limit` shortens the session by removing the highest `drop` first (opinions, extras), never core steps. */
+export function discussionTurns(items: PlayItem[], mode: SessionMode, limit = 12): DiscussionTurn[] {
   const selected = [...items];
-  // Shorten repeated formulation steps first, preserving temporal references and spaced recall.
-  while (selected.length > 12) {
-    const removable = selected.findIndex((item) => item.stage === "reformuler" && !item.recall);
-    if (removable < 0) break;
-    selected.splice(removable, 1);
+  while (selected.length > limit) {
+    const top = Math.max(...selected.map((i) => i.drop ?? 0));
+    if (top <= 0) break;
+    const at = selected.map((i) => i.drop ?? 0).lastIndexOf(top);
+    selected.splice(at, 1);
   }
-  return selected.slice(0, 12).map((item) => {
-    const seqId = item.id.match(/^(sq-[a-z]+)-[cref]$/)?.[1];
-    const sequence = seqId ? SEQ_BY_ID.get(seqId) : undefined;
+  return selected.slice(0, limit).map((item) => {
     const hint = visualHintFor(item);
     const choice = item.kind === "mcq" || item.kind === "tf";
-    const answer = item.options[item.correctIndex]?.label;
+    const word = item.kind === "evoke" || item.kind === "complete" || item.mode === "nommer";
     const repeat = item.mode === "lire" || item.stage === "reformuler";
-    const opening = OPENINGS[item.topic] ?? OPENINGS["general"] ?? DEVELOP;
+    const knowledge = mode === "regard" && !repeat && (choice || word);
     let intro: string | null = null;
     let prompt = item.audio;
-    let model = item.kind === "tf" ? visualHintFor(item).caption : item.model ?? item.answerText ?? answer ?? item.audio;
+    let model = item.model ?? item.answerText ?? item.options[item.correctIndex]?.label ?? item.audio;
     if (item.kind === "tf") {
-      intro = model;
-      prompt = opening;
+      prompt = item.audio;
+      intro = null;
     } else if (choice) {
       // The item's own question, asked once: context (if any) then the question itself.
       intro = item.question && item.question !== item.audio ? item.audio : null;
       prompt = item.question ?? item.audio;
-      if (mode === "conversation" && item.topic !== "actualite" && answer) model = `${capitalize(answer)}.`;
     }
+    // A sentence to repeat is shown and heard as is — the "model" is the same sentence, never a paraphrase.
+    if (repeat) model = item.audio;
+    const answer = knowledge ? answerOf(item) : null;
     return {
       item,
       intro: intro && intro !== prompt ? intro : null,
       prompt,
       model,
       image: item.image ?? hint.image,
-      options: mode === "regard" && item.kind === "mcq" ? item.options : [],
-      phase: repeat
-        ? "repeat"
-        : mode === "regard" && (choice || item.kind === "evoke" || item.kind === "complete" || item.mode === "nommer")
-          ? "knowledge"
-          : "exchange",
-      answer: !repeat && mode === "regard" ? answerOf(item) : null,
+      options: knowledge ? item.options : [],
+      phase: repeat ? "repeat" : knowledge ? "knowledge" : "exchange",
+      answer,
       instruction: repeat
-        ? "Répétez la phrase à voix haute."
-        : item.kind === "evoke" || item.mode === "nommer"
-          ? "Dites le nom à voix haute."
-          : item.kind === "complete"
-            ? "Dites le mot manquant à voix haute."
-            : choice && mode === "conversation"
-              ? "Répondez à voix haute."
-              : DISCUSSION_INSTRUCTION,
+        ? INSTRUCTIONS.repeat
+        : !knowledge
+          ? INSTRUCTIONS.opinion
+          : item.kind === "tf"
+            ? INSTRUCTIONS.truth
+            : item.kind === "complete"
+              ? INSTRUCTIONS.missing
+              : word
+                ? INSTRUCTIONS.word
+                : INSTRUCTIONS.choice,
       followUp:
         REF_FOLLOW_UPS[item.id] ??
         (repeat
@@ -126,7 +135,7 @@ const REF_FOLLOW_UPS: Record<string, string> = {
 };
 
 export function discussionVoiceTexts(items: PlayItem[]): string[] {
-  const out = new Set([DEVELOP, DISCUSSION_INSTRUCTION, ...REINFORCED_INSTRUCTIONS, ...Object.values(OPENINGS)]);
+  const out = new Set([DEVELOP, DISCUSSION_INSTRUCTION, ...REINFORCED_INSTRUCTIONS, ...Object.values(INSTRUCTIONS), ...Object.values(OPENINGS)]);
   for (const mode of ["conversation", "regard"] as const)
     for (const turn of discussionTurns(items, mode)) {
       for (const text of [turn.intro, turn.prompt, turn.model, turn.instruction, turn.followUp])
@@ -135,6 +144,7 @@ export function discussionVoiceTexts(items: PlayItem[]): string[] {
         out.add(confirmText(turn.answer));
         out.add(revealText(turn.answer));
       }
+      for (const o of turn.options) out.add(o.label);
     }
   return [...out];
 }

@@ -19,7 +19,7 @@ export type McqItem = Base & {
   distractors: Opt[]; // ordered from clearly different → semantically closer
 };
 export type TfItem = Base & { kind: "tf"; audio: string; answer: boolean; keyword: string };
-export type CompleteItem = Base & { kind: "complete"; audio: string; answer: string; hint: string };
+export type CompleteItem = Base & { kind: "complete"; audio: string; answer: string; hint: string; distractors?: string[] | undefined };
 export type OralItem = Base & {
   kind: "oral";
   mode: "expliquer" | "lire" | "reformuler" | "nommer";
@@ -31,10 +31,12 @@ export type OralItem = Base & {
   follow?: string; // id of an item played right after
 };
 /** Professional word retrieval: question → semantic cue → first syllable → word → audio → repeat. */
-export type EvokeItem = Base & { kind: "evoke"; audio: string; answer: string; hint: string; syllable: string; model: string };
+export type EvokeItem = Base & { kind: "evoke"; audio: string; answer: string; hint: string; syllable: string; model: string; distractors?: string[] | undefined };
 export type Item = McqItem | TfItem | CompleteItem | OralItem | EvokeItem;
 
 const o = (label: string, image?: string): Opt => ({ label, image });
+/** Full sentence of a fill-in item: "pour les…" + "os" → "pour les os." (no space after an apostrophe). */
+export const completeModel = (audio: string, answer: string) => audio.replace(/\s*(['’]?)…$/, (_m, ap: string) => (ap ? ap : " ") + answer + ".");
 
 const mcq = (id: string, theme: Theme, skill: Skill, audio: string, keyword: string, answer: Opt, distractors: Opt[], extra: Partial<McqItem> = {}): McqItem => ({
   id, theme, skill, kind: "mcq", audio, keyword, answer, distractors, ...extra,
@@ -321,10 +323,45 @@ export function topicOf(i: Item): Topic {
 const MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 const R = { topic: "actualite" as Topic };
 export const REPERES: Item[] = [
-  mcq("rp-fr-pres", "avis", "information", "Qui a été élu président de la République en 2017 ?", "président", o("Emmanuel Macron"), [o("François Hollande"), o("Nicolas Sarkozy")], R),
-  mcq("rp-us-pres", "avis", "information", "Qui a été élu président des États-Unis en 2024 ?", "États-Unis", o("Donald Trump"), [o("Joe Biden"), o("Barack Obama")], R),
+  // People appear as photo + name options once their portraits are added to the library (p-… ids).
+  mcq("rp-fr-pres", "avis", "information", "Qui a été élu président de la République en 2017 ?", "président", o("Emmanuel Macron", "p-macron"), [o("François Hollande", "p-hollande"), o("Nicolas Sarkozy", "p-sarkozy")], R),
+  mcq("rp-us-pres", "avis", "information", "Qui a été élu président des États-Unis en 2024 ?", "États-Unis", o("Donald Trump", "p-trump"), [o("Joe Biden", "p-biden"), o("Barack Obama", "p-obama")], R),
+  mcq("rp-pope", "avis", "information", "Qui a été élu pape en 2025 ?", "pape", o("Léon XIV", "p-leon14"), [o("François", "p-francois"), o("Benoît XVI", "p-benoit16")], R),
+  mcq("rp-king", "avis", "information", "Qui a été couronné roi du Royaume-Uni en 2023 ?", "Royaume-Uni", o("Charles III", "p-charles3"), [o("le prince William", "p-william"), o("le prince Harry", "p-harry")], R),
   mcq("rp-euro", "avis", "information", "Avec quelle monnaie paie-t-on en France ?", "monnaie", o("l'euro"), [o("le dollar"), o("le franc")], R),
   mcq("rp-jo", "avis", "information", "Quelle ville a accueilli les Jeux olympiques de 2024 ?", "Jeux olympiques", o("Paris", "paris"), [o("Londres", "london"), o("Rome", "rome")], R),
+  mcq("rp-notredame", "avis", "information", "Quelle cathédrale a rouvert en 2024, après son incendie ?", "cathédrale", o("Notre-Dame de Paris"), [o("la Sagrada Família"), o("la cathédrale de Chartres")], R),
+  mcq("rp-mondial", "avis", "information", "Quel pays a gagné la Coupe du monde 2022 ?", "football", o("l'Argentine"), [o("la France"), o("le Brésil")], R),
+  mcq("rp-jo-hiver", "avis", "information", "Où auront lieu les Jeux olympiques d'hiver de 2030 ?", "hiver", o("dans les Alpes françaises", "winter"), [o("en Bretagne"), o("à Marseille")], R),
+  mcq("rp-ia", "avis", "information", "Comment appelle-t-on les programmes qui répondent aux questions comme une personne ?", "programmes", o("l'intelligence artificielle"), [o("la télévision"), o("le minitel")], R),
+  mcq("rp-smartphone", "avis", "information", "Quel objet sert de téléphone, d'appareil photo et d'agenda ?", "téléphone", o("le smartphone", "phone"), [o("la radio"), o("la montre à aiguilles", "watch")], R),
+  tf("rp-tf-euro", "L'euro a remplacé le franc en 2002.", true, "euro", "avis"),
+  tf("rp-tf-notredame", "Notre-Dame de Paris a été restaurée après un incendie.", true, "Notre-Dame", "avis"),
+].map((i) => ({ ...i, topic: "actualite" as Topic }));
+
+// ——— Proverbes : un plaisir partagé, la fin vient souvent toute seule. Transversal, toujours en choix. ———
+const pv = (id: string, start: string, answer: string, distractors: [string, string]): CompleteItem => ({
+  id, theme: "expression", skill: "completion", kind: "complete", topic: "general", audio: `${start}…`, answer, hint: "Un proverbe bien connu.", distractors,
+});
+export const PROVERBS: CompleteItem[] = [
+  pv("pv-oiseau", "Petit à petit, l'oiseau fait son", "nid", ["toit", "chant"]),
+  pv("pv-oeuf", "Qui vole un œuf vole un", "bœuf", ["veau", "poulet"]),
+  pv("pv-ours", "Il ne faut pas vendre la peau de l'ours avant de l'avoir", "tué", ["vu", "lavé"]),
+  pv("pv-caravane", "Les chiens aboient, la caravane", "passe", ["s'arrête", "recule"]),
+  pv("pv-mousse", "Pierre qui roule n'amasse pas", "mousse", ["poussière", "sable"]),
+  pv("pv-pluie", "Après la pluie, le", "beau temps", ["vent", "froid"]),
+  pv("pv-moine", "L'habit ne fait pas le", "moine", ["roi", "maître"]),
+  pv("pv-charrue", "Il ne faut pas mettre la charrue avant les", "bœufs", ["chevaux", "roues"]),
+  pv("pv-point", "Rien ne sert de courir, il faut partir à", "point", ["l'heure", "midi"]),
+  pv("pv-jamais", "Mieux vaut tard que", "jamais", ["demain", "rien"]),
+  pv("pv-tempete", "Qui sème le vent récolte la", "tempête", ["pluie", "grêle"]),
+  pv("pv-nuit", "La nuit porte", "conseil", ["chance", "malheur"]),
+  pv("pv-coeur", "Loin des yeux, loin du", "cœur", ["regard", "corps"]),
+  pv("pv-eau", "Chat échaudé craint l'eau", "froide", ["chaude", "salée"]),
+  pv("pv-rome", "Rome ne s'est pas faite en un", "jour", ["mois", "an"]),
+  pv("pv-hirondelle", "Une hirondelle ne fait pas le", "printemps", ["nid", "été"]),
+  pv("pv-appetit", "L'appétit vient en", "mangeant", ["dormant", "marchant"]),
+  pv("pv-pere", "Tel père, tel", "fils", ["frère", "oncle"]),
 ];
 
 /**
@@ -346,7 +383,7 @@ export function datedReperes(now: Date): Item[] {
   ];
 }
 
-export const BANK: Item[] = [...CORE, ...TOPIC_BANK, ...REPERES];
+export const BANK: Item[] = [...CORE, ...TOPIC_BANK, ...REPERES, ...PROVERBS];
 export const BY_ID = new Map(BANK.map((i) => [i.id, i]));
 export const FOLLOW_IDS = new Set(BANK.flatMap((i) => (i.kind === "oral" && i.follow ? [i.follow] : [])));
 
@@ -370,7 +407,15 @@ export const SCENE: Record<string, string> = {
   "t-season": "calendar", "t-2h": "plate", "t-dinner": "evening", "t-sequence": "consultation", "t-3x": "calendar", "t-kine": "calendar",
   "tf-olive": "olive_oil", "tf-salmon": "salmon", "tf-lentils": "lentils", "tf-vitc": "orange", "tf-water": "water", "tf-soda": "soda",
   "tf-insulin": "consultation", "tf-calcium": "yogurt", "tf-walnuts": "walnuts", "tf-transit": "vegetables", "tf-protage": "elderly_meal",
-  "rp-fr-pres": "elysee", "rp-us-pres": "white_house", "rp-year": "calendar", "rp-month": "calendar", "rp-euro": "market", "rp-jo": "paris",
+  "rp-fr-pres": "elysee", "rp-us-pres": "white_house", "rp-king": "london", "rp-notredame": "", "rp-mondial": "football", "rp-tf-euro": "market", "rp-tf-notredame": "", "rp-year": "calendar", "rp-month": "calendar", "rp-euro": "market", "rp-jo": "paris",
   "tf-vitdsun": "summer", "tf-saltbp": "salt",
   "sq-mediterranee-r": "legumes", "v-legum": "legumes",
+  // New paths (15 Oct): a photo of the situation on every step that has one, never of the answer.
+  ...Object.fromEntries(
+    ([["sq-pain", "bread"], ["sq-paris2024", "paris"], ["sq-arbres", "autumn"], ["sq-fontaine", "book"], ["sq-telephone", "phone"],
+      ["sq-alpes", "winter"], ["sq-coeur", "consultation"], ["sq-lune", "night"], ["sq-hydratation", "water"]] as const)
+      .flatMap(([id, img]) => ["c", "e", "f"].map((k) => [`${id}-${k}`, img])),
+  ),
+  "sq-notredame-c": "", "sq-notredame-e": "", "sq-notredame-f": "",
+  "sq-arbres-r": "forest", "sq-lune-r": "night", "sq-coeur-e": "walk", "sq-coeur-f": "walk",
 };

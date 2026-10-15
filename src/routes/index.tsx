@@ -76,6 +76,7 @@ function Index() {
           )}
           {[
             { to: "/interets" as const, label: "Mes centres d'intérêt", search: { next: undefined } },
+            { to: "/memoire" as const, label: "Jeux de mémoire", search: undefined },
             // Progress lives in the caregiver space (footer link), never on the person's own screen.
             ...(state === "in" ? [] : [{ to: "/auth" as const, label: "Mon espace", search: undefined }]),
           ].map((l) => (

@@ -119,7 +119,7 @@ export function srtTurn(t: PersonalTarget, step: number, maintenance = false): D
   const item: PlayItem = {
     id: srtItemId(t), kind: "evoke", theme: "expression", topic: "general", skill: "evocation", level: 1,
     audio: t.question, question: null, keyword: null, hint: null, answerText: t.answer, image: null, model: null,
-    syllable: null, options: [], correctIndex: -1, stage: null, seqTitle: "Pour vous", recall: null,
+    syllable: null, options: [], correctIndex: -1, stage: null, seqTitle: "Pour vous", recall: null, drop: 0,
   };
   return {
     item,

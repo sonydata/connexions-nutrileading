@@ -67,15 +67,60 @@ describe("Dates and variety", () => {
     expect(datedReperes(new Date()).some((i) => i.kind === "oral" && i.steps[0]!.includes(String(y)))).toBe(true);
     expect(datedReperes(new Date(0))).toEqual([]);
   });
-  it("opens with Repères at most every 3 days, with different items", () => {
+  it("opens with one Repère each session (a different one) and talks about the date at most every 3 days", () => {
     const now = Date.now();
+    const talk = /^rp-(year|month|ex-season)$/;
     const plan1 = buildPlan([], ["i:actualite", "i:art"], 1).items.filter((i) => i.id.startsWith("rp-"));
     expect(plan1.length).toBe(2);
+    expect(plan1.some((i) => talk.test(i.id))).toBe(true);
     const past = plan1.map((i) => ({ item_id: i.id, kind: "discussion:x", skill: i.skill, outcome: "after_repeat", created_at: new Date(now - 864e5).toISOString(), response_ms: null }));
-    expect(buildPlan(past, ["i:actualite", "i:art"], 1).items.some((i) => i.id.startsWith("rp-"))).toBe(false);
+    const next = buildPlan(past, ["i:actualite", "i:art"], 1).items.filter((i) => i.id.startsWith("rp-"));
+    expect(next.length).toBe(1);
+    expect(next.some((i) => talk.test(i.id))).toBe(false);
+    expect(next.some((i) => plan1.some((j) => j.id === i.id))).toBe(false);
     const older = past.map((r) => ({ ...r, created_at: new Date(now - 4 * 864e5).toISOString() }));
     const plan2 = buildPlan(older, ["i:actualite", "i:art"], 1).items.filter((i) => i.id.startsWith("rp-"));
     expect(plan2.length).toBe(2);
     expect(plan2.some((i) => plan1.some((j) => j.id === i.id))).toBe(false);
+  });
+
+});
+
+describe("Sonia's feedback (15 Oct)", () => {
+  const SINGLE = ["sante", "medecine", "sciences", "histoire", "art", "geographie", "nature", "litterature", "technologie", "cuisine", "sport", "actualite"];
+  it("keeps every activity within the chosen interests (plus transversal time/proverb items)", () => {
+    for (const one of SINGLE)
+      for (let n = 0; n < 15; n++) {
+        const items = buildPlan([], [`i:${one}`], 1).items;
+        for (const i of items) expect([one, "general"], `${one}: ${i.id} (${i.topic})`).toContain(i.topic);
+      }
+    for (let n = 0; n < 30; n++) {
+      const items = buildPlan([], ["i:actualite", "i:medecine"], 1).items;
+      expect(items.some((i) => i.id.startsWith("sq-renaissance"))).toBe(false);
+    }
+  });
+  it("lets every knowledge turn be answered by touch, with the answer among the choices", () => {
+    for (let n = 0; n < 40; n++)
+      for (const turn of discussionTurns(buildPlan([], [`i:${SINGLE[n % SINGLE.length]}`, "i:sante"], 1 + (n % 3)).items, "regard")) {
+        if (turn.phase !== "knowledge") continue;
+        expect(turn.options.length, turn.item.id).toBeGreaterThanOrEqual(2);
+        expect(turn.options.some((o) => o.label === turn.answer), turn.item.id).toBe(true);
+      }
+  });
+  it("includes a sentence to repeat, word by word, in every session — even when shortened", () => {
+    for (let n = 0; n < 30; n++) {
+      const turns = discussionTurns(buildPlan([], [`i:${SINGLE[n % SINGLE.length]}`], 1).items, "regard", 8);
+      const repeat = turns.filter((t) => t.phase === "repeat");
+      expect(repeat.length).toBeGreaterThan(0);
+      for (const t of repeat) expect(t.model).toBe(t.prompt);
+    }
+  });
+  it("varies the questions from one session to the next", () => {
+    const now = Date.now();
+    const first = buildPlan([], ["i:sante", "i:medecine", "i:sciences", "i:actualite", "i:art"], 1).items;
+    const past = first.map((i) => ({ item_id: i.id, kind: "mcq", skill: i.skill, outcome: "spontaneous", created_at: new Date(now - 864e5).toISOString(), response_ms: 3000 }));
+    const second = buildPlan(past, ["i:sante", "i:medecine", "i:sciences", "i:actualite", "i:art"], 1).items;
+    const repeated = second.filter((i) => first.some((j) => j.id === i.id) && !i.recall);
+    expect(repeated.length).toBeLessThanOrEqual(1);
   });
 });

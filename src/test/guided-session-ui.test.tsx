@@ -52,14 +52,16 @@ describe("Simple screen (accompagnement renforcé)", () => {
     // The question is read, then the choices appear without any other tap.
     await waitFor(() => expect(screen.getAllByRole("button").length).toBeGreaterThan(3), { timeout: 4000 });
     expect(screen.getByText("1 / " + screen.getByLabelText(/^1 sur/).textContent!.split(" / ")[1])).toBeTruthy();
-    const choice = screen.getAllByRole("button").find((b) => /Macron|Trump|euro|Paris|Hollande|Biden|dollar|Londres|Sarkozy|Obama|franc|Rome/.test(b.textContent ?? ""))!;
+    const controls = /Réécouter|Passer|J'ai fini|C'était juste|Écouter/;
+    const choice = screen.getAllByRole("button").find((b) => !!b.textContent?.trim() && !controls.test(b.textContent))!;
     await act(async () => fireEvent.click(choice));
 
     // The answer is always said and shown, then the next question comes by itself.
-    await screen.findByText(/^(Oui, c'est bien cela|La réponse) : /);
+    await screen.findByText(/^(Oui, c'est|La réponse : |En fait, c'est)/);
     await waitFor(() => expect(screen.getByLabelText(/^2 sur/)).toBeTruthy(), { timeout: 5000 });
-    expect(recorded[0]).toMatchObject({ kind: "mcq" });
-    expect(["after_cue", "revealed"]).toContain(recorded[0]!.outcome);
+    expect(["mcq", "tf"]).toContain(recorded[0]!.kind);
+    // Touching is the normal way to answer: a right tap without help counts as found alone.
+    expect(["spontaneous", "revealed"]).toContain(recorded[0]!.outcome);
   }, 15000);
 
   it("asks the personal target after a warm-up, accepts the helper's 'C'était juste' and schedules the next ask", async () => {

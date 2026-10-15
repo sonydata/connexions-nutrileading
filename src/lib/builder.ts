@@ -1,7 +1,7 @@
 import { LIBRARY, imageSrc } from "./library";
-import { BANK, REPERES, datedReperes, BY_ID, FOLLOW_IDS, SCENE, topicOf, type Item, type Opt, type Skill, type Theme, type Topic } from "./content";
+import { BANK, PROVERBS, completeModel, REPERES, datedReperes, BY_ID, FOLLOW_IDS, SCENE, topicOf, type Item, type Opt, type Skill, type Theme, type Topic } from "./content";
 import { interestsOf } from "./interests";
-import { COLLECTIONS, SEQUENCES, SEQ_BY_ID, SEQ_TITLE, STAGE_OF, exploredSeqs, type Sequence, type Stage } from "./sequences";
+import { COLLECTIONS, SEQUENCES, SEQ_BY_ID, SEQ_ITEMS, SEQ_TITLE, STAGE_OF, exploredSeqs, type Sequence, type Stage } from "./sequences";
 
 export type PastAttempt = { item_id: string | null; kind?: string | null; skill: string; outcome: string; created_at: string; response_ms: number | null };
 
@@ -26,6 +26,8 @@ export type PlayItem = {
   stage: Stage | null; // step inside a thematic mini-sequence
   seqTitle: string | null;
   recall: string | null; // "we talked about this before" line read before a reactivated item
+  /** Trimming priority when the session is shortened: higher goes first, 0 is always kept. */
+  drop: number;
 };
 
 const shuffle = <T,>(a: T[]) => {
@@ -68,11 +70,12 @@ export function skillLevels(past: PastAttempt[], base: number): Record<string, n
 
 // Illustration for every question: curated scene → photo whose subject is named in the
 // situation (never in the answers) . No generic fallback: no photo rather than an ambiguous one. Never shows the answer.
-const STOP = new Set(["les", "des", "une", "verre", "tasse", "pain", "soleil", "lever", "coucher", "haut"]);
+const STOP = new Set(["les", "des", "une", "verre", "tasse", "pain", "soleil", "lever", "coucher", "haut", "peut", "paris"]);
 const norm = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-const KEYS = LIBRARY.flatMap((l) => norm(l.label).split(/[^a-z]+/).filter((w) => w.length >= 4 && !STOP.has(w)).map((w) => [w, l.id] as const));
+// Hint photos and portraits are only used where explicitly assigned, never matched on a word.
+const KEYS = LIBRARY.filter((l) => l.group !== "indices" && l.group !== "people").flatMap((l) => norm(l.label).split(/[^a-z]+/).filter((w) => w.length >= 4 && !STOP.has(w)).map((w) => [w, l.id] as const));
 function illustrate(item: Item, text: string, answer?: string): string | null {
-  if (SCENE[item.id]) return SCENE[item.id]!;
+  if (item.id in SCENE) return SCENE[item.id] || null; // "" = deliberately no photo (none fits)
   const seq = item.id.match(/^(sq-[a-z]+)-[cref]$/)?.[1];
   if (seq && imageSrc(seq)) return seq;
   const t = norm(text);
@@ -82,13 +85,32 @@ function illustrate(item: Item, text: string, answer?: string): string | null {
   return null;
 }
 
+// Word to find / missing word: offered as tap choices too (the word + plausible others), so nobody
+// has to answer aloud. Explicit distractors first, else words of the same kind and subject.
+const WORD_POOL = [...BANK, ...SEQ_ITEMS].flatMap((i) =>
+  i.kind === "evoke" || i.kind === "complete" ? [{ kind: i.kind as string, topic: topicOf(i), word: i.answer }] : i.kind === "oral" && i.mode === "nommer" && i.answer ? [{ kind: "nommer", topic: topicOf(i), word: i.answer }] : [],
+);
+function wordChoices(item: Item, answer: string, level: number): Opt[] {
+  const n = level >= 2 ? 2 : 1;
+  const explicit = "distractors" in item && Array.isArray(item.distractors) && typeof item.distractors[0] === "string" ? (item.distractors as string[]) : [];
+  const kind = item.kind === "oral" ? "nommer" : item.kind;
+  const same = (w: { word: string }) => norm(w.word) !== norm(answer) && !explicit.includes(w.word);
+  const pool = [
+    ...explicit,
+    ...shuffle(WORD_POOL.filter((w) => w.kind === kind && w.topic === topicOf(item) && same(w)).map((w) => w.word)),
+    ...shuffle(WORD_POOL.filter((w) => w.kind === kind && same(w)).map((w) => w.word)),
+  ].filter((w, k, a) => a.indexOf(w) === k);
+  return shuffle([answer, ...pool.slice(0, n)]).map((label) => ({ label }));
+}
+
 export function toPlay(item: Item, level: number): PlayItem {
-  const base = { id: item.id, kind: item.kind, theme: item.theme, topic: topicOf(item), skill: item.skill, level, question: null, keyword: null, hint: null, answerText: null, image: null, model: null, syllable: null, options: [] as Opt[], correctIndex: -1, stage: STAGE_OF.get(item.id) ?? null, seqTitle: SEQ_TITLE.get(item.id) ?? null, recall: null as string | null };
+  const base = { id: item.id, kind: item.kind, theme: item.theme, topic: topicOf(item), skill: item.skill, level, question: null, keyword: null, hint: null, answerText: null, image: null, model: null, syllable: null, options: [] as Opt[], correctIndex: -1, stage: STAGE_OF.get(item.id) ?? null, seqTitle: SEQ_TITLE.get(item.id) ?? (item.id.startsWith("pv-") ? "Un proverbe" : null), recall: null as string | null, drop: 0 };
   if (item.kind === "mcq") {
     let opts = shuffle([item.answer, ...item.distractors.slice(0, level)]);
     // Photos only when every option has one, and never for advice/actions
     // (a salt photo next to "réduire le sel" would say the opposite).
-    if (item.skill === "conseil" || !opts.every((o) => o.image)) opts = opts.map((o) => ({ label: o.label }));
+    // A photo key without its file (e.g. a portrait not added yet) counts as no photo.
+    if (item.skill === "conseil" || !opts.every((o) => imageSrc(o.image))) opts = opts.map((o) => ({ label: o.label }));
     const answer = opts.find((o) => o.label === item.answer.label)!;
     return {
       ...base,
@@ -97,21 +119,24 @@ export function toPlay(item: Item, level: number): PlayItem {
       keyword: item.keyword,
       options: opts,
       correctIndex: opts.indexOf(answer),
-      image: opts.every((o) => o.image) ? null : illustrate(item, `${item.audio} ${item.question ?? ""}`, item.answer.label),
+      image: opts.every((o) => o.image && imageSrc(o.image)) ? null : illustrate(item, `${item.audio} ${item.question ?? ""}`, item.answer.label),
     };
   }
   if (item.kind === "tf") {
     return { ...base, audio: item.audio, question: "Vrai ou faux ?", keyword: item.keyword, options: [{ label: "Vrai" }, { label: "Faux" }], correctIndex: item.answer ? 0 : 1, image: illustrate(item, item.audio) };
   }
   if (item.kind === "complete") {
-    return { ...base, audio: item.audio, hint: item.hint, answerText: item.answer, image: illustrate(item, item.audio, item.answer), syllable: firstSound(item.answer), model: item.audio.replace(/…$/, item.answer + ".") };
+    const options = wordChoices(item, item.answer, level);
+    return { ...base, audio: item.audio, hint: item.hint, answerText: item.answer, image: illustrate(item, item.audio, item.answer), syllable: firstSound(item.answer), model: completeModel(item.audio, item.answer), options, correctIndex: options.findIndex((o) => o.label === item.answer) };
   }
   if (item.kind === "evoke") {
-    return { ...base, audio: item.audio, hint: item.hint, answerText: item.answer, image: illustrate(item, item.audio, item.answer), syllable: item.syllable, model: item.model };
+    const options = wordChoices(item, item.answer, level);
+    return { ...base, audio: item.audio, hint: item.hint, answerText: item.answer, image: illustrate(item, item.audio, item.answer), syllable: item.syllable, model: item.model, options, correctIndex: options.findIndex((o) => o.label === item.answer) };
   }
   const step = item.steps[Math.min(level - 1, item.steps.length - 1)]!;
   const model = item.mode === "lire" ? step : item.mode === "nommer" && item.answer ? cap(item.answer) + "." : (item.model ?? null);
-  return { ...base, mode: item.mode, audio: step, image: item.image ?? (item.mode === "nommer" ? null : illustrate(item, step)), answerText: item.answer ?? null, hint: item.hint ?? null, syllable: item.answer ? firstSound(item.answer) : null, model };
+  const options = item.mode === "nommer" && item.answer ? wordChoices(item, item.answer, level) : [];
+  return { ...base, mode: item.mode, audio: step, image: item.image ?? (item.mode === "nommer" ? null : illustrate(item, step)), answerText: item.answer ?? null, hint: item.hint ?? null, syllable: item.answer ? firstSound(item.answer) : null, model, options, correctIndex: options.findIndex((o) => o.label === item.answer) };
 }
 
 // One session = 15 activities. ~80 % come from the person's chosen subjects
@@ -134,7 +159,7 @@ const PLAN: Slot[] = [
   { kinds: ["oral"], modes: ["expliquer"] },
   { kinds: ["mcq", "tf"], general: true },
 ];
-const WITH_CONTENT = new Set<Topic>(["sante", "medecine", "sciences", "histoire", "art", "geographie", "nature", "litterature", "technologie", "cuisine", "sport"]);
+const WITH_CONTENT = new Set<Topic>(["sante", "medecine", "sciences", "histoire", "art", "geographie", "nature", "litterature", "technologie", "cuisine", "sport", "actualite"]);
 
 /** `topics` = caregiver_settings.topics (interests stored with an "i:" prefix). */
 function buildSlotSession(past: PastAttempt[], topics: string[], base: number): PlayItem[] {
@@ -266,15 +291,16 @@ export function buildPlan(past: PastAttempt[], topics: string[], base: number, f
     SEQUENCES.filter((s) => chosen.includes(s.topic)).sort((a, b) => famScore(b) - famScore(a))[0];
   if (!familiar) return { items: buildSlotSession(past, topics, base), teaser: "" };
 
-  // New: a path never seen, on another subject — chosen subjects first, else beyond them.
-  const unseen = SEQUENCES.filter((s) => s !== familiar && !explored.has(s.id) && s.topic !== familiar.topic);
+  // New: a path never seen, on another chosen subject when possible. Always within the chosen interests:
+  // a subject the person did not pick never appears (e.g. no Renaissance for someone who chose Actualité).
+  const mine = SEQUENCES.filter((s) => s !== familiar && chosen.includes(s.topic));
   const novel =
-    shuffle(unseen.filter((s) => chosen.includes(s.topic)))[0] ??
-    shuffle(unseen)[0] ??
-    SEQUENCES.filter((s) => s !== familiar && s.topic !== familiar.topic).sort((a, b) => age(b.id) - age(a.id))[0];
+    shuffle(mine.filter((s) => !explored.has(s.id) && s.topic !== familiar.topic))[0] ??
+    shuffle(mine.filter((s) => !explored.has(s.id)))[0] ??
+    mine.sort((a, b) => age(b.id) - age(a.id))[0];
 
   // Reactivation: a word from an earlier path, back after 2 days (if it was hard) or a week.
-  const due = SEQUENCES.filter((s) => s !== familiar && s !== novel && explored.has(s.id)).map((s) => {
+  const due = SEQUENCES.filter((s) => s !== familiar && s !== novel && explored.has(s.id) && chosen.includes(s.topic)).map((s) => {
     const r = `${s.id}-r`;
     const t = lastSeen.get(r) ?? lastSeen.get(`${s.id}-c`)!;
     const d = (now - t) / 864e5;
@@ -283,33 +309,60 @@ export function buildPlan(past: PastAttempt[], topics: string[], base: number, f
   }).filter((x) => x.prio > 0).sort((a, b) => b.prio - a.prio)[0];
 
   const recent = new Set(past.slice(0, 40).map((p) => p.item_id));
+  const leastRecent = (xs: Item[]) => shuffle(xs).sort((a, b) => (lastSeen.get(a.id) ?? 0) - (lastSeen.get(b.id) ?? 0))[0];
+  const play = (i: Item, drop: number, title?: string) => {
+    const p = toPlay(i, levels[i.skill] ?? base);
+    p.drop = drop;
+    if (title) p.seqTitle = title;
+    return p;
+  };
   const general = BANK.filter((i) => !FOLLOW_IDS.has(i.id) && topicOf(i) === "general" && i.skill === "temps" && !recent.has(i.id));
   const extra = shuffle(general.length ? general : BANK.filter((i) => topicOf(i) === "general" && i.skill === "temps"))[0];
 
-  const items: PlayItem[] = familiar.items.map((i) => toPlay(i, levels[i.skill] ?? base));
-  if (extra) items.push(toPlay(extra, levels[extra.skill] ?? base));
-  if (due) {
-    const r = toPlay(due.s.items[1], levels["evocation"] ?? base);
-    r.recall = `${due.d >= 7 ? "La semaine dernière" : "Il y a quelques jours"}, nous avions parlé de ce sujet : ${due.s.title}.`;
-    items.push(r);
-  }
-  if (novel) items.push(...novel.items.map((i) => toPlay(i, levels[i.skill] ?? base)));
+  // Quick questions from the whole bank, only on the chosen subjects: more variety, all answered by touch.
+  const used = new Set<string>();
+  const quickPool = BANK.filter((i) => !FOLLOW_IDS.has(i.id) && chosen.includes(topicOf(i)) && !i.id.startsWith("rp-"));
+  const quick = (kinds: Item["kind"][], mode?: string) => {
+    const xs = quickPool.filter((i) => !used.has(i.id) && kinds.includes(i.kind) && (!mode || (i.kind === "oral" && i.mode === mode)));
+    const fresh = xs.filter((i) => !recent.has(i.id));
+    const pick = leastRecent(fresh.length ? fresh : xs);
+    if (pick) used.add(pick.id);
+    return pick;
+  };
+  const q1 = quick(["mcq", "tf"]);
+  const q2 = quick(["mcq", "evoke", "complete"]);
+  const q3 = quick(["mcq", "tf"]);
+  // "Écoutez, puis répétez la phrase": one sentence to repeat from a chosen subject, every session.
+  const toRepeat = quick(["oral"], "lire");
+  const proverb = leastRecent(PROVERBS.filter((i) => !recent.has(i.id))) ?? leastRecent(PROVERBS);
 
-  // Actualité: a short opening (one stable fact + one chat about today's date), at most every 3 days,
-  // always the least recently seen ones — so sessions never all start with the same questions.
-  const lastSeenRepere = Math.max(0, ...[...lastSeen].filter(([id]) => id.startsWith("rp-")).map(([, t]) => t));
-  if (interestsOf(topics).includes("actualite") && (!focus || focus === "actualite") && now - lastSeenRepere > 3 * 864e5) {
-    const leastRecent = (xs: Item[]) => shuffle(xs).sort((a, b) => (lastSeen.get(a.id) ?? 0) - (lastSeen.get(b.id) ?? 0))[0];
-    const fact = leastRecent(REPERES.filter((i) => i.kind === "mcq"));
-    const talk = leastRecent(datedReperes(new Date(now)));
-    const current: PlayItem[] = [];
-    for (const i of [fact, talk]) {
-      if (!i) continue;
-      const p = toPlay(i, levels[i.skill] ?? base);
-      p.seqTitle = "Repères du moment";
-      current.push(p);
-    }
-    items.unshift(...current);
+  const due_ = due ? play(due.s.items[1], 6) : null;
+  if (due_ && due) due_.recall = `${due.d >= 7 ? "La semaine dernière" : "Il y a quelques jours"}, nous avions parlé de ce sujet : ${due.s.title}.`;
+
+  // Order alternates kinds of activity; `drop` decides what goes first when the session is shortened.
+  const [fc, fr, fe, ff] = familiar.items;
+  const items: PlayItem[] = [
+    play(fc, 0), play(fr, 0), play(ff, 1), ...(q1 ? [play(q1, 2)] : []), play(fe, 5),
+    ...(extra ? [play(extra, 7)] : []),
+    ...(novel ? [play(novel.items[0], 0), play(novel.items[1], 0), play(novel.items[3], 1)] : []),
+    ...(q2 ? [play(q2, 4)] : []),
+    ...(toRepeat ? [play(toRepeat, 2)] : []),
+    ...(due_ ? [due_] : []),
+    ...(proverb ? [play(proverb, 3)] : []),
+    ...(novel ? [play(novel.items[2], 8)] : []),
+    ...(q3 ? [play(q3, 9)] : []),
+  ];
+
+  // Actualité: one stable landmark question each session (least recently seen), and a chat about
+  // today's date at most every 3 days — so sessions never all start with the same questions.
+  if (chosen.includes("actualite")) {
+    const fact = leastRecent(REPERES.filter((i) => !recent.has(i.id))) ?? leastRecent(REPERES);
+    const lastTalk = Math.max(0, ...[...lastSeen].filter(([id]) => /^rp-(year|month|ex-season)$/.test(id)).map(([, t]) => t));
+    const talk = now - lastTalk > 3 * 864e5 ? leastRecent(datedReperes(new Date(now))) : undefined;
+    const opening: PlayItem[] = [];
+    if (fact) opening.push(play(fact, 3, "Repères du moment"));
+    if (talk) opening.push(play(talk, 6, "Repères du moment"));
+    items.unshift(...opening);
   }
 
   // Teaser: tomorrow's subjects, hinted without revealing them.

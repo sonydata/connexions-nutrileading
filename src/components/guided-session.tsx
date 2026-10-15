@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Lightbulb, Mic, Play, Square, Volume2 } from "lucide-react";
+import { ArrowRight, Check, Lightbulb, Mic, Play, Square, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { buildPlan } from "@/lib/builder";
-import { confirmText, discussionTurns, revealText, type DiscussionTurn } from "@/lib/discussion";
+import { INSTRUCTIONS, confirmText, discussionTurns, revealText, type DiscussionTurn } from "@/lib/discussion";
 import { completeSession, recordAttempt, speak, speakCached, startSession } from "@/lib/session.functions";
 import { deriveParams, type SessionParams } from "@/lib/adaptive-profile";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +18,6 @@ import { MAX_EXTRA_TRIALS, SRT_KIND, insertAt, nextTrial, srtTurn, type Personal
 type Outcome = "spontaneous" | "after_repeat" | "after_cue" | "revealed";
 /** Simple mode (accompagnement renforcé): what the screen is waiting for. One thing at a time. */
 type SimpleStep = "speaking" | "choose" | "listen" | "after";
-const OPINION = "Donnez votre avis à voix haute.";
 const WELL_SAID = "Très bien dit.";
 const hasSpeechRecognition = () =>
   typeof window !== "undefined" && !!((window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition); // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -58,7 +57,6 @@ export function GuidedSession() {
   const [view, setView] = useState<"prompt" | "develop" | "model">("prompt");
   const [simpleStep, setSimpleStep] = useState<SimpleStep>("speaking");
   const [hintVisible, setHintVisible] = useState(false);
-  const [optionsVisible, setOptionsVisible] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [speaking, setSpeaking] = useState(false);
   const [heard, setHeard] = useState("");
@@ -69,7 +67,7 @@ export function GuidedSession() {
   // Set by the caregiver in the profile (or automatically when comprehension is difficult) — never toggled from the session.
   const simple = params.reinforced;
   const instr = (t: DiscussionTurn) =>
-    simple ? (t.options.length ? "Touchez votre réponse." : "À vous de parler.") : t.instruction;
+    simple ? (t.options.length ? "Touchez votre réponse." : t.phase === "repeat" ? INSTRUCTIONS.repeat : "À vous de parler.") : t.instruction;
   const sessionId = useRef("");
   const audio = useRef<HTMLAudioElement | null>(null);
   const playId = useRef(0);
@@ -277,7 +275,7 @@ export function GuidedSession() {
       sessionId.current = result.sessionId;
       setTeaser(result.teaser);
       setParams(result.params);
-      const list = discussionTurns(result.items, "regard")
+      const list = discussionTurns(result.items, "regard", result.params.maxTurns)
         .slice(0, result.params.maxTurns)
         .map((t) => ({ ...t, options: t.options.slice(0, result.params.optionCount) }))
         // Keep the expected answer among the choices when options are trimmed.
@@ -336,19 +334,18 @@ export function GuidedSession() {
     setHeard(text);
     participated.current = true;
     words.current += wordCount(text);
-    if (view === "develop" || view === "model" || turn?.phase === "repeat") return showModel();
-    if (turn?.answer && !answerLine) {
+    // A repeated sentence or an opinion: a warm word, nothing to judge.
+    if (turn?.phase === "repeat" || view !== "prompt" || !turn?.answer) {
+      setView("develop");
+      return void read([WELL_SAID]);
+    }
+    if (!answerLine) {
       // Speech recognition is only a hint: a match confirms; anything else simply gives the answer, never "wrong".
       const found = !!text && heardWord(text, turn.answer);
       if (found) settle(supportUsed.current ? "after_cue" : "spontaneous");
       else if (text) settle("after_repeat");
-      if (turn.srt) return void closeKnowledge(found);
-      setView("develop");
-      closeKnowledge(found, [turn.followUp, OPINION]);
-      return;
+      closeKnowledge(found);
     }
-    setView("develop");
-    read([turn?.followUp ?? null, OPINION]);
   }
   async function choose(n: number) {
     if (!turn || selected !== null) return;
@@ -359,20 +356,17 @@ export function GuidedSession() {
     const label = turn.options[n]?.label;
     if (turn.answer) {
       const found = label === turn.answer;
-      // Choices are a support (recognition rather than recall): a right choice counts as "with help".
-      settle(found ? "after_cue" : "revealed");
+      // Touching is the normal way to answer: a right choice without help counts as found alone.
+      settle(found ? (supportUsed.current ? "after_cue" : "spontaneous") : "revealed");
       if (simple) {
         setSimpleStep("speaking");
         await closeKnowledge(found);
         if (run === turnRun.current) setSimpleStep("after");
         return;
       }
-      setView("develop");
-      closeKnowledge(found, [turn.followUp, OPINION]);
+      closeKnowledge(found);
       return;
     }
-    setView("develop");
-    read([turn.followUp, OPINION]);
   }
   function signal(kind: "repeat" | "notunderstood" | "abandon") {
     if (!sessionId.current || !turn) return;
@@ -412,8 +406,8 @@ export function GuidedSession() {
     read(
       view === "model"
         ? [turn.model]
-        : view === "develop"
-          ? [answerLine, turn.followUp, OPINION]
+        : answerLine
+          ? [answerLine]
           : [turn.intro, turn.prompt, instr(turn)],
     );
   }
@@ -510,7 +504,6 @@ export function GuidedSession() {
     setSimpleStep("speaking");
     setHeard("");
     setHintVisible(false);
-    setOptionsVisible(false);
     setSelected(null);
     setAnswerLine(null);
     if (last) setState("done");
@@ -661,11 +654,15 @@ export function GuidedSession() {
   }
 
   // ——— Standard screen (person comfortable with the app) ———
+  // Knowledge turns are answered by touching a choice; speaking stays possible but is never required.
   function renderStandard() {
     if (!turn) return null;
     const hint = visualHintFor(turn.item);
     const showHint = hintVisible && view !== "model" && !answerLine;
-    const showOptions = optionsVisible && view !== "model" && !answerLine;
+    const answered = !!answerLine || view !== "prompt";
+    const hasChoices = turn.options.length > 0 && view !== "model";
+    const withImages = turn.options.every((o) => o.image && imageSrc(o.image));
+    const correct = turn.answer;
     return (
       <main className="paper-grain flex min-h-screen flex-col px-6 py-6 md:px-12">
         <header className="flex items-center justify-between gap-4">
@@ -676,32 +673,65 @@ export function GuidedSession() {
             {index + 1} / {turns.length}
           </span>
         </header>
-        <section key={index} className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center py-10 text-center">
-          <p className={`mb-5 text-sm font-semibold uppercase ${accent.text}`}>{title}</p>
-          {src && <img src={src} alt={title} className="mb-6 max-h-60 w-auto max-w-full rounded-lg object-contain" />}
-          <Button variant="default" size="icon" aria-label="Réécouter" onClick={relisten} className="mb-2 size-16 rounded-full">
-            <Volume2 className="size-7" />
-          </Button>
-          {view === "prompt" && (
-            <Button variant="link" onClick={notUnderstood} className="mb-4 text-base text-muted-foreground">
-              Je n'ai pas compris
+        <section key={index} className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center py-8 text-center">
+          <p className={`mb-4 text-sm font-semibold uppercase ${accent.text}`}>{title}</p>
+          {src && <img src={src} alt={title} className="mb-5 max-h-72 w-auto max-w-full rounded-xl object-contain shadow-sm" />}
+          <div className="mb-3 flex items-center gap-3">
+            <Button variant="default" size="icon" aria-label="Réécouter" onClick={relisten} className="size-14 rounded-full">
+              <Volume2 className="size-7" />
             </Button>
-          )}
+            {view === "prompt" && !answerLine && (
+              <Button variant="link" onClick={notUnderstood} className="text-base text-muted-foreground">
+                Je n'ai pas compris
+              </Button>
+            )}
+          </div>
           {audioUnavailable && (
             <p role="status" className="mb-3 text-base text-muted-foreground">
               Le son n'a pas pu être lu. Touchez le haut-parleur pour réessayer.
             </p>
           )}
-          {view === "prompt" && turn.intro && <p className="mb-5 max-w-2xl font-serif text-2xl leading-snug">{turn.intro}</p>}
-          <h1 className={`max-w-2xl font-serif leading-snug ${params.largeText ? "text-3xl md:text-4xl" : "text-2xl md:text-3xl"}`}>
-            {view === "model" ? turn.model : view === "develop" ? turn.followUp : turn.prompt}
+          {view === "prompt" && turn.intro && <p className="mb-4 max-w-2xl font-serif text-2xl leading-snug">{turn.intro}</p>}
+          <h1 className={`max-w-2xl font-serif leading-snug ${params.largeText || turn.phase === "repeat" ? "text-3xl md:text-4xl" : "text-2xl md:text-3xl"}`}>
+            {view === "model" ? turn.model : turn.prompt}
           </h1>
+          <p className="mt-4 text-xl font-medium text-primary">
+            {view === "model" ? "Une réponse possible" : answered && turn.phase !== "knowledge" ? WELL_SAID : instr(turn)}
+          </p>
+
+          {hasChoices && (
+            <div className={`mt-6 grid w-full gap-3 ${turn.options.length > 2 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+              {turn.options.map((option, n) => {
+                const isRight = !!answerLine && option.label === correct;
+                const picked = selected === n;
+                return (
+                  <button
+                    key={option.label}
+                    onClick={() => choose(n)}
+                    disabled={!!answerLine}
+                    aria-pressed={picked}
+                    className={`flex min-h-20 items-center gap-4 rounded-2xl border-2 bg-card px-5 py-4 text-left text-xl transition ${
+                      isRight ? "border-calm bg-calm-soft font-semibold" : answerLine ? "border-border opacity-60" : picked ? "border-primary" : "border-border hover:border-primary"
+                    } ${withImages ? "flex-col text-center" : ""}`}
+                  >
+                    {withImages && option.image && <img src={imageSrc(option.image) ?? ""} alt="" className="h-32 w-full rounded-lg object-cover" />}
+                    {/* Only the right answer gets a tick; a different choice is simply dimmed, never marked wrong. */}
+                    <span className={`flex size-8 shrink-0 items-center justify-center rounded-md border-2 ${isRight ? "border-calm bg-calm text-primary-foreground" : picked && !answerLine ? "border-primary bg-primary/15" : "border-muted-foreground/40"}`}>
+                      {isRight && <Check className="size-5" />}
+                    </span>
+                    <span className="flex-1">{option.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {answerLine && view !== "model" && (
-            <p role="status" className="mt-4 max-w-2xl font-serif text-2xl text-calm">
+            <p role="status" className="mt-5 max-w-2xl font-serif text-2xl text-calm">
               {answerLine}
             </p>
           )}
-          {turn.answer && !turn.options.length && answerLine === revealText(turn.answer) && (
+          {turn.answer && selected === null && answerLine === revealText(turn.answer) && (
             <Button variant="link" onClick={markCorrect} className="text-base text-muted-foreground">
               C'était juste
             </Button>
@@ -719,78 +749,60 @@ export function GuidedSession() {
               Entendre la réponse
             </Button>
           )}
-          <p className="mt-4 text-xl text-primary">{view === "model" ? "Une formulation possible" : view === "develop" ? OPINION : instr(turn)}</p>
           {voice.listening && (
             <p className="mt-3 text-lg text-primary" role="status">
               Je vous écoute
             </p>
           )}
           {(voice.transcript || heard) && <p className="mt-3 max-w-2xl text-lg italic text-muted-foreground">« {voice.transcript || heard} »</p>}
-          {view !== "model" && !answerLine && !turn.srt && (
+
+          {!answered && !turn.srt && turn.phase !== "repeat" && (hint.image || hint.caption) && (
             <Button
               variant="ghost"
               onClick={() => {
                 supportUsed.current = true;
-                const open = !hintVisible;
-                setHintVisible(open);
-                setOptionsVisible(open && turn.options.length > 0);
-                if (open && turn.options.length) read(turn.options.map((o) => o.label));
+                setHintVisible(!hintVisible);
               }}
               aria-expanded={hintVisible}
               aria-controls="discussion-hint"
-              className="mt-5 h-12 text-lg text-primary"
+              className="mt-4 h-12 text-lg text-primary"
             >
               <Lightbulb />
-              {hintVisible ? "Masquer l’aide" : "Besoin d’aide ?"}
+              {hintVisible ? "Masquer l'indice" : "Un indice ?"}
             </Button>
           )}
           {showHint && (
-            <figure id="discussion-hint" className="mt-5 max-w-64" aria-live="polite">
-              {hint.image && <img src={imageSrc(hint.image) ?? ""} alt={hint.alt} className="max-h-48 w-full rounded-lg object-contain" />}
+            <figure id="discussion-hint" className="mt-3 max-w-72" aria-live="polite">
+              {hint.image && <img src={imageSrc(hint.image) ?? ""} alt={hint.alt} className="max-h-52 w-full rounded-lg object-contain" />}
               <figcaption className="mt-3 text-lg">{hint.caption}</figcaption>
-              <Button
-                variant="link"
-                onClick={() => {
-                  supportUsed.current = true;
-                  showModel();
-                }}
-                className="mt-1 text-lg"
-              >
-                Entendre une réponse possible
-              </Button>
             </figure>
           )}
-          {showOptions && (
-            <div className="mt-5 w-full">
-              <p className="mb-3 text-lg text-primary">Touchez votre choix.</p>
-              <div className="grid w-full gap-3 sm:grid-cols-2">
-                {turn.options.map((option, n) => (
-                  <Button
-                    key={option.label}
-                    variant="outline"
-                    aria-pressed={selected === n}
-                    onClick={() => choose(n)}
-                    className="h-auto min-h-16 flex-col whitespace-normal rounded-lg bg-card py-4 text-xl text-foreground"
-                  >
-                    {turn.options.every((o) => o.image && imageSrc(o.image)) && option.image && <img src={imageSrc(option.image) ?? ""} alt="" className="h-28 w-full object-contain" />}
-                    {option.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Button onClick={answer} className="h-14 whitespace-normal text-xl">
-              {voice.listening ? <Square /> : <Mic />}
-              {voice.listening ? "Terminer ma réponse" : view === "model" || turn.phase === "repeat" ? "Répéter" : "Répondre"}
+          {turn.phase === "exchange" && view !== "model" && (
+            <Button variant="link" onClick={() => { supportUsed.current = true; showModel(); }} className="mt-2 text-lg">
+              Entendre une réponse possible
             </Button>
+          )}
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            {(!hasChoices || voice.listening) && !answerLine && (
+              <Button onClick={answer} variant={answered ? "outline" : "default"} className="h-14 whitespace-normal text-xl">
+                {voice.listening ? <Square /> : <Mic />}
+                {voice.listening ? "J'ai fini" : turn.phase === "repeat" ? "Répéter" : "Répondre"}
+              </Button>
+            )}
+            {hasChoices && !answerLine && !voice.listening && (
+              <Button variant="ghost" onClick={answer} className="h-14 text-lg text-muted-foreground">
+                <Mic />
+                Répondre à voix haute
+              </Button>
+            )}
             {voice.recording && (
               <Button variant="ghost" onClick={voice.playRecording} className="h-14 text-lg">
                 <Play />
                 M'écouter
               </Button>
             )}
-            <Button variant="outline" onClick={() => next()} className="h-14 text-xl">
+            <Button variant={answered ? "default" : "outline"} onClick={() => next()} className="h-14 text-xl">
               Continuer
               <ArrowRight />
             </Button>

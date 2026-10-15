@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as InteretsRouteImport } from './routes/interets'
+import { Route as MemoireRouteImport } from './routes/memoire'
 import { Route as SeanceRouteImport } from './routes/seance'
 import { Route as AuthenticatedAidantRouteImport } from './routes/_authenticated/aidant'
 import { Route as ApiPublicVoiceWarmRouteImport } from './routes/api/public/voice-warm'
@@ -36,6 +37,11 @@ const InteretsRoute = InteretsRouteImport.update({
   path: '/interets',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MemoireRoute = MemoireRouteImport.update({
+  id: '/memoire',
+  path: '/memoire',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SeanceRoute = SeanceRouteImport.update({
   id: '/seance',
   path: '/seance',
@@ -56,6 +62,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/interets': typeof InteretsRoute
+  '/memoire': typeof MemoireRoute
   '/seance': typeof SeanceRoute
   '/aidant': typeof AuthenticatedAidantRoute
   '/api/public/voice-warm': typeof ApiPublicVoiceWarmRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/interets': typeof InteretsRoute
+  '/memoire': typeof MemoireRoute
   '/seance': typeof SeanceRoute
   '/aidant': typeof AuthenticatedAidantRoute
   '/api/public/voice-warm': typeof ApiPublicVoiceWarmRoute
@@ -74,6 +82,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/interets': typeof InteretsRoute
+  '/memoire': typeof MemoireRoute
   '/seance': typeof SeanceRoute
   '/_authenticated/aidant': typeof AuthenticatedAidantRoute
   '/api/public/voice-warm': typeof ApiPublicVoiceWarmRoute
@@ -84,6 +93,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/interets'
+    | '/memoire'
     | '/seance'
     | '/aidant'
     | '/api/public/voice-warm'
@@ -92,6 +102,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/interets'
+    | '/memoire'
     | '/seance'
     | '/aidant'
     | '/api/public/voice-warm'
@@ -101,6 +112,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/interets'
+    | '/memoire'
     | '/seance'
     | '/_authenticated/aidant'
     | '/api/public/voice-warm'
@@ -111,6 +123,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   InteretsRoute: typeof InteretsRoute
+  MemoireRoute: typeof MemoireRoute
   SeanceRoute: typeof SeanceRoute
   ApiPublicVoiceWarmRoute: typeof ApiPublicVoiceWarmRoute
 }
@@ -143,6 +156,13 @@ declare module '@tanstack/react-router' {
       path: '/interets'
       fullPath: '/interets'
       preLoaderRoute: typeof InteretsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/memoire': {
+      id: '/memoire'
+      path: '/memoire'
+      fullPath: '/memoire'
+      preLoaderRoute: typeof MemoireRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/seance': {
@@ -185,6 +205,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   InteretsRoute: InteretsRoute,
+  MemoireRoute: MemoireRoute,
   SeanceRoute: SeanceRoute,
   ApiPublicVoiceWarmRoute: ApiPublicVoiceWarmRoute,
 }

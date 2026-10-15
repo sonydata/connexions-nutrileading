@@ -9,6 +9,8 @@ export type Sequence = { id: string; topic: Topic; title: string; added?: string
 type S = {
   info: string; q: string; a: string; d: [string, string, string];
   find: string; word: string; hint: string; syl: string; wordModel: string;
+  /** Two plausible wrong words, offered with the right one as tap choices. */
+  wd?: [string, string];
   ask: string; askModel: string;
   say: string; sayModel: string;
 };
@@ -21,7 +23,7 @@ function seq(id: string, topic: Topic, title: string, s: S, added?: string): Seq
     id, topic, title, added,
     items: [
       { id: `${id}-c`, topic, theme: "sciences", skill: "information", kind: "mcq", audio: s.info, question: s.q, keyword: keyOf(s.info), answer: opt(s.a), distractors: s.d.map(opt) },
-      { id: `${id}-r`, topic, theme: "sciences", skill: "evocation", kind: "evoke", audio: s.find, answer: s.word, hint: s.hint, syllable: s.syl, model: s.wordModel },
+      { id: `${id}-r`, topic, theme: "sciences", skill: "evocation", kind: "evoke", audio: s.find, answer: s.word, hint: s.hint, syllable: s.syl, model: s.wordModel, distractors: s.wd ?? WORD_CHOICES[id] },
       { id: `${id}-e`, topic, theme: "expression", skill: "expression", kind: "oral", mode: "expliquer", steps: [s.ask], model: s.askModel },
       { id: `${id}-f`, topic, theme: "expression", skill: "expression", kind: "oral", mode: "reformuler", steps: [`${s.say}`], model: s.sayModel },
     ],
@@ -29,6 +31,20 @@ function seq(id: string, topic: Topic, title: string, s: S, added?: string): Seq
 }
 
 const NEW = "2026-10-06";
+const NEW2 = "2026-10-15";
+
+/** Plausible wrong words for the "Retrouver" step of the first paths (tap choices). */
+const WORD_CHOICES: Record<string, [string, string]> = {
+  "sq-monet": ["cubisme", "surréalisme"], "sq-renaissance": ["Michel-Ange", "Raphaël"], "sq-mediterranee": ["céréales", "crudités"],
+  "sq-microbiote": ["métabolisme", "épiderme"], "sq-sarcopenie": ["ostéoporose", "arthrose"], "sq-diabete": ["adrénaline", "cortisone"],
+  "sq-tension": ["thermomètre", "stéthoscope"], "sq-photosynthese": ["respiration", "digestion"], "sq-saisons": ["équinoxe", "éclipse"],
+  "sq-pasteur": ["stérilisation", "congélation"], "sq-rome": ["pont d'Avignon", "arc de Triomphe"], "sq-hugo": ["Germinal", "Le Rouge et le Noir"],
+  "sq-loire": ["Versailles", "Fontainebleau"], "sq-abeilles": ["germination", "évaporation"], "sq-internet": ["imprimante", "tableur"],
+  "sq-epices": ["cannelle", "paprika"], "sq-marathon": ["Tour de France", "Coupe Davis"], "sq-penicilline": ["aspirine", "morphine"],
+  "sq-adn": ["pyramide", "ligne droite"], "sq-imagerie": ["radiographie", "échographie"], "sq-langage": ["élasticité", "mémoire"],
+  "sq-florence": ["Le Penseur", "La Joconde"], "sq-venise": ["péniche", "pirogue"], "sq-pompei": ["Etna", "Stromboli"],
+  "sq-cubisme": ["impressionnisme", "surréalisme"], "sq-surrealisme": ["Monet", "Cézanne"],
+};
 
 export const SEQUENCES: Sequence[] = [
   // ——— Art ———
@@ -225,6 +241,98 @@ export const SEQUENCES: Sequence[] = [
     ask: "Pourquoi peindre les rêves, selon vous ?", askModel: "Ils libèrent l'imagination et montrent ce qu'on ne voit pas d'habitude.",
     say: "Le surréalisme est aussi un mouvement littéraire.", sayModel: "Le surréalisme touche autant la poésie que la peinture.",
   }, NEW),
+  // ——— Ajouts du 15 octobre : sujets moins fournis + Actualité (faits datés, stables) ———
+  seq("sq-notredame", "actualite", "Notre-Dame de Paris", {
+    info: "En 2019, un incendie a détruit la toiture et la flèche de Notre-Dame de Paris. La cathédrale a rouvert en décembre 2024.",
+    q: "Combien de temps a duré la restauration ?", a: "environ cinq ans", d: ["environ six mois", "environ vingt ans", "environ cinquante ans"],
+    find: "Quelle partie pointue, au sommet de la cathédrale, a été reconstruite ?", word: "flèche", hint: "Elle s'élève très haut au-dessus du toit.", syl: "flè…", wordModel: "La flèche de Notre-Dame a été reconstruite.", wd: ["cloche", "porte"],
+    ask: "Que ressentez-vous devant un monument restauré ?", askModel: "Je suis ému de voir le travail des artisans redonner vie au monument.",
+    say: "Des centaines d'artisans ont travaillé sur le chantier.", sayModel: "Des centaines d'artisans ont travaillé sur le chantier.",
+  }, NEW2),
+  seq("sq-paris2024", "actualite", "Les Jeux de Paris", {
+    info: "En 2024, Paris a accueilli les Jeux olympiques et paralympiques. Des épreuves se sont déroulées devant des monuments célèbres.",
+    q: "Où se sont déroulées certaines épreuves ?", a: "devant des monuments célèbres", d: ["dans un seul stade", "à l'étranger", "sous la mer"],
+    find: "Quel symbole brûle pendant toute la durée des Jeux ?", word: "flamme olympique", hint: "Elle est allumée en Grèce, puis voyage jusqu'à la ville hôte.", syl: "fla…", wordModel: "C'est la flamme olympique.", wd: ["médaille d'or", "drapeau blanc"],
+    ask: "Quel sport aimez-vous regarder ?", askModel: "J'aime regarder la natation et l'athlétisme.",
+    say: "Les Jeux paralympiques suivent les Jeux olympiques.", sayModel: "Les Jeux paralympiques suivent les Jeux olympiques.",
+  }, NEW2),
+  seq("sq-ia", "actualite", "L'intelligence artificielle", {
+    info: "Aujourd'hui, on peut parler à des programmes d'intelligence artificielle. Ils répondent aux questions et aident à écrire.",
+    q: "Que peuvent faire ces programmes ?", a: "répondre aux questions", d: ["préparer un repas", "réparer une voiture", "planter un arbre"],
+    find: "Comment appelle-t-on une machine qui fait des tâches toute seule ?", word: "robot", hint: "On en voit dans les usines.", syl: "ro…", wordModel: "Une machine qui travaille seule, c'est un robot.", wd: ["moteur", "écran"],
+    ask: "Faites-vous confiance à ces programmes ?", askModel: "Ils sont utiles, mais il faut garder un esprit critique.",
+    say: "Ces programmes peuvent parfois se tromper.", sayModel: "Ces programmes peuvent parfois se tromper.",
+  }, NEW2),
+  seq("sq-pain", "cuisine", "Le pain", {
+    info: "La baguette est le pain emblématique de la France. Son savoir-faire est reconnu par l'Unesco depuis 2022.",
+    q: "Quel pain est emblématique de la France ?", a: "la baguette", d: ["le pain de mie", "le bretzel", "la pita"],
+    find: "Qui fabrique le pain ?", word: "boulanger", hint: "Il travaille tôt le matin, devant son four.", syl: "bou…", wordModel: "C'est le boulanger qui fait le pain.", wd: ["boucher", "fromager"],
+    ask: "Quel pain aimez-vous ?", askModel: "J'aime une baguette bien croustillante, encore tiède.",
+    say: "Le pain sort du four tôt le matin.", sayModel: "Le pain sort du four tôt le matin.",
+  }, NEW2),
+  seq("sq-tour", "sport", "Le Tour de France", {
+    info: "Le Tour de France est une course cycliste créée en 1903. Elle traverse la France chaque été.",
+    q: "Quel sport pratique-t-on au Tour de France ?", a: "le cyclisme", d: ["la course à pied", "l'aviron", "l'équitation"],
+    find: "De quelle couleur est le maillot du premier au classement ?", word: "jaune", hint: "La couleur du soleil.", syl: "jau…", wordModel: "Le premier porte le maillot jaune.", wd: ["bleu", "vert"],
+    ask: "Quel souvenir de sport aimez-vous ?", askModel: "J'aime regarder les étapes de montagne et les beaux paysages.",
+    say: "Les coureurs traversent les montagnes en été.", sayModel: "Les coureurs traversent les montagnes en été.",
+  }, NEW2),
+  seq("sq-arbres", "nature", "Les arbres en automne", {
+    info: "En automne, beaucoup d'arbres perdent leurs feuilles. Ils économisent ainsi l'eau et l'énergie pour l'hiver.",
+    q: "Pourquoi perdent-ils leurs feuilles ?", a: "pour économiser l'eau et l'énergie", d: ["parce qu'ils sont malades", "pour attirer les oiseaux", "pour grandir plus vite"],
+    find: "Quel arbre donne des glands ?", word: "chêne", hint: "Un arbre solide, qui peut vivre plusieurs siècles.", syl: "chê…", wordModel: "Le chêne donne des glands.", wd: ["sapin", "bouleau"],
+    ask: "Aimez-vous vous promener en forêt ?", askModel: "J'aime marcher en forêt, surtout en automne, pour les couleurs.",
+    say: "Les feuilles mortes nourrissent le sol.", sayModel: "Les feuilles mortes nourrissent le sol.",
+  }, NEW2),
+  seq("sq-fontaine", "litterature", "Les fables de La Fontaine", {
+    info: "Jean de La Fontaine a écrit des fables où les animaux parlent. Une fable se termine souvent par une morale.",
+    q: "Qui parle dans ses fables ?", a: "des animaux", d: ["des machines", "seulement des rois", "seulement des enfants"],
+    find: "Dans la fable, quel oiseau tient un fromage dans son bec ?", word: "corbeau", hint: "Le renard le flatte pour lui prendre son fromage.", syl: "cor…", wordModel: "C'est le corbeau, flatté par le renard.", wd: ["pigeon", "moineau"],
+    ask: "Quelle fable vous a marqué ?", askModel: "La Cigale et la Fourmi, pour sa leçon de prévoyance.",
+    say: "La cigale ayant chanté tout l'été.", sayModel: "La cigale ayant chanté tout l'été.",
+  }, NEW2),
+  seq("sq-telephone", "technologie", "Le téléphone", {
+    info: "Le téléphone a été inventé à la fin du dix-neuvième siècle. Aujourd'hui, le smartphone tient dans la poche.",
+    q: "Que permet le smartphone ?", a: "téléphoner, photographier et s'informer", d: ["seulement téléphoner", "seulement écouter la radio", "imprimer des lettres"],
+    find: "Comment appelle-t-on un court message écrit envoyé par téléphone ?", word: "SMS", hint: "On l'écrit avec les doigts sur l'écran.", syl: "S…", wordModel: "C'est un SMS, qu'on appelle aussi un texto.", wd: ["fax", "télégramme"],
+    ask: "Le téléphone rapproche-t-il les familles ?", askModel: "Oui, on peut voir et entendre ses proches, même de loin.",
+    say: "Un appel vidéo permet de voir ses proches.", sayModel: "Un appel vidéo permet de voir ses proches.",
+  }, NEW2),
+  seq("sq-alpes", "geographie", "Les Alpes", {
+    info: "Le mont Blanc est le plus haut sommet des Alpes. Il mesure environ quatre mille huit cents mètres.",
+    q: "Quelle est sa hauteur ?", a: "environ quatre mille huit cents mètres", d: ["environ mille mètres", "environ huit mille mètres", "environ deux cents mètres"],
+    find: "Quelle ville, au pied du mont Blanc, a accueilli les premiers Jeux d'hiver ?", word: "Chamonix", hint: "Elle se trouve en Haute-Savoie.", syl: "Cha…", wordModel: "Les premiers Jeux d'hiver ont eu lieu à Chamonix.", wd: ["Grenoble", "Annecy"],
+    ask: "Préférez-vous la mer ou la montagne ?", askModel: "J'aime la montagne pour l'air pur et le calme.",
+    say: "En altitude, l'air devient plus frais.", sayModel: "En altitude, l'air devient plus frais.",
+  }, NEW2),
+  seq("sq-versailles", "histoire", "Versailles", {
+    info: "Louis XIV a installé la cour et le pouvoir à Versailles. Le château possède la célèbre galerie des Glaces.",
+    q: "Quel roi a installé le pouvoir à Versailles ?", a: "Louis XIV", d: ["Henri IV", "Napoléon", "Louis XVI"],
+    find: "Comment surnommait-on Louis XIV ?", word: "le Roi-Soleil", hint: "Un astre qui brille au centre de tout.", syl: "Roi…", wordModel: "On l'appelait le Roi-Soleil.", wd: ["le Bien-Aimé", "le Juste"],
+    ask: "Quel monument aimeriez-vous visiter ?", askModel: "J'aimerais revoir Versailles et ses jardins.",
+    say: "Les jardins de Versailles sont immenses.", sayModel: "Les jardins de Versailles sont immenses.",
+  }, NEW2),
+  seq("sq-coeur", "medecine", "Le cœur", {
+    info: "Le cœur bat environ cent mille fois par jour. Il fait circuler le sang dans tout le corps.",
+    q: "À quoi sert le cœur ?", a: "faire circuler le sang", d: ["digérer les aliments", "filtrer l'air", "fabriquer les os"],
+    find: "Avec quel instrument le médecin écoute-t-il le cœur ?", word: "stéthoscope", hint: "Il le porte autour du cou.", syl: "sté…", wordModel: "Le médecin écoute le cœur avec un stéthoscope.", wd: ["thermomètre", "tensiomètre"],
+    ask: "Comment prenez-vous soin de votre cœur ?", askModel: "Je marche, je mange peu salé et je dors bien.",
+    say: "La marche régulière renforce le cœur.", sayModel: "La marche régulière renforce le cœur.",
+  }, NEW2),
+  seq("sq-lune", "sciences", "La Lune", {
+    info: "En 1969, Neil Armstrong est le premier homme à marcher sur la Lune.",
+    q: "En quelle année ?", a: "en 1969", d: ["en 1945", "en 1989", "en 2000"],
+    find: "Comment appelle-t-on la Lune quand elle est toute ronde et éclairée ?", word: "pleine lune", hint: "On la voit entière dans le ciel.", syl: "plei…", wordModel: "C'est la pleine lune.", wd: ["nouvelle lune", "demi-lune"],
+    ask: "Aimez-vous regarder le ciel la nuit ?", askModel: "J'aime regarder les étoiles par une nuit claire.",
+    say: "La Lune tourne autour de la Terre.", sayModel: "La Lune tourne autour de la Terre.",
+  }, NEW2),
+  seq("sq-hydratation", "sante", "Bien s'hydrater", {
+    info: "Avec l'âge, on ressent moins la soif. Il faut boire régulièrement, même sans avoir soif.",
+    q: "Que faut-il faire ?", a: "boire régulièrement", d: ["attendre d'avoir soif", "boire seulement le soir", "boire surtout du café"],
+    find: "Quelle boisson est la meilleure pour s'hydrater ?", word: "eau", hint: "Elle coule du robinet.", syl: "e…", wordModel: "La meilleure boisson, c'est l'eau.", wd: ["soda", "café"],
+    ask: "Que buvez-vous dans la journée ?", askModel: "J'aime un grand verre d'eau fraîche ou une tisane.",
+    say: "Un verre d'eau à chaque repas.", sayModel: "Un verre d'eau à chaque repas.",
+  }, NEW2),
 ];
 
 export const SEQ_ITEMS = SEQUENCES.flatMap((s) => s.items);
@@ -239,6 +347,7 @@ export const COLLECTIONS: Collection[] = [
   { id: "decouvertes", title: "Les grandes découvertes scientifiques", ids: ["sq-pasteur", "sq-penicilline", "sq-adn", "sq-imagerie", "sq-langage"] },
   { id: "italie", title: "Voyage en Italie", ids: ["sq-rome", "sq-florence", "sq-renaissance", "sq-venise", "sq-pompei"] },
   { id: "courants", title: "Les grands courants artistiques", ids: ["sq-renaissance", "sq-monet", "sq-cubisme", "sq-surrealisme"] },
+  { id: "aujourdhui", title: "Repères d'aujourd'hui", ids: ["sq-notredame", "sq-paris2024", "sq-ia"] },
   { id: "nutrition", title: "Nutrition et vieillissement", ids: ["sq-mediterranee", "sq-microbiote", "sq-sarcopenie", "sq-diabete", "sq-tension", "sq-epices"] },
 ];
 /** A collection is "new" for three weeks after one of its paths was added. */

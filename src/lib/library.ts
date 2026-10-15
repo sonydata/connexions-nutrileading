@@ -72,6 +72,15 @@ export const LIBRARY: LibraryItem[] = [
   { id: "elysee", label: "palais de l'Élysée", group: "culture" },
   { id: "white_house", label: "Maison-Blanche", group: "culture" },
   { id: "forest", label: "forêt (nature)", group: "science" },
+  // Personalities (Actualité): portraits shown as photo + name answers once the file is added
+  // as src/assets/library/<id>.jpg — use freely licensed photos (e.g. Wikimedia Commons).
+  // Until then the question simply shows names, never an approximate photo.
+  ...[
+    ["p-macron", "Emmanuel Macron"], ["p-hollande", "François Hollande"], ["p-sarkozy", "Nicolas Sarkozy"],
+    ["p-trump", "Donald Trump"], ["p-biden", "Joe Biden"], ["p-obama", "Barack Obama"],
+    ["p-leon14", "le pape Léon XIV"], ["p-francois", "le pape François"], ["p-benoit16", "le pape Benoît XVI"],
+    ["p-charles3", "le roi Charles III"], ["p-william", "le prince William"], ["p-harry", "le prince Harry"],
+  ].map(([id, label]) => ({ id: id ?? "", label: label ?? "", group: "people" })),
   ...[
     ["hint-tension", "Un tensiomètre autour du bras"], ["hint-pancreas", "Le pancréas"],
     ["hint-weight", "Une balance pour surveiller le poids"], ["hint-skeleton", "Le squelette"],
