@@ -116,9 +116,8 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
 
   return (
     <>
-      <section className="mt-10 rounded-3xl border bg-card p-7">
-        <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Espace proche</p>
-        <h2 className="mt-2 text-3xl">Cette semaine</h2>
+      <section className="mt-5 rounded-3xl border bg-card p-7">
+        <h2 className="text-2xl">Cette semaine</h2>
         <p className="mt-2 text-sm text-muted-foreground">Observé pendant les séances Connexions. Ce ne sont pas des mesures cliniques.</p>
         {week.few ? (
           <p className="mt-5 text-lg text-muted-foreground">Les observations apparaîtront après quelques échanges.</p>
@@ -200,12 +199,6 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
         </div>
       </section>
 
-      <section className="mt-5 rounded-3xl border bg-card p-7">
-        <h2 className="text-2xl">Voix</h2>
-        <p className="mt-1 text-muted-foreground">Vérifiez que la voix naturelle fonctionne sur cet appareil.</p>
-        <button onClick={testVoice} className="mt-4 rounded-full border px-6 py-2">Tester la voix</button>
-        {voiceCheck && <p role="status" className="mt-3 text-lg">{voiceCheck}</p>}
-      </section>
 
       <section className="mt-5 rounded-3xl border bg-card p-7">
         <div className="flex items-start justify-between gap-4">
@@ -220,6 +213,10 @@ export function CaregiverProfile({ userId, attempts, sessions }: { userId: strin
             Séances d'environ {p.sessionMinutes} min · {p.ideasPerUtterance === 1 ? "une idée à la fois" : "phrases naturelles"} · {p.optionCount} pistes{p.repetition >= 2 ? " · question répétée" : ""}{p.reinforced ? " · accompagnement renforcé" : ""}
           </p>
         )}
+        <div className="mt-5 flex flex-wrap items-center gap-3 border-t pt-4 text-sm">
+          <button onClick={testVoice} className="rounded-full border px-4 py-1.5">Tester la voix</button>
+          {voiceCheck && <span role="status" className="text-muted-foreground">{voiceCheck}</span>}
+        </div>
         {open && (
           <div className="mt-6 space-y-7">
             {QUESTIONS.map((q) => (

@@ -40,3 +40,5 @@
 - Collections in sequences.ts are ordered and double as multi-day series. "Explored" means the path's "-c" step was answered, so no schema change is needed.
 - Adaptation goes through `src/lib/adaptive-profile.ts` (`deriveParams`): caregiver functional profile (`adaptive_profiles.answers`) + recent `signal:*`/`discussion:*` rows → session params; language support and intellectual complexity stay separate — single, pure place to evolve the algorithm.
 - Interaction signals (repeat, not understood, abandon) are `attempts` rows with `kind` = `signal:<name>`, excluded from levels/affinity and scores — no schema change, no audio stored.
+- Home page "Cette semaine" shows positive counts only (sessions, minutes, answers found, sentences repeated, opinions shared, subjects explored), never a percentage. No "Vos collections" block on the home page (removed 15 Oct).
+- Espace aidant stays short: En bref (3 figures + 14-day strip, detail folded), Cette semaine observations, personal landmarks, profile (with voice test), one Réglages card (name, interests, starting level).

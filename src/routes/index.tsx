@@ -4,9 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/nutrileading-logo.png.asset.json";
 import symbol from "@/assets/connexions-symbol.png.asset.json";
 import { weekPhrase, weekSummary, type Week } from "@/lib/week";
-import { COLLECTIONS, isFresh } from "@/lib/sequences";
 import { imageSrc } from "@/lib/library";
-import { ACCENTS, COLLECTION_CYCLE, PILLARS } from "@/lib/accents";
+import { ACCENTS, PILLARS } from "@/lib/accents";
 import litteratureImg from "@/assets/home/litterature.jpg";
 import artImg from "@/assets/home/art.jpg";
 import santeImg from "@/assets/home/sante.jpg";
@@ -180,56 +179,40 @@ function Index() {
         </div>
       </section>
 
-      {/* CETTE SEMAINE — chaleureux */}
+      {/* CETTE SEMAINE — chaleureux : des repères positifs, jamais un score ni un jour manqué */}
       {state === "in" && week && week.sessions > 0 && (
-        <section className="bg-card">
-          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-10 px-6 py-16 md:px-8">
-            <div className="relative h-24 w-24">
-              <svg viewBox="0 0 36 36" className="h-24 w-24 -rotate-90">
+        <section className="mx-auto w-full max-w-6xl px-6 py-14 md:px-8">
+          <div className="grid items-center gap-8 rounded-3xl border bg-card p-6 shadow-md md:grid-cols-[auto_1fr] md:p-8">
+            <div className="relative h-28 w-28">
+              <svg viewBox="0 0 36 36" className="h-28 w-28 -rotate-90">
                 <circle cx="18" cy="18" r="15.5" fill="none" className="stroke-muted" strokeWidth="3" />
                 <circle cx="18" cy="18" r="15.5" fill="none" className="stroke-primary" strokeWidth="3" strokeLinecap="round" strokeDasharray={`${Math.min(100, (week.days / 7) * 100)} 100`} pathLength={100} />
               </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-2xl font-semibold">{week.days}/7</span>
+              <span className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-2xl font-semibold">{week.days}</span>
+                <span className="text-xs text-muted-foreground">jour{week.days > 1 ? "s" : ""}</span>
+              </span>
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.25em] text-primary">Cette semaine</p>
-              <p className="mt-2 text-2xl font-semibold">
-                {week.sessions} séance{week.sessions > 1 ? "s" : ""} · {week.minutes} minutes · {week.days} jour{week.days > 1 ? "s" : ""} actif{week.days > 1 ? "s" : ""}
-              </p>
-              <p className="mt-1 text-lg text-muted-foreground">
-                {[week.oral && `${week.oral} réponse${week.oral > 1 ? "s" : ""} à voix haute`, week.found && `${week.found} mot${week.found > 1 ? "s" : ""} retrouvé${week.found > 1 ? "s" : ""}`, week.topics && (week.topics > 1 ? `${week.topics} sujets explorés` : "1 sujet exploré")].filter(Boolean).join(" · ")}
-              </p>
-              <p className="mt-2 font-serif text-xl italic">{weekPhrase(week)}</p>
+              <p className="mt-2 font-serif text-3xl">{weekPhrase(week)}</p>
+              <ul className="mt-4 flex flex-wrap gap-3 text-lg">
+                {[
+                  `${week.sessions} séance${week.sessions > 1 ? "s" : ""} · ${week.minutes} min`,
+                  week.found > 0 && `${week.found} réponse${week.found > 1 ? "s" : ""} trouvée${week.found > 1 ? "s" : ""}`,
+                  week.repeated > 0 && `${week.repeated} phrase${week.repeated > 1 ? "s" : ""} répétée${week.repeated > 1 ? "s" : ""}`,
+                  week.spoken > 0 && `${week.spoken} avis partagé${week.spoken > 1 ? "s" : ""}`,
+                ]
+                  .filter(Boolean)
+                  .map((t) => (
+                    <li key={t as string} className="rounded-full bg-sage-soft px-4 py-1.5">{t}</li>
+                  ))}
+              </ul>
+              {week.topics.length > 0 && <p className="mt-4 text-base text-muted-foreground">Sujets explorés : {week.topics.slice(0, 4).join(" · ")}</p>}
             </div>
           </div>
         </section>
       )}
-
-      {/* COLLECTIONS */}
-      <section className="bg-background">
-        <div className="mx-auto w-full max-w-6xl px-6 py-16 md:px-8">
-          <p className="text-xs font-bold uppercase tracking-[0.25em] text-primary">Vos collections</p>
-          <div className="mt-6 grid gap-x-12 gap-y-8 md:grid-cols-2">
-            {COLLECTIONS.map((c, ci) => {
-              const n = c.ids.filter((id) => week?.explored.includes(id)).length;
-              return (
-                <div key={c.id}>
-                  <div className="flex items-baseline justify-between gap-4">
-                    <p className="text-xl font-semibold">
-                      {c.title}
-                      {isFresh(c) && <span className="ml-3 align-middle text-xs font-bold uppercase tracking-[0.2em] text-primary">Nouveau</span>}
-                    </p>
-                    <p className="shrink-0 text-base text-muted-foreground">{n} / {c.ids.length} sujets explorés</p>
-                  </div>
-                  <div className="mt-3 h-1 rounded-full bg-border">
-                    <div className={`h-1 rounded-full ${(COLLECTION_CYCLE[ci % COLLECTION_CYCLE.length] ?? ACCENTS.comprendre).bar} transition-all`} style={{ width: `${(n / c.ids.length) * 100}%` }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
 
       {/* MANIFESTE */}
       <section className="bg-sage-soft">
